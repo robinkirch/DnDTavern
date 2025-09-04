@@ -36,14 +36,12 @@ export interface Campaign {
 export interface Category {
   id: string;
   name: string;
-  isDeletable?: boolean;
 }
 
 export interface Rarity {
     id: string;
     name: string;
     color: string; // hex color string
-    isDeletable?: boolean;
 }
 
 export interface RecipeComponent {

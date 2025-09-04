@@ -57,17 +57,17 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         name: 'Elminster\'s Everyday Eats',
         description: 'A collection of recipes found in a sentient, and very hungry, spellbook.',
         categories: [
-          { id: 'cat-potion', name: 'Potions', isDeletable: true },
-          { id: 'cat-meal', name: 'Meals', isDeletable: true },
-          { id: 'cat-snack', name: 'Snacks', isDeletable: true },
-          { id: 'cat-drink', name: 'Drinks', isDeletable: true },
-          { id: 'cat-base', name: 'Ingredients', isDeletable: false },
+          { id: 'cat-potion', name: 'Potions' },
+          { id: 'cat-meal', name: 'Meals' },
+          { id: 'cat-snack', name: 'Snacks' },
+          { id: 'cat-drink', name: 'Drinks' },
+          { id: 'cat-base', name: 'Ingredients' },
         ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: true },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a', isDeletable: true },
-            { id: 'rarity-rare', name: 'Rare', color: '#2563eb', isDeletable: true },
-            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3', isDeletable: true },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
+            { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
+            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
         ],
         recipes: [
              // Base ingredients are now recipes without components
@@ -115,12 +115,12 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         name: 'Volo\'s Vile Brews',
         description: 'Brews and concoctions from the famed (and often embellished) world traveler, Volothamp Geddarm.',
         categories: [
-          { id: 'cat-drink', name: 'Drinks', isDeletable: false },
-          { id: 'cat-snack', name: 'Snacks', isDeletable: true },
-          { id: 'cat-base', name: 'Ingredients', isDeletable: false },
+          { id: 'cat-drink', name: 'Drinks' },
+          { id: 'cat-snack', name: 'Snacks' },
+          { id: 'cat-base', name: 'Ingredients' },
         ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: false },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
         ],
         recipes: [
             { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
@@ -233,12 +233,12 @@ export async function createGrimoire(id: string, name: string, creatorUsername: 
         name: name,
         description: `A newly discovered collection of recipes from the source '${id}'.`,
         categories: [
-            { id: 'cat-base', name: 'Ingredients', isDeletable: false },
-            { id: 'cat-new-cat', name: 'My new Category', isDeletable: true },
+            { id: 'cat-base', name: 'Ingredients' },
+            { id: 'cat-new-cat', name: 'My new Category' },
         ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: false },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a', isDeletable: false },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
         ],
         recipes: []
     };

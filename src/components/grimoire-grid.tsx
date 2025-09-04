@@ -49,7 +49,8 @@ export function GrimoireGrid() {
   }, [user]);
 
   const handleDeleteGrimoire = async (id: string) => {
-    if (confirm('Are you sure you want to remove this data source? This does not delete the data itself.')) {
+    // Re-instating confirm for this top-level action, as it's more critical.
+    if (window.confirm('Are you sure you want to remove this data source? This does not delete the data itself.')) {
       await deleteGrimoire(id);
       setGrimoires(grimoires.filter(g => g.id !== id));
     }
@@ -72,7 +73,6 @@ export function GrimoireGrid() {
     const newCategory: Category = {
         id: `cat-${newCategoryName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
         name: newCategoryName.trim(),
-        isDeletable: true
     };
 
     const updatedCategories = [...managingGrimoire.categories, newCategory];
@@ -88,16 +88,15 @@ export function GrimoireGrid() {
 
    const handleDeleteCategory = async (categoryId: string) => {
     if (!managingGrimoire) return;
-    if (confirm('Are you sure you want to delete this category?')) {
-      await deleteCategory(managingGrimoire.id, categoryId);
+    
+    await deleteCategory(managingGrimoire.id, categoryId);
 
-      const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
-      const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
+    const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
+    const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
 
-      setManagingGrimoire(updatedGrimoire);
-      setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-      toast({ title: 'Category Deleted' });
-    }
+    setManagingGrimoire(updatedGrimoire);
+    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+    toast({ title: 'Category Deleted' });
   };
 
   const handleAddRarity = async () => {
@@ -107,7 +106,6 @@ export function GrimoireGrid() {
         id: `rarity-${newRarityName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
         name: newRarityName.trim(),
         color: newRarityColor,
-        isDeletable: true
     };
     
     const updatedRarities = [...managingGrimoire.rarities, newRarity];
@@ -124,16 +122,15 @@ export function GrimoireGrid() {
 
   const handleDeleteRarity = async (rarityId: string) => {
     if (!managingGrimoire) return;
-    if (confirm('Are you sure you want to delete this rarity?')) {
-      await deleteRarity(managingGrimoire.id, rarityId);
-      
-      const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
-      const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
+    
+    await deleteRarity(managingGrimoire.id, rarityId);
+    
+    const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
+    const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
 
-      setManagingGrimoire(updatedGrimoire);
-      setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-      toast({ title: 'Rarity Deleted' });
-    }
+    setManagingGrimoire(updatedGrimoire);
+    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+    toast({ title: 'Rarity Deleted' });
   };
 
 
