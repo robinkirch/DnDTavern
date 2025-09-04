@@ -13,7 +13,7 @@ import {
 
 interface RecipeCardProps {
     recipe: Recipe;
-    grimoire: Grimoire;
+    grimoire: Grimoire | null;
     canEdit: boolean;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
