@@ -86,7 +86,7 @@ export default function CampaignPage() {
     toast({ title: t('Success'), description: t('Session notes have been saved.') });
   };
 
-  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'tracking'>) => {
+  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => {
     if (!campaign) return;
     
     // Create a fully formed campaign object for updating
@@ -187,7 +187,7 @@ export default function CampaignPage() {
               )}
               <p className="text-muted-foreground mb-8 max-w-3xl">{campaign.description}</p>
               
-               {isCreator && <CampaignTracker campaign={campaign} setCampaign={setCampaign} />}
+               <CampaignTracker campaign={campaign} setCampaign={setCampaign} />
 
                 <Tabs defaultValue="recipes" className="w-full">
                     <TabsList className='mb-6'>
@@ -211,7 +211,7 @@ export default function CampaignPage() {
                         {campaign.grimoireId ? (
                             <RecipeGrid 
                                 grimoireId={campaign.grimoireId} 
-                                canEdit={isCreator}
+                                canEdit={false}
                                 userPermissions={campaign.userPermissions[user.username]}
                              />
                         ) : (

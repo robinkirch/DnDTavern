@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Campaign, Grimoire, UserPermissions, WeatherRegion, WeatherCondition } from '@/lib/types';
+import type { Campaign, Grimoire, UserPermissions, PredefinedWeatherCondition, RegionWeatherCondition } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { getGrimoiresByUsername, getGrimoireById } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
@@ -30,24 +30,30 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, KeyRound, UserCog, CalendarDays, CloudSun, PlusCircle, Trash2 } from 'lucide-react';
+import { Upload, KeyRound, UserCog, CalendarDays, CloudSun, PlusCircle, Trash2, Settings } from 'lucide-react';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Separator } from './ui/separator';
 import { UserPermissionsDialog } from './user-permissions-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Label } from './ui/label';
+import { Switch } from './ui/switch';
 
-const weatherConditionSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1, 'Condition name is required.'),
+
+const regionWeatherConditionSchema = z.object({
+  conditionId: z.string().min(1, 'Please select a condition'),
   probability: z.number().min(0).max(100),
+});
+
+const predefinedWeatherConditionSchema = z.object({
+    id: z.string(),
+    name: z.string().min(1, 'Condition name is required.'),
 });
 
 const weatherRegionSchema = z.object({
   id: z.string(),
   name: z.string().min(1, 'Region name is required.'),
-  conditions: z.array(weatherConditionSchema),
+  conditions: z.array(regionWeatherConditionSchema),
 });
 
 
@@ -62,7 +68,14 @@ const formSchema = z.object({
   daysPerMonth: z.number().min(1),
   monthsPerYear: z.number().min(1),
   yearName: z.string(),
+  predefinedConditions: z.array(predefinedWeatherConditionSchema),
   weatherRegions: z.array(weatherRegionSchema),
+  visibility: z.object({
+    showDate: z.boolean(),
+    showTimeOfDay: z.boolean(),
+    showWeather: z.boolean(),
+    showRegion: z.boolean(),
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -70,11 +83,11 @@ type FormData = z.infer<typeof formSchema>;
 interface EditCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'tracking'>) => void;
+    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => void;
     campaign: Campaign | null;
 }
 
-const WeatherRegionFields = ({ control, regionIndex, removeRegion, watch }: { control: any, regionIndex: number, removeRegion: (index: number) => void, watch: any }) => {
+const WeatherRegionFields = ({ control, watch, regionIndex, removeRegion, predefinedConditions }: { control: any, watch: any, regionIndex: number, removeRegion: (index: number) => void, predefinedConditions: PredefinedWeatherCondition[] }) => {
     const { t } = useI18n();
     const { fields: conditionFields, append: appendCondition, remove: removeCondition } = useFieldArray({
         control,
@@ -94,14 +107,26 @@ const WeatherRegionFields = ({ control, regionIndex, removeRegion, watch }: { co
                         <FormMessage />
                     </FormItem>
                 )} />
-                <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={() => removeRegion(regionIndex)}>{t("Delete Region")}</Button>
+                <Button type="button" variant="destructive" size="sm" className="mt-8" onClick={() => removeRegion(regionIndex)}><Trash2 className='h-4 w-4' /></Button>
             </div>
 
             <Label className="mt-4 mb-2 block">{t("Conditions")}</Label>
             {conditionFields.map((condition, conditionIndex) => (
                 <div key={condition.id} className="grid grid-cols-[2fr,1fr,auto] gap-2 items-center mb-2">
-                    <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.name`} render={({ field }) => (
-                        <FormItem><FormControl><Input placeholder={t("e.g. Sunny")} {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.conditionId`} render={({ field }) => (
+                       <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger><SelectValue placeholder={t("Select...")} /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {predefinedConditions.map((pc) => (
+                                        <SelectItem key={pc.id} value={pc.id}>{pc.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
                     )} />
                     <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.probability`} render={({ field }) => (
                         <FormItem><FormControl><Input type="number" placeholder="%" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl><FormMessage /></FormItem>
@@ -110,7 +135,7 @@ const WeatherRegionFields = ({ control, regionIndex, removeRegion, watch }: { co
                 </div>
             ))}
             <div className="flex justify-between items-center mt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => appendCondition({ id: `cond-${Date.now()}`, name: '', probability: 0 })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Condition")}</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => appendCondition({ conditionId: '', probability: 0 })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Condition")}</Button>
                 <div className={`text-sm ${totalProb !== 100 ? 'text-destructive' : 'text-green-600'}`}>{t("Total")}: {totalProb}%</div>
             </div>
         </div>
@@ -136,6 +161,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
   const inventoryType = watch('inventoryType');
   const grimoireId = watch('grimoireId');
   const { fields: regionFields, append: appendRegion, remove: removeRegion } = useFieldArray({ control, name: 'weatherRegions' });
+  const { fields: predefinedConditionFields, append: appendPredefinedCondition, remove: removePredefinedCondition } = useFieldArray({ control, name: 'predefinedConditions' });
+
+  const predefinedConditions = watch('predefinedConditions');
 
   useEffect(() => {
     if (user && user.role === 'dm' && isOpen) {
@@ -164,7 +192,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         daysPerMonth: campaign.calendarSettings.daysPerMonth,
         monthsPerYear: campaign.calendarSettings.monthsPerYear,
         yearName: campaign.calendarSettings.yearName,
-        weatherRegions: campaign.weatherSettings.regions,
+        predefinedConditions: campaign.weatherSettings.predefinedConditions || [],
+        weatherRegions: campaign.weatherSettings.regions || [],
+        visibility: campaign.tracking.visibility || { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true },
       });
       setImagePreview(campaign.image);
     } else if (!isOpen) {
@@ -209,10 +239,18 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 }
             }
         };
-        // This is a bit of a hack since we are not submitting the form yet.
-        // We directly call onSave to update the state in the parent component.
-        // This is necessary because the dialog is complex.
-        onSave(updatedCampaign);
+        onSave({
+            ...updatedCampaign,
+            tracking: {
+                ...updatedCampaign.tracking,
+                visibility: watch('visibility')
+            },
+            weatherSettings: {
+                ...updatedCampaign.weatherSettings,
+                predefinedConditions: watch('predefinedConditions'),
+                regions: watch('weatherRegions')
+            }
+        });
         setPermissionsDialogOpen(false);
   };
 
@@ -259,7 +297,12 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
             yearName: values.yearName,
         },
         weatherSettings: {
+            predefinedConditions: values.predefinedConditions,
             regions: values.weatherRegions,
+        },
+        tracking: {
+            ...campaign.tracking,
+            visibility: values.visibility
         }
     });
   }
@@ -285,7 +328,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         }
         onOpenChange(open);
     }}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline">{t('Edit Campaign')}</DialogTitle>
           <DialogDescription>
@@ -476,7 +519,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 <AccordionItem value="time-weather">
                     <AccordionTrigger className="text-lg font-headline hover:no-underline">
                         <div className="flex items-center gap-2 text-base">
-                             <CalendarDays className='h-5 w-5 text-primary' /> {t('Time & Weather')}
+                             <CalendarDays className='h-5 w-5 text-primary' /> {t('Time &amp; Weather')}
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-6">
@@ -496,19 +539,62 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                         </div>
                         <div className="rounded-md border p-4 space-y-4">
                              <h4 className="font-medium">{t("Weather Settings")}</h4>
-                            <div className='space-y-4'>
-                                {regionFields.map((region, regionIndex) => (
-                                    <WeatherRegionFields 
-                                        key={region.id}
-                                        control={control} 
-                                        regionIndex={regionIndex} 
-                                        removeRegion={removeRegion}
-                                        watch={watch}
-                                    />
+                            
+                            <div className="space-y-2">
+                                <Label>{t("Pre-defined Conditions")}</Label>
+                                <FormDescription>{t("Define all possible weather conditions for this campaign.")}</FormDescription>
+                                <div className='space-y-2'>
+                                {predefinedConditionFields.map((field, index) => (
+                                    <div key={field.id} className="flex items-center gap-2">
+                                        <FormField control={control} name={`predefinedConditions.${index}.name`} render={({ field }) => (
+                                            <FormItem className='flex-grow'><FormControl><Input {...field} placeholder={t("e.g. Sunny")} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                         <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => removePredefinedCondition(index)}><Trash2 className="h-4 w-4" /></Button>
+                                    </div>
                                 ))}
+                                </div>
+                                <Button type="button" variant="outline" size="sm" onClick={() => appendPredefinedCondition({ id: `precond-${Date.now()}`, name: '' })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Global Condition")}</Button>
                             </div>
-                            <Button type="button" className="w-full" variant="secondary" onClick={() => appendRegion({ id: `reg-${Date.now()}`, name: '', conditions: [] })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Region")}</Button>
+                            
+                            <Separator/>
+
+                            <div className="space-y-2">
+                                <Label>{t("Regions")}</Label>
+                                <FormDescription>{t("Assign probabilities to conditions for each region.")}</FormDescription>
+                                <div className='space-y-4'>
+                                    {regionFields.map((region, regionIndex) => (
+                                        <WeatherRegionFields 
+                                            key={region.id}
+                                            control={control} 
+                                            watch={watch}
+                                            regionIndex={regionIndex} 
+                                            removeRegion={removeRegion}
+                                            predefinedConditions={predefinedConditions}
+                                        />
+                                    ))}
+                                </div>
+                                <Button type="button" className="w-full" variant="secondary" onClick={() => appendRegion({ id: `reg-${Date.now()}`, name: '', conditions: [] })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Region")}</Button>
+                            </div>
                         </div>
+
+                         <div className="rounded-md border p-4 space-y-4">
+                            <h4 className="font-medium">{t("Player Visibility")}</h4>
+                             <FormDescription>{t("Control which parts of the tracker are visible to players.")}</FormDescription>
+                             <div className="grid grid-cols-2 gap-4">
+                                <FormField control={control} name="visibility.showDate" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm col-span-2 sm:col-span-1"><div className="space-y-0.5"><FormLabel>{t("Show Date")}</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                                )} />
+                                 <FormField control={control} name="visibility.showTimeOfDay" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm col-span-2 sm:col-span-1"><div className="space-y-0.5"><FormLabel>{t("Show Time of Day")}</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                                )} />
+                                 <FormField control={control} name="visibility.showWeather" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm col-span-2 sm:col-span-1"><div className="space-y-0.5"><FormLabel>{t("Show Weather")}</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                                )} />
+                                 <FormField control={control} name="visibility.showRegion" render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm col-span-2 sm:col-span-1"><div className="space-y-0.5"><FormLabel>{t("Show Region")}</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                                )} />
+                             </div>
+                         </div>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>

@@ -71,11 +71,16 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     },
     calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Year of the Rising Dragon' },
     weatherSettings: { 
+        predefinedConditions: [
+            { id: 'weather-1', name: 'Sunny' },
+            { id: 'weather-2', name: 'Light Rain' },
+            { id: 'weather-3', name: 'Stormy' },
+        ],
         regions: [
             { id: 'region-1', name: 'Sword Coast', conditions: [
-                { id: 'weather-1', name: 'Sunny', probability: 60 },
-                { id: 'weather-2', name: 'Light Rain', probability: 30 },
-                { id: 'weather-3', name: 'Stormy', probability: 10 },
+                { conditionId: 'weather-1', probability: 60 },
+                { conditionId: 'weather-2', probability: 30 },
+                { conditionId: 'weather-3', probability: 10 },
             ]}
         ]
     },
@@ -83,7 +88,8 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
         currentDate: { day: 15, month: 4, year: 1491 },
         currentTimeOfDay: 'noon',
         currentRegionId: 'region-1',
-        currentWeather: 'Sunny'
+        currentWeather: 'Sunny',
+        visibility: { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true }
     }
   },
   {
@@ -100,12 +106,13 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     userPermissions: {},
     userInventories: {},
     calendarSettings: { daysPerMonth: 28, monthsPerYear: 14, yearName: 'Age of Worms' },
-    weatherSettings: { regions: [] },
+    weatherSettings: { predefinedConditions: [], regions: [] },
     tracking: {
         currentDate: { day: 1, month: 1, year: 1 },
         currentTimeOfDay: 'morning',
         currentRegionId: null,
-        currentWeather: null
+        currentWeather: null,
+        visibility: { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true }
     }
   },
    {
@@ -122,12 +129,13 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     userPermissions: {},
     userInventories: {},
     calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Present Day' },
-    weatherSettings: { regions: [] },
+    weatherSettings: { predefinedConditions: [], regions: [] },
     tracking: {
         currentDate: { day: 1, month: 1, year: 1 },
         currentTimeOfDay: 'morning',
         currentRegionId: null,
-        currentWeather: null
+        currentWeather: null,
+        visibility: { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true }
     }
   },
 ];
@@ -239,12 +247,13 @@ export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'invent
         userPermissions: {},
         userInventories: {},
         calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Year of Beginnings' },
-        weatherSettings: { regions: [] },
+        weatherSettings: { predefinedConditions: [], regions: [] },
         tracking: {
             currentDate: { day: 1, month: 1, year: 1 },
             currentTimeOfDay: 'morning',
             currentRegionId: null,
             currentWeather: null,
+            visibility: { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true }
         }
     };
      if (!newCampaign.image) {
@@ -283,7 +292,7 @@ export async function getGrimoireById(id: string): Promise<Grimoire | null> {
     if (!grimoire) {
        console.error(`Grimoire with id "${id}" not found. In a real app, this would be an error.`);
        // To prevent crashes, we can return a "default" or empty grimoire structure.
-       // However, the calling code should handle `null` gracefully.
+       // However, the calling code should handle \`null\` gracefully.
     }
     return grimoire;
 }

@@ -7,8 +7,9 @@ import { useI18n } from '@/context/i18n-context';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Sun, SunMoon, Moon, Sunrise, Sunset, Wind, Cloud, CloudRain, CloudSun, CloudSnow, CloudLightning, ArrowRight } from 'lucide-react';
+import { Sun, Moon, Sunrise, Sunset, Wind, Cloud, CloudRain, CloudSun, CloudSnow, CloudLightning, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
 
 interface CampaignTrackerProps {
   campaign: Campaign;
@@ -42,6 +43,7 @@ const getWeatherIcon = (weatherName: string | null) => {
 }
 
 export function CampaignTracker({ campaign, setCampaign }: CampaignTrackerProps) {
+  const { user } = useAuth();
   const { t } = useI18n();
   const { toast } = useToast();
   const [selectedRegion, setSelectedRegion] = useState(campaign.tracking.currentRegionId);
@@ -66,9 +68,9 @@ export function CampaignTracker({ campaign, setCampaign }: CampaignTrackerProps)
       }
     }
     
-    // Roll for new weather
     const region = campaign.weatherSettings.regions.find(r => r.id === selectedRegion);
     let newWeather = campaign.tracking.currentWeather;
+
     if (region && region.conditions.length > 0) {
         const totalProb = region.conditions.reduce((acc, c) => acc + c.probability, 0);
         if (totalProb !== 100) {
@@ -76,10 +78,11 @@ export function CampaignTracker({ campaign, setCampaign }: CampaignTrackerProps)
         } else {
             const roll = Math.random() * 100;
             let cumulativeProb = 0;
-            for (const condition of region.conditions) {
-                cumulativeProb += condition.probability;
+            for (const conditionRef of region.conditions) {
+                cumulativeProb += conditionRef.probability;
                 if (roll <= cumulativeProb) {
-                    newWeather = condition.name;
+                    const weatherCondition = campaign.weatherSettings.predefinedConditions.find(pc => pc.id === conditionRef.conditionId);
+                    newWeather = weatherCondition?.name || t('N/A');
                     break;
                 }
             }
@@ -110,43 +113,60 @@ export function CampaignTracker({ campaign, setCampaign }: CampaignTrackerProps)
   };
 
   const { day, month, year } = campaign.tracking.currentDate;
+  const isCreator = user?.username === campaign.creatorUsername;
 
   return (
     <Card className="mb-8">
       <CardHeader>
         <CardTitle className="font-headline">{t('Campaign Tracker')}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col sm:flex-row gap-6 justify-between items-center">
-         <div className='flex items-center gap-6'>
-            <div className='flex items-center gap-2'>
-                {timeOfDayIcons[campaign.tracking.currentTimeOfDay]}
-                <span className='font-semibold text-lg'>{t(campaign.tracking.currentTimeOfDay)}</span>
-            </div>
-            <div className="h-10 w-px bg-border" />
-            <div className='flex items-center gap-2'>
-                {getWeatherIcon(campaign.tracking.currentWeather)}
-                <span className='font-semibold text-lg'>{campaign.tracking.currentWeather || t('N/A')}</span>
-            </div>
-             <div className="h-10 w-px bg-border" />
-            <div className='flex items-center gap-2'>
-                 <span className='font-semibold text-lg'>{`${t('Day')} ${day}, ${t('Month')} ${month}, ${year} ${campaign.calendarSettings.yearName}`}</span>
-            </div>
+      <CardContent className="flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center">
+         <div className='flex items-center gap-6 flex-wrap'>
+            {campaign.tracking.visibility.showTimeOfDay && (
+              <div className='flex items-center gap-2'>
+                  {timeOfDayIcons[campaign.tracking.currentTimeOfDay]}
+                  <span className='font-semibold text-lg'>{t(campaign.tracking.currentTimeOfDay)}</span>
+              </div>
+            )}
+            
+            {campaign.tracking.visibility.showWeather && (
+              <>
+                <div className="h-10 w-px bg-border hidden sm:block" />
+                <div className='flex items-center gap-2'>
+                    {getWeatherIcon(campaign.tracking.currentWeather)}
+                    <span className='font-semibold text-lg'>{campaign.tracking.currentWeather || t('N/A')}</span>
+                </div>
+              </>
+            )}
+
+             {campaign.tracking.visibility.showDate && (
+                <>
+                  <div className="h-10 w-px bg-border hidden sm:block" />
+                  <div className='flex items-center gap-2'>
+                      <span className='font-semibold text-lg'>{`${t('Day')} ${day}, ${t('Month')} ${month}, ${year} ${campaign.calendarSettings.yearName}`}</span>
+                  </div>
+                </>
+             )}
          </div>
-         <div className='flex items-center gap-2 w-full sm:w-auto'>
-            <Select onValueChange={handleRegionChange} value={selectedRegion ?? ''} disabled={campaign.weatherSettings.regions.length === 0}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder={t('Select a region...')} />
-                </SelectTrigger>
-                <SelectContent>
-                    {campaign.weatherSettings.regions.map(region => (
-                        <SelectItem key={region.id} value={region.id}>{region.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Button onClick={handleAdvanceTime}>
-                {t('Advance Time')} <ArrowRight className='ml-2 h-4 w-4' />
-            </Button>
-         </div>
+         {isCreator && (
+            <div className='flex items-center gap-2 w-full sm:w-auto'>
+                {campaign.tracking.visibility.showRegion && (
+                    <Select onValueChange={handleRegionChange} value={selectedRegion ?? ''} disabled={campaign.weatherSettings.regions.length === 0}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder={t('Select a region...')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {campaign.weatherSettings.regions.map(region => (
+                                <SelectItem key={region.id} value={region.id}>{region.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+                <Button onClick={handleAdvanceTime}>
+                    {t('Advance Time')} <ArrowRight className='ml-2 h-4 w-4' />
+                </Button>
+            </div>
+         )}
       </CardContent>
     </Card>
   );

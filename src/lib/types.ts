@@ -38,16 +38,20 @@ export interface UserPermissions {
     [categoryId: string]: PermissionLevel;
 }
 
-export interface WeatherCondition {
+export interface PredefinedWeatherCondition {
     id: string;
     name: string;
+}
+
+export interface RegionWeatherCondition {
+    conditionId: string; // Links to PredefinedWeatherCondition
     probability: number; // Percentage
 }
 
 export interface WeatherRegion {
     id: string;
     name: string;
-    conditions: WeatherCondition[];
+    conditions: RegionWeatherCondition[];
 }
 
 export type TimeOfDay = 'morning' | 'noon' | 'evening' | 'night';
@@ -87,6 +91,7 @@ export interface Campaign {
     yearName: string;
   };
   weatherSettings: {
+    predefinedConditions: PredefinedWeatherCondition[];
     regions: WeatherRegion[];
   };
   tracking: {
@@ -98,6 +103,12 @@ export interface Campaign {
     currentTimeOfDay: TimeOfDay;
     currentRegionId: string | null;
     currentWeather: string | null; // Name of the current weather condition
+    visibility: {
+        showDate: boolean;
+        showTimeOfDay: boolean;
+        showWeather: boolean;
+        showRegion: boolean;
+    }
   };
 }
 
