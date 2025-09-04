@@ -182,6 +182,17 @@
     "Partial Access": "Teilweiser Zugriff",
     "No Access": "Kein Zugriff",
     "Save Permissions": "Berechtigungen speichern",
-    "Your knowledge of this recipe is incomplete.": "Dein Wissen über dieses Rezept ist unvollständig."
+    "Your knowledge of this recipe is incomplete.": "Dein Wissen über dieses Rezept ist unvollständig.",
+    "{{count}} of {{max}} slots used": "{{count}} von {{max}} Plätzen belegt",
+    "No description provided.": "Keine Beschreibung angegeben.",
+    "Inventory Full": "Inventar voll",
+    "You cannot add more items to your inventory.": "Du kannst keine weiteren Gegenstände zu deinem Inventar hinzufügen.",
+    "Inventory Settings": "Inventareinstellungen",
+    "Override campaign's default inventory size for this player.": "Überschreiben Sie die Standard-Inventargröße der Kampagne für diesen Spieler.",
+    "Player's Inventory Size": "Inventargröße des Spielers",
+    "Campaign default ({{size}})": "Kampagnenstandard ({{size}})",
+    "Unlimited": "Unbegrenzt",
+    "Inventory size cannot be set when campaign rule is \"Free\".": "Die Inventargröße kann nicht festgelegt werden, wenn die Kampagnenregel \"Frei\" ist.",
+    "Grimoire Permissions": "Grimoire-Berechtigungen",
+    "Set access levels and inventory size for this player.": "Legen Sie Zugriffsebenen und Inventargröße für diesen Spieler fest."
 }
-    

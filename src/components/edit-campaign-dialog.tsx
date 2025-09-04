@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Campaign, Grimoire } from '@/lib/types';
+import type { Campaign, Grimoire, UserPermissions } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { getGrimoiresByUsername, getGrimoireById } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
@@ -124,6 +124,30 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     setPermissionsDialogOpen(true);
   }
 
+  const handleSavePermissions = (username: string, permissions: UserPermissions, inventorySize?: number) => {
+      if (!campaign) return;
+        const updatedCampaign = {
+            ...campaign,
+            userPermissions: {
+                ...campaign.userPermissions,
+                [username]: permissions
+            },
+            userInventories: {
+                ...campaign.userInventories,
+                [username]: {
+                    ...campaign.userInventories[username],
+                    items: campaign.userInventories[username]?.items || [],
+                    maxSize: inventorySize
+                }
+            }
+        };
+
+        // This is a temporary save. The final save happens when the main dialog is submitted.
+        // We update the parent's state directly.
+        onSave(updatedCampaign);
+        setPermissionsDialogOpen(false);
+  };
+
   function onSubmit(values: FormData) {
     if (!campaign) return;
 
@@ -133,6 +157,21 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     
     // Pass the existing permissions through
     const updatedPermissions = { ...campaign.userPermissions };
+    const updatedInventories = { ...campaign.userInventories };
+
+    // Clean up permissions and inventories for users who were removed
+    const currentUsers = new Set(invitedUsernames);
+    Object.keys(updatedPermissions).forEach(username => {
+        if (!currentUsers.has(username)) {
+            delete updatedPermissions[username];
+        }
+    });
+    Object.keys(updatedInventories).forEach(username => {
+        if (!currentUsers.has(username)) {
+            delete updatedInventories[username];
+        }
+    });
+
 
     onSave({ 
         name: values.name,
@@ -145,7 +184,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
             defaultSize: values.inventoryType === 'limited' ? values.defaultInventorySize : undefined,
         },
         userPermissions: updatedPermissions,
-        userInventories: campaign.userInventories, // Pass through existing inventories
+        userInventories: updatedInventories, 
     });
   }
 
@@ -160,17 +199,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
           username={managingUser}
           campaign={campaign}
           grimoire={linkedGrimoire}
-          onSave={(username, permissions) => {
-            if (!campaign) return;
-             onSave({
-                ...campaign,
-                userPermissions: {
-                    ...campaign.userPermissions,
-                    [username]: permissions
-                }
-            })
-            setPermissionsDialogOpen(false);
-          }}
+          onSave={handleSavePermissions}
        />
     )}
     <Dialog open={isOpen} onOpenChange={(open) => {

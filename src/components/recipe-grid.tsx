@@ -52,13 +52,22 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
   const getPermissionForRecipe = (recipe: Recipe): PermissionLevel => {
     if (canEdit) return 'full'; // DM always has full access
     
-    // Default to 'none' if no specific permissions are set
-    let highestPermission: PermissionLevel = 'none';
+    // If no specific permissions are set for the user, default to full access.
+    if (Object.keys(userPermissions).length === 0) return 'full';
+
+    // The most restrictive permission applies.
+    // Start with the least restrictive and move to most restrictive.
+    let highestPermission: PermissionLevel = 'full';
 
     for (const catId of recipe.categoryIds) {
-        const perm = userPermissions[catId] || 'full'; // Default to full if no specific perm
-        if (perm === 'full') return 'full';
-        if (perm === 'partial') highestPermission = 'partial';
+        const perm = userPermissions[catId] || 'full'; // Default to full if a category is not explicitly set
+        
+        if (perm === 'none') {
+            return 'none'; // 'none' overrides everything
+        }
+        if (perm === 'partial') {
+            highestPermission = 'partial'; // 'partial' is more restrictive than 'full'
+        }
     }
     return highestPermission;
   };
