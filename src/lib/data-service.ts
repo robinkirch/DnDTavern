@@ -17,6 +17,17 @@ import type { Campaign, Grimoire, User, Recipe, Category, Rarity } from './types
 // In a real scenario, this array would be empty and functions
 // would perform async database calls.
 
+const STANDARD_RARITIES: Rarity[] = [
+    { id: 'rarity-common', name: 'Common', color: '#6b7280' },
+    { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
+    { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
+    { id: 'rarity-epic', name: 'Epic', color: '#9333ea' },
+    { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
+    { id: 'rarity-mythical', name: 'Mythical', color: '#db2777' },
+    { id: 'rarity-godly', name: 'Godly', color: '#ca8a04' },
+];
+
+
 const FAKE_DB_CAMPAIGNS: Campaign[] = [
   {
     id: 'the-guzzling-grimoire-campaign',
@@ -63,12 +74,7 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
           { id: 'cat-drink', name: 'Drinks' },
           { id: 'cat-base', name: 'Ingredients' },
         ],
-        rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
-            { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
-            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
-        ],
+        rarities: STANDARD_RARITIES,
         recipes: [
              // Base ingredients are now recipes without components
             { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
@@ -119,9 +125,7 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
           { id: 'cat-snack', name: 'Snacks' },
           { id: 'cat-base', name: 'Ingredients' },
         ],
-        rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
-        ],
+        rarities: STANDARD_RARITIES,
         recipes: [
             { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
             { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
@@ -236,10 +240,7 @@ export async function createGrimoire(id: string, name: string, creatorUsername: 
             { id: 'cat-base', name: 'Ingredients' },
             { id: 'cat-new-cat', name: 'My new Category' },
         ],
-        rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
-        ],
+        rarities: STANDARD_RARITIES,
         recipes: []
     };
     FAKE_DB_GRIMOIRES.push(newGrimoire);

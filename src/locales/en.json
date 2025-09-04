@@ -59,7 +59,7 @@
     "Data Source ID": "Data Source ID",
     "e.g., my-firestore-db": "e.g., my-firestore-db",
     "Manage: {{grimoireName}}": "Manage: {{grimoireName}}",
-    "Add new categories and rarities to this grimoire.": "Add new categories and rarities to this grimoire.",
+    "Add new categories to this grimoire. Rarities are standardized across all grimoires.": "Add new categories to this grimoire. Rarities are standardized across all grimoires.",
     "Categories": "Categories",
     "Add New Category": "Add New Category",
     "e.g. Potions, Herbs": "e.g. Potions, Herbs",
@@ -67,7 +67,7 @@
     "Name": "Name",
     "Actions": "Actions",
     "Rarities": "Rarities",
-    "Add New Rarity": "Add New Rarity",
+    "Rarities are standardized and cannot be changed.": "Rarities are standardized and cannot be changed.",
     "Rarity Name": "Rarity Name",
     "e.g. Mythical": "e.g. Mythical",
     "Rarity Color": "Rarity Color",
@@ -124,5 +124,6 @@
     "\"{{rarityName}}\" has been added.": "\"{{rarityName}}\" has been added.",
     "Rarity Deleted": "Rarity Deleted",
     "Are you sure you want to remove this data source? This does not delete the data itself.": "Are you sure you want to remove this data source? This does not delete the data itself.",
-    "Are you sure you want to delete this recipe? This cannot be undone.": "Are you sure you want to delete this recipe? This cannot be undone."
+    "Are you sure you want to delete this recipe? This cannot be undone.": "Are you sure you want to delete this recipe? This cannot be undone.",
+    "Are you sure you want to delete this category?": "Are you sure you want to delete this category?"
 }

@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import type { Grimoire, Category, Rarity } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, saveRarity, deleteCategory, deleteRarity } from '@/lib/data-service';
+import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, deleteCategory } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, DatabaseZap, Settings, Tags, Palette, Star } from 'lucide-react';
+import { PlusCircle, Trash2, DatabaseZap, Settings, Tags, Star } from 'lucide-react';
 import { RecipeGrid } from './recipe-grid';
 import { GrimoireFormDialog } from './grimoire-form-dialog';
 import { Skeleton } from './ui/skeleton';
@@ -37,8 +37,6 @@ export function GrimoireGrid() {
   const [managingGrimoire, setManagingGrimoire] = useState<Grimoire | null>(null);
 
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newRarityName, setNewRarityName] = useState('');
-  const [newRarityColor, setNewRarityColor] = useState('#6b7280');
 
 
   useEffect(() => {
@@ -89,49 +87,16 @@ export function GrimoireGrid() {
 
    const handleDeleteCategory = async (categoryId: string) => {
     if (!managingGrimoire) return;
-    
-    await deleteCategory(managingGrimoire.id, categoryId);
+    if (confirm(t('Are you sure you want to delete this category?'))) {
+        await deleteCategory(managingGrimoire.id, categoryId);
 
-    const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
-    const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
+        const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
+        const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
 
-    setManagingGrimoire(updatedGrimoire);
-    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-    toast({ title: t('Category Deleted') });
-  };
-
-  const handleAddRarity = async () => {
-    if (!managingGrimoire || !newRarityName.trim()) return;
-
-    const newRarity: Rarity = {
-        id: `rarity-${newRarityName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-        name: newRarityName.trim(),
-        color: newRarityColor,
-    };
-    
-    const updatedRarities = [...managingGrimoire.rarities, newRarity];
-    const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
-    
-    await saveRarity(managingGrimoire.id, newRarity);
-
-    setManagingGrimoire(updatedGrimoire);
-    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-    setNewRarityName('');
-    setNewRarityColor('#6b7280');
-    toast({title: t("Rarity Added"), description: t("\"{{rarityName}}\" has been added.", { rarityName: newRarity.name })});
-  };
-
-  const handleDeleteRarity = async (rarityId: string) => {
-    if (!managingGrimoire) return;
-    
-    await deleteRarity(managingGrimoire.id, rarityId);
-    
-    const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
-    const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
-
-    setManagingGrimoire(updatedGrimoire);
-    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-    toast({ title: t('Rarity Deleted') });
+        setManagingGrimoire(updatedGrimoire);
+        setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+        toast({ title: t('Category Deleted') });
+    }
   };
 
 
@@ -157,7 +122,7 @@ export function GrimoireGrid() {
                 <DialogHeader>
                     <DialogTitle className="font-headline">{t('Manage: {{grimoireName}}', { grimoireName: managingGrimoire?.name || '' })}</DialogTitle>
                     <DialogDescription>
-                       {t('Add new categories and rarities to this grimoire.')}
+                       {t('Add new categories to this grimoire. Rarities are standardized across all grimoires.')}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-8 max-h-[60vh] overflow-y-auto pr-4">
@@ -193,29 +158,15 @@ export function GrimoireGrid() {
                     </Table>
                   </div>
 
-                  {/* Rarity Management */}
+                  {/* Rarity Display */}
                   <div className='space-y-4'>
                     <h4 className='font-headline text-lg flex items-center gap-2'><Star className='h-5 w-5 text-primary'/> {t('Rarities')}</h4>
-                     <div className='space-y-2'>
-                        <Label>{t('Add New Rarity')}</Label>
-                        <div className='flex gap-2 items-end'>
-                            <div className='flex-grow'>
-                                <Label htmlFor='new-rarity-name' className='sr-only'>{t('Rarity Name')}</Label>
-                                <Input id="new-rarity-name" value={newRarityName} onChange={(e) => setNewRarityName(e.target.value)} placeholder={t("e.g. Mythical")}/>
-                            </div>
-                             <div>
-                                <Label htmlFor='new-rarity-color' className='sr-only'>{t('Rarity Color')}</Label>
-                                <Input id="new-rarity-color" type="color" value={newRarityColor} onChange={(e) => setNewRarityColor(e.target.value)} className="p-1 h-10 w-14"/>
-                            </div>
-                            <Button onClick={handleAddRarity}>{t('Add')}</Button>
-                        </div>
-                    </div>
+                    <p className="text-sm text-muted-foreground">{t('Rarities are standardized and cannot be changed.')}</p>
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t('Color')}</TableHead>
                                 <TableHead>{t('Name')}</TableHead>
-                                <TableHead className="text-right">{t('Actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -223,11 +174,6 @@ export function GrimoireGrid() {
                                 <TableRow key={rarity.id}>
                                     <TableCell><div className='h-5 w-5 rounded-full border' style={{backgroundColor: rarity.color}} /></TableCell>
                                     <TableCell className="font-medium">{rarity.name}</TableCell>
-                                    <TableCell className="text-right">
-                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteRarity(rarity.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
