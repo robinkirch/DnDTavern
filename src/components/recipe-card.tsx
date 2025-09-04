@@ -13,7 +13,7 @@ import {
 
 interface RecipeCardProps {
     recipe: Recipe;
-    isCreator: boolean;
+    canEdit: boolean;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
 }
@@ -32,13 +32,13 @@ const rarityColors = {
     Legendary: 'bg-primary text-primary-foreground hover:bg-primary/90',
 };
 
-export function RecipeCard({ recipe, isCreator, onEdit, onDelete }: RecipeCardProps) {
+export function RecipeCard({ recipe, canEdit, onEdit, onDelete }: RecipeCardProps) {
     return (
         <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <CardTitle className="font-headline text-2xl leading-tight mb-2 pr-4">{recipe.name}</CardTitle>
-                    {isCreator && (
+                    {canEdit && (
                         <div className="flex gap-1 -mr-2 -mt-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(recipe.id)}>
                                 <Pencil className="h-4 w-4" />

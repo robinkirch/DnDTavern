@@ -6,13 +6,18 @@ import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { RecipeFormDialog } from './recipe-form-dialog';
+import { mockGrimoires } from '@/lib/mock-data'; // We'll need this for updates
 
 interface RecipeGridProps {
+  grimoireId: string;
   initialRecipes: Recipe[];
-  isCreator: boolean;
+  canEdit: boolean;
 }
 
-export function RecipeGrid({ initialRecipes, isCreator }: RecipeGridProps) {
+export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridProps) {
+  // This component's state should reflect the recipes of the grimoire.
+  // In a real app, you'd use a global state manager (like Zustand or Redux) or pass down callbacks.
+  // For this mock, we'll manipulate a local state and also the "global" mock data.
   const [recipes, setRecipes] = useState(initialRecipes);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setFormOpen] = useState(false);
@@ -43,19 +48,34 @@ export function RecipeGrid({ initialRecipes, isCreator }: RecipeGridProps) {
 
   const handleDeleteRecipe = (id: string) => {
     if(confirm('Are you sure you want to delete this recipe? This cannot be undone.')) {
-        setRecipes(recipes.filter(r => r.id !== id));
-        console.log(`Deleted recipe ${id}`);
+        const updatedRecipes = recipes.filter(r => r.id !== id);
+        setRecipes(updatedRecipes);
+        
+        // Update the mock data source
+        const grimoireIndex = mockGrimoires.findIndex(g => g.id === grimoireId);
+        if (grimoireIndex !== -1) {
+            mockGrimoires[grimoireIndex].recipes = updatedRecipes;
+        }
     }
   };
 
   const handleSaveRecipe = (savedRecipe: Recipe) => {
+    let updatedRecipes;
     if (editingRecipe) {
       // Update existing recipe
-      setRecipes(recipes.map(r => (r.id === savedRecipe.id ? savedRecipe : r)));
+      updatedRecipes = recipes.map(r => (r.id === savedRecipe.id ? savedRecipe : r));
     } else {
       // Add new recipe
-      setRecipes([...recipes, savedRecipe]);
+      updatedRecipes = [...recipes, savedRecipe];
     }
+    setRecipes(updatedRecipes);
+
+    // Update the mock data source
+    const grimoireIndex = mockGrimoires.findIndex(g => g.id === grimoireId);
+    if (grimoireIndex !== -1) {
+        mockGrimoires[grimoireIndex].recipes = updatedRecipes;
+    }
+
     setFormOpen(false);
     setEditingRecipe(null);
   };
@@ -79,7 +99,7 @@ export function RecipeGrid({ initialRecipes, isCreator }: RecipeGridProps) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          {isCreator && (
+          {canEdit && (
             <Button onClick={handleAddRecipe}>
                 <PlusCircle className="mr-2 h-4 w-4"/>
                 Create New Recipe
@@ -88,9 +108,9 @@ export function RecipeGrid({ initialRecipes, isCreator }: RecipeGridProps) {
         </div>
 
         {filteredRecipes.length > 0 ? (
-          <div className="grid grid-cols-1 md:cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} isCreator={isCreator} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} canEdit={canEdit} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
             ))}
           </div>
         ) : (
@@ -99,7 +119,7 @@ export function RecipeGrid({ initialRecipes, isCreator }: RecipeGridProps) {
             <p className="text-muted-foreground">
               {searchTerm ? `No recipes match "${searchTerm}".` : "This grimoire is empty."}
             </p>
-            {isCreator && !searchTerm && (
+            {canEdit && !searchTerm && (
               <Button onClick={handleAddRecipe} className="mt-4">
                 <PlusCircle className="mr-2 h-4 w-4"/>
                 Create the First Recipe

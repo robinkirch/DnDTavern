@@ -19,9 +19,11 @@ export default function HomePage() {
 
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
-        <main className="w-full max-w-7xl flex-1 space-y-8 p-4 md:p-8">
+      <div className="flex min-h-screen w-full flex-col bg-background">
+        <Header />
+        <main className="w-full max-w-7xl flex-1 space-y-8 p-4 md:p-8 container">
             <Skeleton className="h-12 w-1/4" />
+            <Skeleton className="h-10 w-full" />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <Skeleton className="h-64 w-full rounded-lg" />
               <Skeleton className="h-64 w-full rounded-lg" />

@@ -3,8 +3,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/auth-context';
-import { mockCampaigns } from '@/lib/mock-data';
-import type { Campaign } from '@/lib/types';
+import { mockCampaigns, mockGrimoires } from '@/lib/mock-data';
+import type { Campaign, Grimoire, Recipe } from '@/lib/types';
 
 import { Header } from '@/components/header';
 import { RecipeGrid } from '@/components/recipe-grid';
@@ -16,6 +16,7 @@ export default function CampaignPage() {
   const { user, loading: authLoading } = useAuth();
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,25 +32,24 @@ export default function CampaignPage() {
     if (foundCampaign) {
         const isInvited = foundCampaign.invitedUsernames.includes(user?.username || '');
         const isCreator = foundCampaign.creatorUsername === user?.username;
-        const isDM = user?.role === 'dm';
         
-        // A user can access if they created it, are invited, OR if they are a DM (for campaigns they created).
-        // For this app, we'll let a DM see a campaign only if they created it or are explicitly invited.
         if (user && (isCreator || isInvited)) {
             setCampaign(foundCampaign);
+            if (foundCampaign.grimoireId) {
+                const foundGrimoire = mockGrimoires.find(g => g.id === foundCampaign.grimoireId);
+                setGrimoire(foundGrimoire || null);
+            }
         } else if (user) {
             router.push('/'); // Not authorized for this campaign
         }
     }
-    // No else, just wait for user to be loaded or redirected
     
-    // only set loading to false when auth is done and we tried to find a campaign
     if(!authLoading) {
         setLoading(false);
     }
   }, [params.id, router, user, authLoading]);
 
-  if (loading || authLoading || !campaign) {
+  if (loading || authLoading || !campaign || !grimoire) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -67,15 +67,19 @@ export default function CampaignPage() {
     );
   }
 
-  const isCreator = campaign.creatorUsername === user?.username;
+  const isDM = user?.role === 'dm';
+  const canEditGrimoire = isDM && grimoire.creatorUsername === user.username;
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="container py-8">
         <h1 className="font-headline text-4xl font-bold mb-2">{campaign.name}</h1>
+        <p className="text-muted-foreground mb-1">
+          From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
+        </p>
         <p className="text-muted-foreground mb-8 max-w-2xl">{campaign.description}</p>
-        <RecipeGrid initialRecipes={campaign.recipes} isCreator={isCreator} />
+        <RecipeGrid grimoireId={grimoire.id} initialRecipes={grimoire.recipes} canEdit={canEditGrimoire} />
       </main>
     </div>
   );

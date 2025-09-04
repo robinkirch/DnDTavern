@@ -13,12 +13,22 @@ export interface Recipe {
   description: string;
 }
 
+export interface Grimoire {
+  id: string;
+  name: string;
+  description: string;
+  creatorUsername: string;
+  recipes: Recipe[];
+}
+
+
 export interface Campaign {
   id:string;
   name: string;
   description: string;
   creatorUsername: string;
   invitedUsernames: string[];
-  recipes: Recipe[];
+  grimoireId: string | null; // Link to a grimoire
+  recipes: Recipe[]; // This will now be populated from the linked grimoire
   image: string;
 }
