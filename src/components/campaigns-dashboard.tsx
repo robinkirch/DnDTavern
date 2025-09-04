@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { useAuth } from '@/context/auth-context';
 import { mockCampaigns as initialCampaigns } from '@/lib/mock-data';
-import type { Campaign, Recipe } from '@/lib/types';
+import type { Campaign } from '@/lib/types';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,19 +27,19 @@ export default function CampaignsDashboard() {
   });
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const handleCreateCampaign = (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'recipes' | 'image' | 'grimoireId'>) => {
+  const handleCreateCampaign = (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' >) => {
     if (!user) return;
     
     const newCampaign: Campaign = {
       id: newCampaignData.name.toLowerCase().replace(/\s+/g, '-'),
       ...newCampaignData,
       creatorUsername: user.username,
-      recipes: [], // Recipes will come from the linked grimoire
-      grimoireId: null, // Initially no grimoire linked
       image: `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}`,
     };
 
     setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
+    // Also update the mock data source so it persists across navigations
+    initialCampaigns.push(newCampaign);
     setCreateDialogOpen(false);
   };
 
@@ -73,11 +73,11 @@ export default function CampaignsDashboard() {
         <Tabs defaultValue="campaigns" className="w-full">
             <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
                 <TabsTrigger value="campaigns">
-                    <Shield className='mr-2' />
+                    <Shield className='mr-2 h-4 w-4' />
                     Campaigns
                 </TabsTrigger>
                 <TabsTrigger value="grimoires">
-                    <BookHeart className='mr-2'/>
+                    <BookHeart className='mr-2 h-4 w-4'/>
                     Grimoires
                 </TabsTrigger>
             </TabsList>

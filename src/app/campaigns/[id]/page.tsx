@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/auth-context';
 import { mockCampaigns, mockGrimoires } from '@/lib/mock-data';
-import type { Campaign, Grimoire, Recipe } from '@/lib/types';
+import type { Campaign, Grimoire } from '@/lib/types';
 
 import { Header } from '@/components/header';
 import { RecipeGrid } from '@/components/recipe-grid';
@@ -68,6 +68,7 @@ export default function CampaignPage() {
   }
 
   const isDM = user?.role === 'dm';
+  // A DM can edit the grimoire if they created it, even if they aren't the campaign creator.
   const canEditGrimoire = isDM && grimoire.creatorUsername === user.username;
 
   return (
@@ -79,7 +80,7 @@ export default function CampaignPage() {
           From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
         </p>
         <p className="text-muted-foreground mb-8 max-w-2xl">{campaign.description}</p>
-        <RecipeGrid grimoireId={grimoire.id} initialRecipes={grimoire.recipes} canEdit={canEditGrimoire} />
+        <RecipeGrid grimoireId={grimoire.id} canEdit={canEditGrimoire} />
       </main>
     </div>
   );

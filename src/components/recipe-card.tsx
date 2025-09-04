@@ -1,5 +1,5 @@
 'use client';
-import type { Recipe } from '@/lib/types';
+import type { Recipe, Grimoire } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2 } from 'lucide-react';
@@ -10,29 +10,38 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { mockGrimoires } from '@/lib/mock-data'; // Need this to find component names
 
 interface RecipeCardProps {
     recipe: Recipe;
+    grimoireId: string;
     canEdit: boolean;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
 }
 
-const categoryIcons = {
-    Meal: <CookingPot className="h-4 w-4" />,
-    Drink: <GlassWater className="h-4 w-4" />,
-    Snack: <Cookie className="h-4 w-4" />,
-    Potion: <TestTube className="h-4 w-4" />,
+const categoryIcons: { [key: string]: JSX.Element } = {
+    'cat-meal': <CookingPot className="h-4 w-4" />,
+    'cat-drink': <GlassWater className="h-4 w-4" />,
+    'cat-snack': <Cookie className="h-4 w-4" />,
+    'cat-potion': <TestTube className="h-4 w-4" />,
 };
 
-const rarityColors = {
+const rarityColors: { [key: string]: string } = {
     Common: 'bg-stone-500 hover:bg-stone-600',
     Uncommon: 'bg-green-600 hover:bg-green-700',
     Rare: 'bg-blue-600 hover:bg-blue-700',
     Legendary: 'bg-primary text-primary-foreground hover:bg-primary/90',
 };
 
-export function RecipeCard({ recipe, canEdit, onEdit, onDelete }: RecipeCardProps) {
+export function RecipeCard({ recipe, grimoireId, canEdit, onEdit, onDelete }: RecipeCardProps) {
+    const grimoire = mockGrimoires.find(g => g.id === grimoireId);
+    const category = grimoire?.categories.find(c => c.id === recipe.categoryId);
+
+    const getComponentName = (componentId: string) => {
+        return grimoire?.components.find(c => c.id === componentId)?.name || 'Unknown Ingredient';
+    };
+    
     return (
         <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50">
             <CardHeader>
@@ -53,10 +62,12 @@ export function RecipeCard({ recipe, canEdit, onEdit, onDelete }: RecipeCardProp
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                     <Badge className={`${rarityColors[recipe.rarity]}`}>{recipe.rarity}</Badge>
-                    <Badge variant="outline" className="flex items-center gap-1.5">
-                        {categoryIcons[recipe.category]}
-                        {recipe.category}
-                    </Badge>
+                    {category && (
+                        <Badge variant="outline" className="flex items-center gap-1.5">
+                            {categoryIcons[category.id] || null}
+                            {category.name}
+                        </Badge>
+                    )}
                 </div>
                 <CardDescription className="pt-2">{recipe.description}</CardDescription>
             </CardHeader>
@@ -66,9 +77,9 @@ export function RecipeCard({ recipe, canEdit, onEdit, onDelete }: RecipeCardProp
                         <AccordionTrigger className="font-headline">Ingredients</AccordionTrigger>
                         <AccordionContent>
                             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                                {recipe.ingredients.map((ing, i) => (
+                                {recipe.components.map((comp, i) => (
                                     <li key={i}>
-                                        <span className="font-semibold text-foreground">{ing.item}</span> - {ing.quantity}
+                                        <span className="font-semibold text-foreground">{getComponentName(comp.componentId)}</span> - {comp.quantity}
                                     </li>
                                 ))}
                             </ul>
@@ -80,6 +91,14 @@ export function RecipeCard({ recipe, canEdit, onEdit, onDelete }: RecipeCardProp
                             {recipe.instructions}
                         </AccordionContent>
                     </AccordionItem>
+                    {canEdit && recipe.secretDescription && (
+                         <AccordionItem value="secret-description">
+                            <AccordionTrigger className="font-headline text-accent">Secret Notes (DM Only)</AccordionTrigger>
+                            <AccordionContent className="text-muted-foreground whitespace-pre-line text-accent/90">
+                                {recipe.secretDescription}
+                            </AccordionContent>
+                        </AccordionItem>
+                    )}
                 </Accordion>
             </CardContent>
         </Card>

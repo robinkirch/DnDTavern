@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Grimoire, Recipe } from '@/lib/types';
+import type { Grimoire } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { mockGrimoires } from '@/lib/mock-data';
 
@@ -9,14 +9,6 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { RecipeGrid } from './recipe-grid';
 import { GrimoireFormDialog } from './grimoire-form-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 
 
 export function GrimoireGrid() {
@@ -40,7 +32,7 @@ export function GrimoireGrid() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this grimoire and all its recipes? This cannot be undone.')) {
+    if (confirm('Are you sure you want to delete this grimoire and all its contents? This cannot be undone.')) {
       const updatedGrimoires = grimoires.filter(g => g.id !== id);
       setGrimoires(updatedGrimoires);
       // Also update mock data source
@@ -49,27 +41,30 @@ export function GrimoireGrid() {
     }
   };
 
-  const handleSave = (savedGrimoire: Omit<Grimoire, 'id' | 'creatorUsername' | 'recipes'>) => {
+  const handleSave = (savedData: { name: string; description: string }) => {
     if (!user) return;
     
     if (editingGrimoire) {
-      // Update
+      // Update existing grimoire
       const updatedGrimoires = grimoires.map(g => 
-        g.id === editingGrimoire.id ? { ...g, ...savedGrimoire } : g
+        g.id === editingGrimoire.id ? { ...g, ...savedData } : g
       );
       setGrimoires(updatedGrimoires);
       // Update mock data source
       const index = mockGrimoires.findIndex(g => g.id === editingGrimoire.id);
       if (index !== -1) {
-        mockGrimoires[index] = { ...mockGrimoires[index], ...savedGrimoire };
+        mockGrimoires[index] = { ...mockGrimoires[index], ...savedData };
       }
     } else {
-      // Create
+      // Create new grimoire
       const newGrimoire: Grimoire = {
-        id: savedGrimoire.name.toLowerCase().replace(/\s+/g, '-'),
-        ...savedGrimoire,
+        id: savedData.name.toLowerCase().replace(/\s+/g, '-'),
+        name: savedData.name,
+        description: savedData.description,
         creatorUsername: user.username,
         recipes: [],
+        components: [],
+        categories: [],
       };
       setGrimoires([...grimoires, newGrimoire]);
       // Update mock data source
@@ -116,7 +111,6 @@ export function GrimoireGrid() {
                       <CardContent className="flex-grow">
                          <RecipeGrid 
                             grimoireId={grimoire.id}
-                            initialRecipes={grimoire.recipes}
                             canEdit={true}
                           />
                       </CardContent>

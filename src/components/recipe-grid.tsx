@@ -1,35 +1,36 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Recipe } from '@/lib/types';
 import { RecipeCard } from './recipe-card';
 import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { RecipeFormDialog } from './recipe-form-dialog';
-import { mockGrimoires } from '@/lib/mock-data'; // We'll need this for updates
+import { mockGrimoires } from '@/lib/mock-data'; 
 
 interface RecipeGridProps {
   grimoireId: string;
-  initialRecipes: Recipe[];
   canEdit: boolean;
 }
 
-export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridProps) {
-  // This component's state should reflect the recipes of the grimoire.
-  // In a real app, you'd use a global state manager (like Zustand or Redux) or pass down callbacks.
-  // For this mock, we'll manipulate a local state and also the "global" mock data.
-  const [recipes, setRecipes] = useState(initialRecipes);
+export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
+  const grimoire = useMemo(() => mockGrimoires.find(g => g.id === grimoireId), [grimoireId]);
+  
+  const [recipes, setRecipes] = useState(grimoire?.recipes || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+
+  const getComponentName = (componentId: string) => {
+    return grimoire?.components.find(c => c.id === componentId)?.name.toLowerCase() || '';
+  };
 
   const filteredRecipes = recipes.filter(recipe => {
     const term = searchTerm.toLowerCase();
     return (
       recipe.name.toLowerCase().includes(term) ||
       recipe.description.toLowerCase().includes(term) ||
-      recipe.category.toLowerCase().includes(term) ||
-      recipe.ingredients.some(ing => ing.item.toLowerCase().includes(term))
+      recipe.components.some(c => getComponentName(c.componentId).includes(term))
     );
   });
   
@@ -51,7 +52,6 @@ export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridPr
         const updatedRecipes = recipes.filter(r => r.id !== id);
         setRecipes(updatedRecipes);
         
-        // Update the mock data source
         const grimoireIndex = mockGrimoires.findIndex(g => g.id === grimoireId);
         if (grimoireIndex !== -1) {
             mockGrimoires[grimoireIndex].recipes = updatedRecipes;
@@ -62,15 +62,12 @@ export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridPr
   const handleSaveRecipe = (savedRecipe: Recipe) => {
     let updatedRecipes;
     if (editingRecipe) {
-      // Update existing recipe
       updatedRecipes = recipes.map(r => (r.id === savedRecipe.id ? savedRecipe : r));
     } else {
-      // Add new recipe
       updatedRecipes = [...recipes, savedRecipe];
     }
     setRecipes(updatedRecipes);
 
-    // Update the mock data source
     const grimoireIndex = mockGrimoires.findIndex(g => g.id === grimoireId);
     if (grimoireIndex !== -1) {
         mockGrimoires[grimoireIndex].recipes = updatedRecipes;
@@ -80,6 +77,15 @@ export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridPr
     setEditingRecipe(null);
   };
 
+  if (!grimoire) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
+        <h3 className="font-headline text-2xl">Grimoire Not Found</h3>
+        <p className="text-muted-foreground">This collection of recipes could not be loaded.</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <RecipeFormDialog
@@ -87,6 +93,7 @@ export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridPr
         onOpenChange={setFormOpen}
         onSave={handleSaveRecipe}
         recipe={editingRecipe}
+        grimoireId={grimoireId}
       />
       <div>
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
@@ -110,7 +117,7 @@ export function RecipeGrid({ initialRecipes, canEdit, grimoireId }: RecipeGridPr
         {filteredRecipes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} canEdit={canEdit} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} grimoireId={grimoireId} canEdit={canEdit} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
             ))}
           </div>
         ) : (

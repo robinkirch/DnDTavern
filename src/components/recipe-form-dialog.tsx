@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,16 +33,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
+import { mockGrimoires } from '@/lib/mock-data';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Recipe name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
-  category: z.enum(['Potion', 'Meal', 'Drink', 'Snack']),
+  secretDescription: z.string().optional(),
+  categoryId: z.string().min(1, "Category is required."),
   rarity: z.enum(['Common', 'Uncommon', 'Rare', 'Legendary']),
-  ingredients: z.array(z.object({
-    item: z.string().min(1, 'Ingredient name is required.'),
+  components: z.array(z.object({
+    componentId: z.string().min(1, 'Component is required.'),
     quantity: z.string().min(1, 'Quantity is required.'),
-  })).min(1, 'At least one ingredient is required.'),
+  })).min(1, 'At least one component is required.'),
   instructions: z.string().min(10, 'Instructions must be at least 10 characters.'),
 });
 
@@ -53,40 +55,52 @@ interface RecipeFormDialogProps {
   onOpenChange: (isOpen: boolean) => void;
   onSave: (recipe: Recipe) => void;
   recipe?: Recipe | null;
+  grimoireId: string;
 }
 
-export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: RecipeFormDialogProps) {
+export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoireId }: RecipeFormDialogProps) {
+  const grimoire = useMemo(() => mockGrimoires.find(g => g.id === grimoireId), [grimoireId]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'ingredients',
+    name: 'components',
   });
 
   useEffect(() => {
     if (recipe) {
-      form.reset(recipe);
+      form.reset({
+        ...recipe,
+        secretDescription: recipe.secretDescription || '',
+      });
     } else {
       form.reset({
         name: '',
         description: '',
-        category: 'Meal',
+        secretDescription: '',
+        categoryId: grimoire?.categories[0]?.id || '',
         rarity: 'Common',
-        ingredients: [{ item: '', quantity: '' }],
+        components: [{ componentId: '', quantity: '' }],
         instructions: '',
       });
     }
-  }, [recipe, isOpen, form]);
+  }, [recipe, isOpen, form, grimoire]);
 
   function onSubmit(values: FormData) {
     const newRecipe: Recipe = {
       ...values,
+      secretDescription: values.secretDescription || null,
       id: recipe?.id || new Date().toISOString() + Math.random(),
     };
     onSave(newRecipe);
     onOpenChange(false);
+  }
+  
+  if (!grimoire) {
+    return null;
   }
 
   return (
@@ -117,7 +131,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
-                name="category"
+                name="categoryId"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Category</FormLabel>
@@ -128,10 +142,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        <SelectItem value="Meal">Meal</SelectItem>
-                        <SelectItem value="Drink">Drink</SelectItem>
-                        <SelectItem value="Snack">Snack</SelectItem>
-                        <SelectItem value="Potion">Potion</SelectItem>
+                          {grimoire.categories.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                          ))}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -148,7 +161,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a rarity" />
-                        </SelectTrigger>
+                        </Trigger>
                         </FormControl>
                         <SelectContent>
                         <SelectItem value="Common">Common</SelectItem>
@@ -168,9 +181,23 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description (Player-facing)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="A short, enticing description." {...field} />
+                    <Textarea placeholder="A short, enticing description visible to players." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="secretDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Secret Notes (DM only)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Secret details or substitutions only visible to you." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -178,15 +205,15 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
             />
             
             <div>
-              <FormLabel>Ingredients</FormLabel>
+              <FormLabel>Components / Ingredients</FormLabel>
               <div className="space-y-2 pt-1">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2 items-start">
+                  <div key={field.id} className="grid grid-cols-[1fr,2fr,auto] gap-2 items-start">
                     <FormField
                       control={form.control}
-                      name={`ingredients.${index}.quantity`}
+                      name={`components.${index}.quantity`}
                       render={({ field }) => (
-                        <FormItem className="w-1/3">
+                        <FormItem>
                           <FormControl>
                             <Input placeholder="1 cup" {...field} />
                           </FormControl>
@@ -196,12 +223,21 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
                     />
                     <FormField
                       control={form.control}
-                      name={`ingredients.${index}.item`}
+                      name={`components.${index}.componentId`}
                       render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input placeholder="Flour" {...field} />
-                          </FormControl>
+                        <FormItem>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a component" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {grimoire.components.map(comp => (
+                                    <SelectItem key={comp.id} value={comp.id}>{comp.name}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
                            <FormMessage />
                         </FormItem>
                       )}
@@ -224,10 +260,10 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe }: Recip
                   variant="outline"
                   size="sm"
                   className="mt-2"
-                  onClick={() => append({ item: '', quantity: '' })}
+                  onClick={() => append({ componentId: '', quantity: '' })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Ingredient
+                  Add Component
                 </Button>
             </div>
             

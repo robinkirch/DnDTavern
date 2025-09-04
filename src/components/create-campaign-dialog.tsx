@@ -65,7 +65,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
       ? values.invitedUsernames.split(',').map(u => u.trim()).filter(Boolean)
       : [];
     
-    onCreate({ ...values, invitedUsernames });
+    onCreate({ ...values, invitedUsernames, grimoireId: values.grimoireId === "null" ? null : values.grimoireId });
     form.reset();
   }
 
@@ -121,7 +121,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Link Grimoire</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                    <Select onValueChange={field.onChange} value={field.value || ""} >
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a grimoire to link" />
