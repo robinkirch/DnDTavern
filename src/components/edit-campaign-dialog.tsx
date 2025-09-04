@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { getGrimoiresByUsername } from '@/lib/data-service';
-import { useAuth } from '@/context/auth-context';
-import type { Grimoire } from '@/lib/types';
+import type { Campaign } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,69 +25,52 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Campaign name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   invitedUsernames: z.string().optional(),
-  grimoireId: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-interface CreateCampaignDialogProps {
+interface EditCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onCreate: (data: { name: string; description: string; invitedUsernames: string[], grimoireId: string | null }) => void;
+    onSave: (data: { name: string; description: string; invitedUsernames: string[] }) => void;
+    campaign: Campaign | null;
 }
 
-export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateCampaignDialogProps) {
-  const { user } = useAuth();
-  const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
-
+export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: EditCampaignDialogProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      invitedUsernames: '',
-      grimoireId: null
-    },
   });
 
   useEffect(() => {
-    if (user && user.role === 'dm') {
-      getGrimoiresByUsername(user.username).then(setUserGrimoires);
+    if (campaign && isOpen) {
+      form.reset({
+        name: campaign.name,
+        description: campaign.description,
+        invitedUsernames: campaign.invitedUsernames.join(', '),
+      });
     }
-  }, [user]);
+  }, [campaign, isOpen, form]);
 
   function onSubmit(values: FormData) {
     const invitedUsernames = values.invitedUsernames
       ? values.invitedUsernames.split(',').map(u => u.trim()).filter(Boolean)
       : [];
     
-    onCreate({ ...values, invitedUsernames, grimoireId: values.grimoireId === "null" ? null : values.grimoireId });
-    form.reset();
-    onOpenChange(false);
+    onSave({ ...values, invitedUsernames });
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) form.reset();
-      onOpenChange(open);
-    }}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Create New Campaign</DialogTitle>
+          <DialogTitle className="font-headline">Edit Campaign</DialogTitle>
           <DialogDescription>
-            Fill in the details for your new adventure. You can link a grimoire to make its recipes available.
+            Update the details for your campaign.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -124,29 +105,6 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="grimoireId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Link Grimoire</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""} >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a grimoire to link" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="null">None</SelectItem>
-                          {userGrimoires.map(g => (
-                            <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                    </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="invitedUsernames"
@@ -162,7 +120,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
             />
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Create Campaign</Button>
+                <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>
         </Form>

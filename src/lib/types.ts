@@ -29,6 +29,7 @@ export interface Campaign {
   invitedUsernames: string[];
   image: string;
   grimoireId: string | null; // This links to a Grimoire (data source)
+  sessionNotes?: string | null;
 }
 
 export interface Category {
@@ -37,7 +38,7 @@ export interface Category {
 }
 
 export interface Component {
-  id: string;
+  id:string;
   name: string;
   description: string | null;
   secretDescription: string | null; // For the DM

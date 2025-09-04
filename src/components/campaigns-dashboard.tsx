@@ -32,7 +32,7 @@ export default function CampaignsDashboard() {
     }
   }, [user]);
 
-  const handleCreateCampaign = async (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' >) => {
+  const handleCreateCampaign = async (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' | 'sessionNotes' >) => {
     if (!user) return;
     
     const newCampaign = await createCampaign({
@@ -118,10 +118,10 @@ export default function CampaignsDashboard() {
                           <CardTitle className="font-headline text-2xl mb-2">{campaign.name}</CardTitle>
                           <CardDescription className="flex-1">{campaign.description}</CardDescription>
                           <CardFooter className="p-0 pt-6">
-                              <Button asChild className="w-full" disabled={!campaign.grimoireId}>
+                              <Button asChild className="w-full">
                                   <Link href={`/campaigns/${campaign.id}`}>
-                                  {campaign.grimoireId ? 'Open Campaign' : 'No Grimoire Linked'}
-                                  {campaign.grimoireId && <ArrowRight className="ml-2 h-4 w-4" />}
+                                    Open Campaign
+                                    <ArrowRight className="ml-2 h-4 w-4" />
                                   </Link>
                               </Button>
                           </CardFooter>

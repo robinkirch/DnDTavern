@@ -26,6 +26,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     invitedUsernames: ['volo', 'drizzt'],
     image: 'https://picsum.photos/600/400?random=1',
     grimoireId: 'elminsters-eats',
+    sessionNotes: 'The party successfully deciphered the first three pages of the grimoire, revealing a recipe for a potent truth serum. They are now heading towards the Whispering Caves to find Glimmer-root, a key ingredient. A group of goblins is tailing them, hired by a mysterious figure who also wants the grimoire.'
   },
   {
     id: 'the-tipsy-beholder-campaign',
@@ -35,6 +36,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     invitedUsernames: ['elminster'],
     image: 'https://picsum.photos/600/400?random=2',
     grimoireId: 'volos-vile-brews',
+    sessionNotes: null,
   },
    {
     id: 'a-new-adventure',
@@ -44,6 +46,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     invitedUsernames: [],
     image: 'https://picsum.photos/600/400?random=3',
     grimoireId: null,
+    sessionNotes: '',
   },
 ];
 
@@ -147,16 +150,29 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     return FAKE_DB_CAMPAIGNS.find(c => c.id === id) || null;
 }
 
-export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'image'>): Promise<Campaign> {
+export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'image' | 'sessionNotes'>): Promise<Campaign> {
     console.log(`Creating campaign "${campaignData.name}"...`);
     await new Promise(resolve => setTimeout(resolve, 500));
     const newCampaign: Campaign = {
         ...campaignData,
         id: campaignData.name.toLowerCase().replace(/\s+/g, '-'),
         image: `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}`,
+        sessionNotes: '',
     };
     FAKE_DB_CAMPAIGNS.push(newCampaign);
     return newCampaign;
+}
+
+export async function updateCampaign(campaignData: Campaign): Promise<Campaign> {
+    console.log(`Updating campaign "${campaignData.name}"...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const index = FAKE_DB_CAMPAIGNS.findIndex(c => c.id === campaignData.id);
+    if (index !== -1) {
+        FAKE_DB_CAMPAIGNS[index] = campaignData;
+    } else {
+        throw new Error("Campaign not found");
+    }
+    return campaignData;
 }
 
 
@@ -201,13 +217,42 @@ export async function createGrimoire(id: string, creatorUsername: string): Promi
         console.log(`Grimoire with id "${id}" already exists.`);
         return existing;
     }
-    
-    // 2. Simulate failure
+
+    // 2. Simulate connecting to a new database and populating the grimoire.
     // In a real app, you would attempt `const db = await connect(id)` here.
-    // If it fails, you'd throw an error. If it succeeds, you'd fetch
-    // the data and build the Grimoire object. Since we can't connect,
-    // we will always throw an error for new, unknown IDs.
-    throw new Error(`Could not connect to the data source with ID "${id}". This is a placeholder. To connect to a real database, you must implement the connection logic in 'src/lib/data-service.ts' in the 'createGrimoire' function.`);
+    // If it succeeds, you'd fetch the data and build the Grimoire object.
+    console.log(`Simulating connection to new data source: ${id}`);
+    const newGrimoire: Grimoire = {
+        id: id,
+        creatorUsername: creatorUsername,
+        name: `Grimoire of ${id}`,
+        description: `A newly discovered collection of recipes from the source '${id}'.`,
+        categories: [
+            { id: 'new-cat-1', name: 'Dishes' },
+            { id: 'new-cat-2', name: 'Brews' }
+        ],
+        components: [
+            { id: 'new-comp-1', name: 'Mysterious Dust', description: 'A shimmering powder.', secretDescription: 'Could be anything, really.', categoryId: 'new-cat-1' },
+            { id: 'new-comp-2', name: 'Bottled Mists', description: 'Mists from an unknown valley.', secretDescription: null, categoryId: 'new-cat-2' }
+        ],
+        recipes: [
+            {
+                id: 'new-recipe-1',
+                name: 'Misty Stew',
+                categoryId: 'new-cat-1',
+                rarity: 'Common',
+                description: 'A simple, yet enigmatic stew.',
+                secretDescription: 'The mist adds an air of mystery, but no flavor.',
+                components: [
+                    { componentId: 'new-comp-1', quantity: '1 pinch' },
+                    { componentId: 'new-comp-2', quantity: '1 bottle' },
+                ],
+                instructions: '1. Combine ingredients. 2. Stir. 3. Serve with an aura of intrigue.',
+            }
+        ]
+    };
+    FAKE_DB_GRIMOIRES.push(newGrimoire);
+    return newGrimoire;
 }
 
 
