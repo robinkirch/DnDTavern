@@ -49,6 +49,8 @@ export default function CampaignPage() {
                 setSessionNotes(foundCampaign.sessionNotes || '');
                 if (foundCampaign.grimoireId) {
                     getGrimoireById(foundCampaign.grimoireId).then(setGrimoire);
+                } else {
+                    setGrimoire(null); // Explicitly set grimoire to null if not present
                 }
             } else {
                 router.push('/'); // Not authorized for this campaign
@@ -71,11 +73,16 @@ export default function CampaignPage() {
     toast({ title: 'Success', description: 'Session notes have been saved.' });
   };
 
-  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' | 'grimoireId' | 'sessionNotes'>) => {
+  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' | 'sessionNotes'>) => {
     if (!campaign) return;
     const updatedCampaign = { ...campaign, ...updatedData };
      updateCampaign(updatedCampaign).then(savedCampaign => {
         setCampaign(savedCampaign);
+        if (savedCampaign.grimoireId) {
+          getGrimoireById(savedCampaign.grimoireId).then(setGrimoire);
+        } else {
+          setGrimoire(null);
+        }
         toast({ title: "Campaign Updated", description: "Your campaign details have been saved." });
         setEditDialogOpen(false);
      });
