@@ -177,7 +177,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
                 <FormItem>
                   <FormLabel>{t('Header Image')}</FormLabel>
                    <FormControl>
-                     <>
+                     <div>
                       <input 
                           type="file" 
                           ref={fileInputRef} 
@@ -189,7 +189,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
                           <Upload className="mr-2 h-4 w-4" />
                           {t('Upload Image')}
                       </Button>
-                     </>
+                     </div>
                   </FormControl>
                    {imagePreview && (
                     <div className="mt-4 relative w-full aspect-[16/9] rounded-md overflow-hidden">
