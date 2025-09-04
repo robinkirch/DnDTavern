@@ -1,18 +1,18 @@
 'use client';
+import type { User } from '@/lib/types';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
-  user: { username: string } | null;
+  user: User | null;
   loading: boolean;
-  login: (username: string) => void;
+  login: (username: string, role: 'player' | 'dm') => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (username: string) => {
-    const newUser = { username };
+  const login = (username: string, role: 'player' | 'dm') => {
+    const newUser: User = { username, role };
     try {
       localStorage.setItem('tavern-user', JSON.stringify(newUser));
       setUser(newUser);

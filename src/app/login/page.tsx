@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
+  const [role, setRole] = useState<'player' | 'dm'>('player');
   const router = useRouter();
   const { login, user, loading } = useAuth();
 
@@ -23,7 +25,7 @@ export default function LoginPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (username.trim()) {
-      login(username.trim());
+      login(username.trim(), role);
       router.push('/');
     }
   };
@@ -37,10 +39,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">Welcome, Traveler</CardTitle>
-          <CardDescription>What name do you go by in these parts?</CardDescription>
+          <CardDescription>What name do you go by in these parts, and what is your role?</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -52,6 +54,19 @@ export default function LoginPage() {
                 required
                 className="text-base"
               />
+            </div>
+            <div className="space-y-2">
+                <Label>Role</Label>
+                <RadioGroup defaultValue="player" value={role} onValueChange={(value: 'player' | 'dm') => setRole(value)} className="flex gap-4 pt-1">
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="player" id="player" />
+                        <Label htmlFor="player" className="font-normal">Player</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="dm" id="dm" />
+                        <Label htmlFor="dm" className="font-normal">Dungeon Master</Label>
+                    </div>
+                </RadioGroup>
             </div>
           </CardContent>
           <CardFooter>

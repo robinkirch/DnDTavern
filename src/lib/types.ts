@@ -1,5 +1,6 @@
 export interface User {
   username: string;
+  role: 'player' | 'dm';
 }
 
 export interface Recipe {
@@ -13,7 +14,7 @@ export interface Recipe {
 }
 
 export interface Campaign {
-  id: string;
+  id:string;
   name: string;
   description: string;
   creatorUsername: string;

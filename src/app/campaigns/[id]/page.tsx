@@ -29,10 +29,15 @@ export default function CampaignPage() {
     const foundCampaign = mockCampaigns.find(c => c.id === campaignId);
 
     if (foundCampaign) {
-        const isAllowed = foundCampaign.creatorUsername === user?.username || foundCampaign.invitedUsernames.includes(user?.username || '');
-        if (user && isAllowed) {
+        const isInvited = foundCampaign.invitedUsernames.includes(user?.username || '');
+        const isCreator = foundCampaign.creatorUsername === user?.username;
+        const isDM = user?.role === 'dm';
+        
+        // A user can access if they created it, are invited, OR if they are a DM (for campaigns they created).
+        // For this app, we'll let a DM see a campaign only if they created it or are explicitly invited.
+        if (user && (isCreator || isInvited)) {
             setCampaign(foundCampaign);
-        } else if (user && !isAllowed) {
+        } else if (user) {
             router.push('/'); // Not authorized for this campaign
         }
     }

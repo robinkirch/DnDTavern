@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { mockCampaigns } from '@/lib/mock-data';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, PlusCircle } from 'lucide-react';
 import { Badge } from './ui/badge';
 
 export default function CampaignsDashboard() {
@@ -17,11 +17,26 @@ export default function CampaignsDashboard() {
         (c) => c.creatorUsername === user.username || c.invitedUsernames.includes(user.username)
       )
     : [];
+    
+  const handleCreateCampaign = () => {
+    alert("This would open a form to create a new campaign.");
+  };
 
   return (
     <div className="container py-8">
-      <h1 className="font-headline text-4xl font-bold mb-2">Your Campaigns</h1>
-      <p className="text-muted-foreground mb-8">Welcome back, {user?.username}. Here are the campaigns you have access to.</p>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+            <h1 className="font-headline text-4xl font-bold mb-2">Your Campaigns</h1>
+            <p className="text-muted-foreground">Welcome back, {user?.username}. Here are the campaigns you have access to.</p>
+        </div>
+        {user?.role === 'dm' && (
+            <Button onClick={handleCreateCampaign}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Campaign
+            </Button>
+        )}
+      </div>
+      
 
       {userCampaigns.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -56,8 +71,21 @@ export default function CampaignsDashboard() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
-          <p className="text-lg text-muted-foreground">No campaigns found.</p>
-          <p className="text-sm text-muted-foreground">Ask your Dungeon Master for an invitation!</p>
+            {user?.role === 'dm' ? (
+                <>
+                    <p className="text-lg text-muted-foreground">You haven't created any campaigns yet.</p>
+                    <Button onClick={handleCreateCampaign} className="mt-4">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Your First Campaign
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <p className="text-lg text-muted-foreground">No campaigns found.</p>
+                    <p className="text-sm text-muted-foreground">Ask your Dungeon Master for an invitation!</p>
+                </>
+
+            )}
         </div>
       )}
     </div>
