@@ -89,10 +89,10 @@ export function GrimoireGrid() {
    const handleDeleteCategory = async (categoryId: string) => {
     if (!managingGrimoire) return;
     if (confirm('Are you sure you want to delete this category?')) {
+      await deleteCategory(managingGrimoire.id, categoryId);
+
       const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
       const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
-
-      await deleteCategory(managingGrimoire.id, categoryId);
 
       setManagingGrimoire(updatedGrimoire);
       setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
@@ -125,10 +125,10 @@ export function GrimoireGrid() {
   const handleDeleteRarity = async (rarityId: string) => {
     if (!managingGrimoire) return;
     if (confirm('Are you sure you want to delete this rarity?')) {
+      await deleteRarity(managingGrimoire.id, rarityId);
+      
       const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
       const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
-
-      await deleteRarity(managingGrimoire.id, rarityId);
 
       setManagingGrimoire(updatedGrimoire);
       setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
@@ -185,11 +185,9 @@ export function GrimoireGrid() {
                                 <TableRow key={cat.id}>
                                     <TableCell className="font-medium">{cat.name}</TableCell>
                                     <TableCell className="text-right">
-                                        {cat.isDeletable && (
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteCategory(cat.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        )}
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteCategory(cat.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -228,11 +226,9 @@ export function GrimoireGrid() {
                                     <TableCell><div className='h-5 w-5 rounded-full border' style={{backgroundColor: rarity.color}} /></TableCell>
                                     <TableCell className="font-medium">{rarity.name}</TableCell>
                                     <TableCell className="text-right">
-                                        {rarity.isDeletable && (
-                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteRarity(rarity.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        )}
+                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteRarity(rarity.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}

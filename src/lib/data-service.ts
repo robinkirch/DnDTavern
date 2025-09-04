@@ -57,17 +57,17 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         name: 'Elminster\'s Everyday Eats',
         description: 'A collection of recipes found in a sentient, and very hungry, spellbook.',
         categories: [
-          { id: 'cat-potion', name: 'Potions', isDeletable: false },
-          { id: 'cat-meal', name: 'Meals', isDeletable: false },
-          { id: 'cat-snack', name: 'Snacks', isDeletable: false },
-          { id: 'cat-drink', name: 'Drinks', isDeletable: false },
+          { id: 'cat-potion', name: 'Potions', isDeletable: true },
+          { id: 'cat-meal', name: 'Meals', isDeletable: true },
+          { id: 'cat-snack', name: 'Snacks', isDeletable: true },
+          { id: 'cat-drink', name: 'Drinks', isDeletable: true },
           { id: 'cat-base', name: 'Ingredients', isDeletable: false },
         ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: false },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a', isDeletable: false },
-            { id: 'rarity-rare', name: 'Rare', color: '#2563eb', isDeletable: false },
-            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3', isDeletable: false },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: true },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a', isDeletable: true },
+            { id: 'rarity-rare', name: 'Rare', color: '#2563eb', isDeletable: true },
+            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3', isDeletable: true },
         ],
         recipes: [
              // Base ingredients are now recipes without components
@@ -314,10 +314,6 @@ export async function deleteCategory(grimoireId: string, categoryId: string): Pr
 
     const categoryIndex = grimoire.categories.findIndex(c => c.id === categoryId);
     if (categoryIndex !== -1) {
-        if (!grimoire.categories[categoryIndex].isDeletable) {
-            console.warn(`Attempted to delete non-deletable category: ${categoryId}`);
-            return; // Or throw an error
-        }
         grimoire.categories.splice(categoryIndex, 1);
     }
 }
@@ -345,10 +341,6 @@ export async function deleteRarity(grimoireId: string, rarityId: string): Promis
 
     const rarityIndex = grimoire.rarities.findIndex(c => c.id === rarityId);
     if (rarityIndex !== -1) {
-         if (!grimoire.rarities[rarityIndex].isDeletable) {
-            console.warn(`Attempted to delete non-deletable rarity: ${rarityId}`);
-            return; // Or throw an error
-        }
         grimoire.rarities.splice(rarityIndex, 1);
     }
 }
