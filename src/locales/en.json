@@ -168,6 +168,20 @@
     "Item Added": "Item Added",
     "The item has been added to your inventory.": "The item has been added to your inventory.",
     "Item Removed": "Item Removed",
-    "The item has been removed from your inventory.": "The item has been removed from your inventory."
+    "The item has been removed from your inventory.": "The item has been removed from your inventory.",
+    "Advanced Settings": "Advanced Settings",
+    "Player Permissions": "Player Permissions",
+    "Manage what each player can see in the grimoire.": "Manage what each player can see in the grimoire.",
+    "Link a grimoire to manage permissions.": "Link a grimoire to manage permissions.",
+    "Permissions": "Permissions",
+    "Manage Permissions for {{username}}": "Manage Permissions for {{username}}",
+    "Set access levels for each category in the \"{{grimoireName}}\" grimoire.": "Set access levels for each category in the \"{{grimoireName}}\" grimoire.",
+    "Access Level": "Access Level",
+    "Select access level": "Select access level",
+    "Full Access": "Full Access",
+    "Partial Access": "Partial Access",
+    "No Access": "No Access",
+    "Save Permissions": "Save Permissions",
+    "Your knowledge of this recipe is incomplete.": "Your knowledge of this recipe is incomplete."
 }
     

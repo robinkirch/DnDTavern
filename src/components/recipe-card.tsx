@@ -1,9 +1,9 @@
 'use client';
-import type { Recipe, Grimoire, Rarity } from '@/lib/types';
+import type { Recipe, Grimoire, Rarity, PermissionLevel } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
-import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy, Coins } from 'lucide-react';
+import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy, Coins, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   Accordion,
@@ -17,6 +17,7 @@ interface RecipeCardProps {
     recipe: Recipe;
     grimoire: Grimoire | null;
     canEdit: boolean;
+    permissionLevel: PermissionLevel;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
 }
@@ -29,7 +30,7 @@ const categoryIcons: { [key: string]: JSX.Element } = {
 };
 
 
-export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: RecipeCardProps) {
+export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit, onDelete }: RecipeCardProps) {
     const { t } = useI18n();
     const categories = grimoire?.categories.filter(c => recipe.categoryIds.includes(c.id)) || [];
     const rarity = grimoire?.rarities.find(r => r.id === recipe.rarityId);
@@ -37,6 +38,8 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
     const getIngredientName = (ingredientId: string) => {
         return grimoire?.recipes.find(r => r.id === ingredientId)?.name || t('Unknown Ingredient');
     };
+
+    const hasPartialAccess = !canEdit && permissionLevel === 'partial';
     
     return (
         <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50 overflow-hidden">
@@ -70,36 +73,45 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                         </Badge>
                     ))}
                 </div>
-                <CardDescription className="pt-2">{recipe.description}</CardDescription>
+                {hasPartialAccess ? (
+                     <CardDescription className="pt-4 text-amber-600 italic flex items-center gap-2">
+                        <EyeOff className='h-4 w-4' />
+                        {t('Your knowledge of this recipe is incomplete.')}
+                    </CardDescription>
+                ) : (
+                    <CardDescription className="pt-2">{recipe.description}</CardDescription>
+                )}
             </CardHeader>
             <CardContent className="flex-grow flex flex-col">
-                <Accordion type="single" collapsible className="w-full">
-                    {recipe.components.length > 0 && (
-                        <AccordionItem value="ingredients">
-                            <AccordionTrigger className="font-headline">{t('Ingredients')}</AccordionTrigger>
-                            <AccordionContent>
-                                <ul className="list-none pl-0 space-y-1 text-muted-foreground">
-                                    {recipe.components.map((comp, i) => (
-                                        <li key={i} className="flex items-center gap-2">
-                                            <BookCopy className="h-4 w-4 text-primary" />
-                                            <div>
-                                                <span className="font-semibold text-foreground">{getIngredientName(comp.recipeId)}</span> - {comp.quantity}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </AccordionContent>
-                        </AccordionItem>
-                    )}
-                    {canEdit && recipe.secretDescription && (
-                         <AccordionItem value="secret-description">
-                            <AccordionTrigger className="font-headline text-accent">{t('Secret Notes (DM Only)')}</AccordionTrigger>
-                            <AccordionContent className="text-muted-foreground whitespace-pre-line text-accent/90">
-                                {recipe.secretDescription}
-                            </AccordionContent>
-                        </AccordionItem>
-                    )}
-                </Accordion>
+                {!hasPartialAccess && (
+                    <Accordion type="single" collapsible className="w-full">
+                        {recipe.components.length > 0 && (
+                            <AccordionItem value="ingredients">
+                                <AccordionTrigger className="font-headline">{t('Ingredients')}</AccordionTrigger>
+                                <AccordionContent>
+                                    <ul className="list-none pl-0 space-y-1 text-muted-foreground">
+                                        {recipe.components.map((comp, i) => (
+                                            <li key={i} className="flex items-center gap-2">
+                                                <BookCopy className="h-4 w-4 text-primary" />
+                                                <div>
+                                                    <span className="font-semibold text-foreground">{getIngredientName(comp.recipeId)}</span> - {comp.quantity}
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                        )}
+                        {canEdit && recipe.secretDescription && (
+                            <AccordionItem value="secret-description">
+                                <AccordionTrigger className="font-headline text-accent">{t('Secret Notes (DM Only)')}</AccordionTrigger>
+                                <AccordionContent className="text-muted-foreground whitespace-pre-line text-accent/90">
+                                    {recipe.secretDescription}
+                                </AccordionContent>
+                            </AccordionItem>
+                        )}
+                    </Accordion>
+                )}
             </CardContent>
             {recipe.value && (
                 <CardFooter className='bg-muted/50 p-2 px-4 justify-end'>

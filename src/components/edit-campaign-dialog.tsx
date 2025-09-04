@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { getGrimoiresByUsername } from '@/lib/data-service';
+import { getGrimoiresByUsername, getGrimoireById } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
 
 import { Button } from '@/components/ui/button';
@@ -30,10 +30,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload } from 'lucide-react';
+import { Upload, KeyRound, UserCog } from 'lucide-react';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Separator } from './ui/separator';
+import { UserPermissionsDialog } from './user-permissions-dialog';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Campaign name is required.'),
@@ -50,7 +51,7 @@ type FormData = z.infer<typeof formSchema>;
 interface EditCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'userPermissions' | 'userInventories'>) => void;
+    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => void;
     campaign: Campaign | null;
 }
 
@@ -58,20 +59,33 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
   const { user } = useAuth();
   const { t } = useI18n();
   const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
+  const [linkedGrimoire, setLinkedGrimoire] = useState<Grimoire | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPermissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [managingUser, setManagingUser] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
-
-  const inventoryType = form.watch('inventoryType');
+  
+  const { watch, setValue } = form;
+  const inventoryType = watch('inventoryType');
+  const grimoireId = watch('grimoireId');
 
   useEffect(() => {
     if (user && user.role === 'dm' && isOpen) {
       getGrimoiresByUsername(user.username).then(setUserGrimoires);
     }
   }, [user, isOpen]); 
+  
+  useEffect(() => {
+    if(grimoireId) {
+      getGrimoireById(grimoireId).then(setLinkedGrimoire);
+    } else {
+      setLinkedGrimoire(null);
+    }
+  }, [grimoireId]);
 
   useEffect(() => {
     if (campaign && isOpen) {
@@ -88,6 +102,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     } else if (!isOpen) {
       form.reset();
       setImagePreview(null);
+      setLinkedGrimoire(null);
     }
   }, [campaign, isOpen, form]);
 
@@ -97,18 +112,28 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        form.setValue('image', result);
+        setValue('image', result);
         setImagePreview(result);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleManagePermissions = (username: string) => {
+    setManagingUser(username);
+    setPermissionsDialogOpen(true);
+  }
+
   function onSubmit(values: FormData) {
+    if (!campaign) return;
+
     const invitedUsernames = values.invitedUsernames
       ? values.invitedUsernames.split(',').map(u => u.trim()).filter(Boolean)
       : [];
     
+    // Pass the existing permissions through
+    const updatedPermissions = { ...campaign.userPermissions };
+
     onSave({ 
         name: values.name,
         description: values.description || '',
@@ -119,10 +144,35 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
             type: values.inventoryType,
             defaultSize: values.inventoryType === 'limited' ? values.defaultInventorySize : undefined,
         },
+        userPermissions: updatedPermissions,
+        userInventories: campaign.userInventories, // Pass through existing inventories
     });
   }
 
+  const invitedUsernames = watch('invitedUsernames')?.split(',').map(u => u.trim()).filter(Boolean) || [];
+
   return (
+    <>
+    {managingUser && (
+       <UserPermissionsDialog
+          isOpen={isPermissionsDialogOpen}
+          onOpenChange={setPermissionsDialogOpen}
+          username={managingUser}
+          campaign={campaign}
+          grimoire={linkedGrimoire}
+          onSave={(username, permissions) => {
+            if (!campaign) return;
+             onSave({
+                ...campaign,
+                userPermissions: {
+                    ...campaign.userPermissions,
+                    [username]: permissions
+                }
+            })
+            setPermissionsDialogOpen(false);
+          }}
+       />
+    )}
     <Dialog open={isOpen} onOpenChange={(open) => {
         if (!open) {
             form.reset();
@@ -176,7 +226,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 <FormItem>
                   <FormLabel>{t('Header Image')}</FormLabel>
                    <FormControl>
-                     <>
+                     <div>
                       <input 
                           type="file" 
                           ref={fileInputRef} 
@@ -188,7 +238,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                           <Upload className="mr-2 h-4 w-4" />
                           {t('Upload Image')}
                       </Button>
-                     </>
+                     </div>
                   </FormControl>
                    {imagePreview && (
                     <div className="mt-4 relative w-full aspect-[16/9] rounded-md overflow-hidden">
@@ -240,56 +290,80 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
             />
              <Separator />
 
-            <FormField
-                control={form.control}
-                name="inventoryType"
-                render={({ field }) => (
-                <FormItem className="space-y-3">
-                    <FormLabel>{t('Inventory Rules')}</FormLabel>
-                    <FormControl>
-                    <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                    >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                                <RadioGroupItem value="free" />
-                            </FormControl>
-                            <FormLabel className="font-normal">{t('Free')}</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                                <RadioGroupItem value="limited" />
-                            </FormControl>
-                            <FormLabel className="font-normal">{t('Limited')}</FormLabel>
-                        </FormItem>
-                    </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            {inventoryType === 'limited' ? (
-                <FormField
+             <div className="space-y-3">
+                 <h4 className="font-headline text-lg flex items-center gap-2"><UserCog className='h-5 w-5 text-primary' /> {t('Advanced Settings')}</h4>
+                 
+                 <FormField
                     control={form.control}
-                    name="defaultInventorySize"
+                    name="inventoryType"
                     render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>{t('Default Inventory Size')}</FormLabel>
+                    <FormItem className="space-y-3 rounded-md border p-4">
+                        <FormLabel>{t('Inventory Rules')}</FormLabel>
                         <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                        <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                        >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <RadioGroupItem value="free" />
+                                </FormControl>
+                                <FormLabel className="font-normal">{t('Free')}</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <RadioGroupItem value="limited" />
+                                </FormControl>
+                                <FormLabel className="font-normal">{t('Limited')}</FormLabel>
+                            </FormItem>
+                        </RadioGroup>
                         </FormControl>
-                         <FormDescription>
-                            {t('Set a default inventory size for new players.')}
-                        </FormDescription>
                         <FormMessage />
                     </FormItem>
                     )}
                 />
-            ) : (
-                <p className='text-sm text-muted-foreground'>{t('Inventory is not restricted.')}</p>
-            )}
+                {inventoryType === 'limited' ? (
+                    <FormField
+                        control={form.control}
+                        name="defaultInventorySize"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{t('Default Inventory Size')}</FormLabel>
+                            <FormControl>
+                            <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                            </FormControl>
+                            <FormDescription>
+                                {t('Set a default inventory size for new players.')}
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                ) : (
+                    <p className='text-sm text-muted-foreground'>{t('Inventory is not restricted.')}</p>
+                )}
+
+                 <div className="space-y-3 rounded-md border p-4">
+                    <FormLabel>{t('Player Permissions')}</FormLabel>
+                    <FormDescription>
+                        {t('Manage what each player can see in the grimoire.')}
+                    </FormDescription>
+                     {!grimoireId && <p className="text-sm text-amber-500">{t('Link a grimoire to manage permissions.')}</p>}
+                    <div className="space-y-2">
+                        {invitedUsernames.map(username => (
+                            <div key={username} className="flex justify-between items-center">
+                                <p className="text-sm font-medium">{username}</p>
+                                <Button type="button" variant="outline" size="sm" onClick={() => handleManagePermissions(username)} disabled={!grimoireId}>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    {t('Permissions')}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+            </div>
 
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
@@ -299,5 +373,6 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         </Form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

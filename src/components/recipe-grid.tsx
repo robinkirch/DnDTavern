@@ -1,7 +1,8 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
-import type { Recipe, Grimoire, Category } from '@/lib/types';
+import type { Recipe, Grimoire, Category, PermissionLevel } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
+import { useAuth } from '@/context/auth-context';
 import { RecipeCard } from './recipe-card';
 import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
@@ -20,10 +21,12 @@ import {
 interface RecipeGridProps {
   grimoireId: string;
   canEdit: boolean;
+  userPermissions?: { [categoryId: string]: PermissionLevel };
 }
 
-export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
+export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: RecipeGridProps) {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,19 +49,42 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
     return grimoire?.categories.find(c => c.id === categoryId)?.name.toLowerCase() || '';
   }
 
-  const filteredRecipes = grimoire?.recipes.filter(recipe => {
-    const term = searchTerm.toLowerCase();
-    const categoryFilter = selectedCategory === 'all' || recipe.categoryIds.includes(selectedCategory);
+  const getPermissionForRecipe = (recipe: Recipe): PermissionLevel => {
+    if (canEdit) return 'full'; // DM always has full access
     
-    const searchFilter = (
-      recipe.name.toLowerCase().includes(term) ||
-      recipe.description.toLowerCase().includes(term) ||
-      recipe.components.some(c => getRecipeName(c.recipeId).includes(term)) ||
-      recipe.categoryIds.some(c => getCategoryName(c).includes(term))
-    );
-    
-    return categoryFilter && searchFilter;
-  }) || [];
+    // Default to 'none' if no specific permissions are set
+    let highestPermission: PermissionLevel = 'none';
+
+    for (const catId of recipe.categoryIds) {
+        const perm = userPermissions[catId] || 'full'; // Default to full if no specific perm
+        if (perm === 'full') return 'full';
+        if (perm === 'partial') highestPermission = 'partial';
+    }
+    return highestPermission;
+  };
+
+  const filteredRecipes = useMemo(() => {
+     if (!grimoire) return [];
+
+     return grimoire.recipes.filter(recipe => {
+        const term = searchTerm.toLowerCase();
+        const permission = getPermissionForRecipe(recipe);
+
+        if (permission === 'none') return false;
+
+        const categoryFilter = selectedCategory === 'all' || recipe.categoryIds.includes(selectedCategory);
+        
+        const searchFilter = (
+          recipe.name.toLowerCase().includes(term) ||
+          recipe.description.toLowerCase().includes(term) ||
+          recipe.components.some(c => getRecipeName(c.recipeId).includes(term)) ||
+          recipe.categoryIds.some(c => getCategoryName(c).includes(term))
+        );
+        
+        return categoryFilter && searchFilter;
+      });
+  }, [grimoire, searchTerm, selectedCategory, canEdit, user, userPermissions]);
+
   
   const handleAddRecipe = () => {
     setEditingRecipe(null);
@@ -163,7 +189,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
         {filteredRecipes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} grimoire={grimoire} canEdit={canEdit} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} grimoire={grimoire} canEdit={canEdit} permissionLevel={getPermissionForRecipe(recipe)} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
             ))}
           </div>
         ) : (

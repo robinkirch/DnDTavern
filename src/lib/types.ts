@@ -32,6 +32,12 @@ export interface InventoryItem {
     isCustom: boolean; // True if it's a user-defined item
 }
 
+export type PermissionLevel = 'full' | 'partial' | 'none';
+
+export interface UserPermissions {
+    [categoryId: string]: PermissionLevel;
+}
+
 export interface Campaign {
   id: string;
   name: string;
@@ -48,11 +54,8 @@ export interface Campaign {
     type: 'free' | 'limited';
     defaultSize?: number;
   };
-  userPermissions: {
-    [username: string]: {
-      // Key is categoryId, value is permission level
-      [categoryId: string]: 'full' | 'partial' | 'none';
-    }
+   userPermissions: {
+    [username: string]: UserPermissions;
   };
    userInventories: {
     // Key is username

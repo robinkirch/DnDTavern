@@ -87,8 +87,17 @@ export default function CampaignPage() {
 
   const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => {
     if (!campaign) return;
-    const updatedCampaign = { ...campaign, ...updatedData };
-     updateCampaign(updatedCampaign).then(savedCampaign => {
+    
+    // Create a fully formed campaign object for updating
+    const updatedCampaign = {
+        ...campaign,
+        ...updatedData,
+        // Ensure fields not in the dialog are preserved
+        sessionNotes: campaign.sessionNotes,
+        sessionNotesDate: campaign.sessionNotesDate,
+    };
+
+    updateCampaign(updatedCampaign).then(savedCampaign => {
         setCampaign(savedCampaign);
         if (savedCampaign.grimoireId !== campaign.grimoireId) {
             if (savedCampaign.grimoireId) {
@@ -200,7 +209,11 @@ export default function CampaignPage() {
                     
                     <TabsContent value="recipes">
                         {campaign.grimoireId ? (
-                            <RecipeGrid grimoireId={campaign.grimoireId} canEdit={false} />
+                            <RecipeGrid 
+                                grimoireId={campaign.grimoireId} 
+                                canEdit={isCreator}
+                                userPermissions={campaign.userPermissions[user.username]}
+                             />
                         ) : (
                             <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
                             <h3 className="font-headline text-2xl">{t('No Grimoire Linked')}</h3>

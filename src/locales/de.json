@@ -168,6 +168,20 @@
     "Item Added": "Gegenstand hinzugefügt",
     "The item has been added to your inventory.": "Der Gegenstand wurde deinem Inventar hinzugefügt.",
     "Item Removed": "Gegenstand entfernt",
-    "The item has been removed from your inventory.": "Der Gegenstand wurde aus deinem Inventar entfernt."
+    "The item has been removed from your inventory.": "Der Gegenstand wurde aus deinem Inventar entfernt.",
+    "Advanced Settings": "Erweiterte Einstellungen",
+    "Player Permissions": "Spielerberechtigungen",
+    "Manage what each player can see in the grimoire.": "Verwalten Sie, was jeder Spieler im Grimoire sehen kann.",
+    "Link a grimoire to manage permissions.": "Verknüpfen Sie ein Grimoire, um Berechtigungen zu verwalten.",
+    "Permissions": "Berechtigungen",
+    "Manage Permissions for {{username}}": "Berechtigungen für {{username}} verwalten",
+    "Set access levels for each category in the \"{{grimoireName}}\" grimoire.": "Legen Sie die Zugriffsebenen für jede Kategorie im \"{{grimoireName}}\"-Grimoire fest.",
+    "Access Level": "Zugriffsebene",
+    "Select access level": "Zugriffsebene auswählen",
+    "Full Access": "Vollzugriff",
+    "Partial Access": "Teilweiser Zugriff",
+    "No Access": "Kein Zugriff",
+    "Save Permissions": "Berechtigungen speichern",
+    "Your knowledge of this recipe is incomplete.": "Dein Wissen über dieses Rezept ist unvollständig."
 }
     
