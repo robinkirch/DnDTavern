@@ -30,8 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
-  name: z.string().min(3, 'Campaign name must be at least 3 characters.'),
-  description: z.string().min(10, 'Description must be at least 10 characters.'),
+  name: z.string().min(1, 'Campaign name is required.'),
+  description: z.string(),
   invitedUsernames: z.string().optional(),
   grimoireId: z.string().nullable(),
 });
