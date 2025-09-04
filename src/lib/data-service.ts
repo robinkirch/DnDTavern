@@ -4,12 +4,16 @@
 // and fetch the data. The connection string or data source ID
 // from the Grimoire object would be used here to determine
 // which database/table/collection to query.
+//
+// FOR THE DEVELOPER: To connect to your real database, you would
+// replace the mock data and logic in this file with your actual
+// data access code.
 
 import type { Campaign, Grimoire, User, Recipe } from './types';
 
-// --- MOCK DATA (to be replaced by a real database) ---
+// --- MOCK DATA ---
 // This data simulates what would be returned from a database.
-// We keep it here to make the UI work without a real backend.
+// It is used to make the UI work without a real backend.
 // In a real scenario, this array would be empty and functions
 // would perform async database calls.
 
@@ -47,7 +51,6 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
     {
         id: 'elminsters-eats',
         creatorUsername: 'elminster',
-        // --- The following properties would be fetched from the data source ---
         name: 'Elminster\'s Everyday Eats',
         description: 'A collection of recipes found in a sentient, and very hungry, spellbook.',
         categories: [
@@ -165,69 +168,53 @@ export async function getGrimoiresByUsername(username: string): Promise<Grimoire
 
 export async function getGrimoireById(id: string): Promise<Grimoire | null> {
     console.log(`Fetching grimoire ${id}...`);
-    // This is the key function. In a real app, `id` would be the connection
-    // string or identifier for a database. You would use it here to connect
-    // and fetch the grimoire's data.
+    // DEVELOPER: This is a key function. In a real app, 'id' would be the
+    // connection string or identifier for a database. You would use it here to
+    // connect and fetch the grimoire's data.
     await new Promise(resolve => setTimeout(resolve, 500));
-    return FAKE_DB_GRIMOIRES.find(g => g.id === id) || null;
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === id) || null;
+    
+    // if (!grimoire) {
+    //    // DEVELOPER: Add your database connection logic here.
+    //    // Example:
+    //    // const db = connectToDatabase(id);
+    //    // const data = await db.query('SELECT * FROM recipes');
+    //    // return transformDataToGrimoire(data);
+    //    console.warn(`Grimoire with id "${id}" not found in mock data. In a real app, this would attempt a database connection.`);
+    // }
+    return grimoire;
 }
 
 export async function createGrimoire(id: string, creatorUsername: string): Promise<Grimoire> {
-    console.log(`Creating grimoire with source "${id}"...`);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log(`Attempting to add grimoire with source "${id}"...`);
     
-    // In a real app, you would connect to the data source `id` here,
-    // fetch its name/description, and confirm it's valid.
-    // For this mock, we'll create a new grimoire with some default content.
-    const newGrimoire: Grimoire = {
-        id: id,
-        creatorUsername: creatorUsername,
-        name: `New Grimoire: ${id}`,
-        description: `A collection of newly discovered recipes, sourced from "${id}".`,
-        categories: [
-            { id: 'cat-snack', name: 'Snacks' },
-            { id: 'cat-drink', name: 'Drinks' },
-        ],
-        components: [
-            { id: 'comp-mana-biscuit', name: 'Mana Biscuit', description: 'A dry, but nourishing biscuit.', secretDescription: 'Tastes like cardboard.', categoryId: 'cat-snack' },
-            { id: 'comp-purified-water', name: 'Purified Water', description: 'Clean, safe water.', secretDescription: null, categoryId: 'cat-drink' },
-        ],
-        recipes: [
-            {
-                id: 'simple-mana-biscuit',
-                name: 'Simple Mana Biscuit',
-                categoryId: 'cat-snack',
-                rarity: 'Common',
-                description: 'The most basic travel ration. Fills the stomach, but not the soul.',
-                secretDescription: null,
-                components: [
-                    { componentId: 'comp-mana-biscuit', quantity: '1' },
-                ],
-                instructions: 'Unwrap and eat. Try not to think about it too much.',
-            },
-            {
-                id: 'water',
-                name: 'Water',
-                categoryId: 'cat-drink',
-                rarity: 'Common',
-                description: 'Just water. Refreshing and vital.',
-                secretDescription: 'Can be found... anywhere there is water.',
-                components: [
-                    { componentId: 'comp-purified-water', quantity: '1 flask' },
-                ],
-                instructions: 'Open flask. Drink.',
-            },
-        ],
-    };
-    FAKE_DB_GRIMOIRES.push(newGrimoire);
-    return newGrimoire;
+    // DEVELOPER: In a real app, you would use 'id' to connect to your data source here,
+    // fetch its metadata (name, description), and confirm it's a valid source.
+    // Since we can't connect to a real DB, we'll check if it exists in our mock data.
+    // If not, we will throw an error to simulate a failed connection.
+    
+    const existing = FAKE_DB_GRIMOIRES.find(g => g.id === id);
+    if (existing) {
+        // In a real app, you might want to handle this differently, e.g.,
+        // claim ownership or just return the existing one.
+        console.log(`Grimoire with id "${id}" already exists.`);
+        return existing;
+    }
+    
+    // Simulate failure because the id is not in our "database" of mock grimoires.
+    // In a real app, this would be a real connection failure.
+    throw new Error(`Could not connect to or find a data source with the ID "${id}". Please ensure the ID is correct.`);
 }
+
 
 export async function deleteGrimoire(id: string): Promise<void> {
     console.log(`Deleting grimoire ${id}...`);
+    // This would remove the reference from your application's list of connected grimoires.
+    // It would NOT delete the underlying database.
     await new Promise(resolve => setTimeout(resolve, 500));
     const index = FAKE_DB_GRIMOIRES.findIndex(g => g.id === id);
     if (index !== -1) {
+        // Note: For this mock service, we'll allow deleting the "pre-wired" grimoires.
         FAKE_DB_GRIMOIRES.splice(index, 1);
     }
 }
@@ -237,6 +224,7 @@ export async function deleteGrimoire(id: string): Promise<void> {
 
 export async function saveRecipe(grimoireId: string, recipe: Recipe): Promise<Recipe> {
     console.log(`Saving recipe to grimoire ${grimoireId}...`);
+    // DEVELOPER: This would be a 'write' operation to the database identified by grimoireId.
     await new Promise(resolve => setTimeout(resolve, 500));
     const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
     if (!grimoire) throw new Error("Grimoire not found");
@@ -252,6 +240,7 @@ export async function saveRecipe(grimoireId: string, recipe: Recipe): Promise<Re
 
 export async function deleteRecipe(grimoireId: string, recipeId: string): Promise<void> {
     console.log(`Deleting recipe ${recipeId} from grimoire ${grimoireId}...`);
+    // DEVELOPER: This would be a 'delete' operation to the database identified by grimoireId.
     await new Promise(resolve => setTimeout(resolve, 500));
     const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
     if (!grimoire) throw new Error("Grimoire not found");
