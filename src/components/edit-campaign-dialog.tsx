@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, ChangeEvent } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Campaign, Grimoire, UserPermissions, WeatherRegion, WeatherCondition } from '@/lib/types';
@@ -72,6 +72,49 @@ interface EditCampaignDialogProps {
     onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'tracking'>) => void;
     campaign: Campaign | null;
 }
+
+const WeatherRegionFields = ({ control, regionIndex, removeRegion }: { control: any, regionIndex: number, removeRegion: (index: number) => void }) => {
+    const { t } = useI18n();
+    const { fields: conditionFields, append: appendCondition, remove: removeCondition } = useFieldArray({
+        control,
+        name: `weatherRegions.${regionIndex}.conditions`
+    });
+
+    const totalProb = watch({
+        control,
+        name: `weatherRegions.${regionIndex}.conditions`
+    }).reduce((acc: number, c: any) => acc + (c.probability || 0), 0);
+
+    return (
+        <div className="p-3 border rounded-md bg-background/50">
+            <FormField control={control} name={`weatherRegions.${regionIndex}.name`} render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{t("Region Name")}</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                </FormItem>
+            )} />
+            <Label className="mt-2 mb-1 block">{t("Conditions")}</Label>
+            {conditionFields.map((condition, conditionIndex) => (
+                <div key={condition.id} className="grid grid-cols-[2fr,1fr,auto] gap-2 items-center mb-2">
+                    <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.name`} render={({ field }) => (
+                        <FormItem><FormControl><Input placeholder={t("e.g. Sunny")} {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.probability`} render={({ field }) => (
+                        <FormItem><FormControl><Input type="number" placeholder="%" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeCondition(conditionIndex)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+            ))}
+            <div className="flex justify-between items-center mt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => appendCondition({ id: `cond-${Date.now()}`, name: '', probability: 0 })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Condition")}</Button>
+                <div className={`text-sm ${totalProb !== 100 ? 'text-destructive' : 'text-green-600'}`}>{t("Total")}: {totalProb}%</div>
+            </div>
+            <Button type="button" variant="destructive" size="sm" className="mt-4 w-full" onClick={() => removeRegion(regionIndex)}>{t("Delete Region")}</Button>
+        </div>
+    );
+};
+
 
 export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: EditCampaignDialogProps) {
   const { user } = useAuth();
@@ -450,35 +493,15 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                             )} />
                         </div>
                         <div className="rounded-md border p-4 space-y-4">
-                             <h4 className="font-medium">{t("Weather Settings")}</h4>
-                             {regionFields.map((region, regionIndex) => {
-                                const { fields: conditionFields, append: appendCondition, remove: removeCondition } = useFieldArray({ control, name: `weatherRegions.${regionIndex}.conditions` });
-                                const totalProb = conditionFields.reduce((acc, c) => acc + (c.probability || 0), 0);
-                                return (
-                                    <div key={region.id} className="p-3 border rounded-md bg-background/50">
-                                         <FormField control={control} name={`weatherRegions.${regionIndex}.name`} render={({ field }) => (
-                                            <FormItem><FormLabel>{t("Region Name")}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <Label className="mt-2 mb-1 block">{t("Conditions")}</Label>
-                                         {conditionFields.map((condition, conditionIndex) => (
-                                            <div key={condition.id} className="grid grid-cols-[2fr,1fr,auto] gap-2 items-center mb-2">
-                                                <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.name`} render={({ field }) => (
-                                                    <FormItem><FormControl><Input placeholder={t("e.g. Sunny")} {...field} /></FormControl><FormMessage /></FormItem>
-                                                )} />
-                                                 <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.probability`} render={({ field }) => (
-                                                    <FormItem><FormControl><Input type="number" placeholder="%" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl><FormMessage /></FormItem>
-                                                )} />
-                                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeCondition(conditionIndex)}><Trash2 className="h-4 w-4" /></Button>
-                                            </div>
-                                         ))}
-                                         <div className="flex justify-between items-center mt-2">
-                                            <Button type="button" variant="outline" size="sm" onClick={() => appendCondition({ id: `cond-${Date.now()}`, name: '', probability: 0 })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Condition")}</Button>
-                                            <div className={`text-sm ${totalProb !== 100 ? 'text-destructive' : 'text-green-600'}`}>{t("Total")}: {totalProb}%</div>
-                                         </div>
-                                         <Button type="button" variant="destructive" size="sm" className="mt-4 w-full" onClick={() => removeRegion(regionIndex)}>{t("Delete Region")}</Button>
-                                    </div>
-                                )
-                             })}
+                            <h4 className="font-medium">{t("Weather Settings")}</h4>
+                            {regionFields.map((region, regionIndex) => (
+                                <WeatherRegionFields 
+                                    key={region.id}
+                                    control={control} 
+                                    regionIndex={regionIndex} 
+                                    removeRegion={removeRegion} 
+                                />
+                            ))}
                             <Button type="button" className="w-full" variant="secondary" onClick={() => appendRegion({ id: `reg-${Date.now()}`, name: '', conditions: [] })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Region")}</Button>
                         </div>
                     </AccordionContent>
