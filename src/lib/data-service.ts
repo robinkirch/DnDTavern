@@ -9,7 +9,7 @@
 // replace the mock data and logic in this file with your actual
 // data access code.
 
-import type { Campaign, Grimoire, User, Recipe } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Component } from './types';
 
 // --- MOCK DATA ---
 // This data simulates what would be returned from a database.
@@ -24,7 +24,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     description: 'An adventure centered around a sentient, and very hungry, spellbook.',
     creatorUsername: 'elminster',
     invitedUsernames: ['volo', 'drizzt'],
-    image: 'https://picsum.photos/600/400?random=1',
+    image: 'https://picsum.photos/1200/400?random=1',
     grimoireId: 'elminsters-eats',
     sessionNotes: 'The party successfully deciphered the first three pages of the grimoire, revealing a recipe for a potent truth serum. They are now heading towards the Whispering Caves to find Glimmer-root, a key ingredient. A group of goblins is tailing them, hired by a mysterious figure who also wants the grimoire.'
   },
@@ -34,7 +34,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     description: 'A quest that starts in a tavern that caters to... unusual clientele.',
     creatorUsername: 'volo',
     invitedUsernames: ['elminster'],
-    image: 'https://picsum.photos/600/400?random=2',
+    image: 'https://picsum.photos/1200/400?random=2',
     grimoireId: 'volos-vile-brews',
     sessionNotes: null,
   },
@@ -44,7 +44,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     description: 'A freshly started campaign, ready for a grimoire to be linked.',
     creatorUsername: 'elminster',
     invitedUsernames: [],
-    image: 'https://picsum.photos/600/400?random=3',
+    image: 'https://picsum.photos/1200/400?random=3',
     grimoireId: null,
     sessionNotes: '',
   },
@@ -79,11 +79,12 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                 description: 'A fizzy, red concoction that makes you feel reinvigorated. Tastes of strawberries and hope.',
                 secretDescription: 'The "hope" is mostly placebo.',
                 components: [
-                  { componentId: 'comp-glimmer-root', quantity: '2 oz infusion' },
-                  { componentId: 'comp-spring-water', quantity: '4 oz' },
-                  { componentId: 'comp-wild-berry', quantity: '1' },
+                  { componentId: 'comp-glimmer-root', quantity: '2 oz infusion', type: 'component' },
+                  { componentId: 'comp-spring-water', quantity: '4 oz', type: 'component' },
+                  { componentId: 'comp-wild-berry', quantity: '1', type: 'component' },
                 ],
                 instructions: 'Mix the Glimmer-root infusion and sparkling water in a chilled glass. Drop the wild berry in gently. Serve immediately.',
+                image: 'https://picsum.photos/400/300?random=10'
             },
             {
                 id: 'owlbear-omelette',
@@ -93,9 +94,9 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                 description: 'A famously large and hearty meal, said to be able to feed a whole party. Ethically sourced, of course.',
                 secretDescription: null,
                 components: [
-                  { componentId: 'comp-owlbear-egg', quantity: '1' },
-                  { componentId: 'comp-cave-mushroom', quantity: '1 cup, sliced' },
-                  { componentId: 'comp-dwarven-cheese', quantity: '1/2 cup, grated' },
+                  { componentId: 'comp-owlbear-egg', quantity: '1', type: 'component' },
+                  { componentId: 'comp-cave-mushroom', quantity: '1 cup, sliced', type: 'component' },
+                  { componentId: 'comp-dwarven-cheese', quantity: '1/2 cup, grated', type: 'component' },
                 ],
                 instructions: 'Whisk the egg in a comically large bowl. Pour into a greased, cauldron-sized pan over medium heat. Add mushrooms and cheese as it begins to set. Fold and serve on a platter or shield.',
             },
@@ -124,8 +125,8 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                 description: 'A classic grog with a spicy kick that clears the sinuses.',
                 secretDescription: null,
                 components: [
-                    { componentId: 'comp-grog', quantity: '1 mug' },
-                    { componentId: 'comp-kobold-spice', quantity: '1 pinch' },
+                    { componentId: 'comp-grog', quantity: '1 mug', type: 'component' },
+                    { componentId: 'comp-kobold-spice', quantity: '1 pinch', type: 'component' },
                 ],
                 instructions: 'Pour grog into mug. Add spice. Stir once. Drink before you reconsider.',
             },
@@ -150,15 +151,16 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     return FAKE_DB_CAMPAIGNS.find(c => c.id === id) || null;
 }
 
-export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'image' | 'sessionNotes'>): Promise<Campaign> {
+export async function createCampaign(campaignData: Omit<Campaign, 'id'>): Promise<Campaign> {
     console.log(`Creating campaign "${campaignData.name}"...`);
     await new Promise(resolve => setTimeout(resolve, 500));
     const newCampaign: Campaign = {
         ...campaignData,
         id: campaignData.name.toLowerCase().replace(/\s+/g, '-'),
-        image: `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}`,
-        sessionNotes: '',
     };
+     if (!newCampaign.image) {
+        newCampaign.image = `https://picsum.photos/1200/400?random=${Math.floor(Math.random() * 1000)}`;
+    }
     FAKE_DB_CAMPAIGNS.push(newCampaign);
     return newCampaign;
 }
@@ -186,20 +188,14 @@ export async function getGrimoiresByUsername(username: string): Promise<Grimoire
 
 export async function getGrimoireById(id: string): Promise<Grimoire | null> {
     console.log(`Fetching grimoire ${id}...`);
-    // DEVELOPER: This is a key function. In a real app, 'id' would be the
-    // connection string or identifier for a database. You would use it here to
-    // connect and fetch the grimoire's data.
     await new Promise(resolve => setTimeout(resolve, 500));
     const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === id) || null;
     
-    // if (!grimoire) {
-    //    // DEVELOPER: Add your database connection logic here.
-    //    // Example:
-    //    // const db = connectToDatabase(id);
-    //    // const data = await db.query('SELECT * FROM recipes');
-    //    // return transformDataToGrimoire(data);
-    //    console.warn(`Grimoire with id "${id}" not found in mock data. In a real app, this would attempt a database connection.`);
-    // }
+    if (!grimoire) {
+       console.error(`Grimoire with id "${id}" not found. In a real app, this would be an error.`);
+       // To prevent crashes, we can return a "default" or empty grimoire structure.
+       // However, the calling code should handle `null` gracefully.
+    }
     return grimoire;
 }
 
@@ -218,38 +214,18 @@ export async function createGrimoire(id: string, creatorUsername: string): Promi
         return existing;
     }
 
-    // 2. Simulate connecting to a new database and populating the grimoire.
-    // In a real app, you would attempt `const db = await connect(id)` here.
-    // If it succeeds, you'd fetch the data and build the Grimoire object.
+    // 2. Since this is a simulation, we now explicitly create a NEW mock grimoire
+    // instead of throwing an error. This acknowledges the user wants to add a new
+    // data source and provides a starting point.
     console.log(`Simulating connection to new data source: ${id}`);
     const newGrimoire: Grimoire = {
         id: id,
         creatorUsername: creatorUsername,
         name: `Grimoire of ${id}`,
         description: `A newly discovered collection of recipes from the source '${id}'.`,
-        categories: [
-            { id: 'new-cat-1', name: 'Dishes' },
-            { id: 'new-cat-2', name: 'Brews' }
-        ],
-        components: [
-            { id: 'new-comp-1', name: 'Mysterious Dust', description: 'A shimmering powder.', secretDescription: 'Could be anything, really.', categoryId: 'new-cat-1' },
-            { id: 'new-comp-2', name: 'Bottled Mists', description: 'Mists from an unknown valley.', secretDescription: null, categoryId: 'new-cat-2' }
-        ],
-        recipes: [
-            {
-                id: 'new-recipe-1',
-                name: 'Misty Stew',
-                categoryId: 'new-cat-1',
-                rarity: 'Common',
-                description: 'A simple, yet enigmatic stew.',
-                secretDescription: 'The mist adds an air of mystery, but no flavor.',
-                components: [
-                    { componentId: 'new-comp-1', quantity: '1 pinch' },
-                    { componentId: 'new-comp-2', quantity: '1 bottle' },
-                ],
-                instructions: '1. Combine ingredients. 2. Stir. 3. Serve with an aura of intrigue.',
-            }
-        ]
+        categories: [],
+        components: [],
+        recipes: []
     };
     FAKE_DB_GRIMOIRES.push(newGrimoire);
     return newGrimoire;
@@ -298,4 +274,34 @@ export async function deleteRecipe(grimoireId: string, recipeId: string): Promis
     if (recipeIndex !== -1) {
         grimoire.recipes.splice(recipeIndex, 1);
     }
+}
+
+export async function saveCategory(grimoireId: string, category: Category): Promise<Category> {
+    console.log(`Saving category to grimoire ${grimoireId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
+    if (!grimoire) throw new Error("Grimoire not found");
+
+    const categoryIndex = grimoire.categories.findIndex(c => c.id === category.id);
+    if (categoryIndex !== -1) {
+        grimoire.categories[categoryIndex] = category;
+    } else {
+        grimoire.categories.push(category);
+    }
+    return category;
+}
+
+export async function saveComponent(grimoireId: string, component: Component): Promise<Component> {
+    console.log(`Saving component to grimoire ${grimoireId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
+    if (!grimoire) throw new Error("Grimoire not found");
+
+    const componentIndex = grimoire.components.findIndex(c => c.id === component.id);
+    if (componentIndex !== -1) {
+        grimoire.components[componentIndex] = component;
+    } else {
+        grimoire.components.push(component);
+    }
+    return component;
 }

@@ -32,13 +32,10 @@ export default function CampaignsDashboard() {
     }
   }, [user]);
 
-  const handleCreateCampaign = async (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' | 'sessionNotes' >) => {
+  const handleCreateCampaign = async (newCampaignData: Omit<Campaign, 'id'>) => {
     if (!user) return;
     
-    const newCampaign = await createCampaign({
-      ...newCampaignData,
-      creatorUsername: user.username,
-    });
+    const newCampaign = await createCampaign(newCampaignData);
 
     setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
     setCreateDialogOpen(false);
@@ -102,13 +99,17 @@ export default function CampaignsDashboard() {
                     {campaigns.map((campaign) => (
                     <Card key={campaign.id} className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                         <CardHeader className="relative p-0 h-48 w-full">
-                        <Image
-                            src={campaign.image}
-                            alt={campaign.name}
-                            fill
-                            className="object-cover"
-                            data-ai-hint="fantasy landscape"
-                        />
+                         {campaign.image ? (
+                            <Image
+                                src={campaign.image}
+                                alt={campaign.name}
+                                fill
+                                className="object-cover"
+                                data-ai-hint="fantasy landscape"
+                            />
+                         ) : (
+                            <div className='w-full h-full bg-muted'/>
+                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                         {campaign.creatorUsername === user?.username && (
                             <Badge variant="destructive" className="absolute top-4 right-4 bg-accent text-accent-foreground">DM</Badge>
@@ -116,7 +117,7 @@ export default function CampaignsDashboard() {
                         </CardHeader>
                         <div className="flex flex-col flex-1 p-6">
                           <CardTitle className="font-headline text-2xl mb-2">{campaign.name}</CardTitle>
-                          <CardDescription className="flex-1">{campaign.description}</CardDescription>
+                          <CardDescription className="flex-1 line-clamp-3">{campaign.description}</CardDescription>
                           <CardFooter className="p-0 pt-6">
                               <Button asChild className="w-full">
                                   <Link href={`/campaigns/${campaign.id}`}>

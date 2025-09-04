@@ -1,6 +1,7 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 import { useAuth } from '@/context/auth-context';
 import { getCampaignById, getGrimoireById, updateCampaign } from '@/lib/data-service';
@@ -73,7 +74,7 @@ export default function CampaignPage() {
     toast({ title: 'Success', description: 'Session notes have been saved.' });
   };
 
-  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' | 'sessionNotes'>) => {
+  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes'>) => {
     if (!campaign) return;
     const updatedCampaign = { ...campaign, ...updatedData };
      updateCampaign(updatedCampaign).then(savedCampaign => {
@@ -92,16 +93,26 @@ export default function CampaignPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="container py-8">
-            <Skeleton className="h-10 w-1/3 mb-2" />
-            <Skeleton className="h-6 w-2/3 mb-8" />
-            <Skeleton className="h-10 w-full mb-6" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-96 rounded-lg" />
-                <Skeleton className="h-96 rounded-lg" />
-                <Skeleton className="h-96 rounded-lg" />
+         <main className="flex-grow">
+            <div className="w-full h-64 md:h-80 bg-muted animate-pulse" />
+            <div className="container -mt-16 md:-mt-24 pb-8">
+              <Skeleton className="h-10 w-1/3 mb-2" />
+              <Skeleton className="h-6 w-2/3 mb-8" />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 <div className="lg:col-span-2 space-y-6">
+                    <Skeleton className="h-10 w-full" />
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Skeleton className="h-96 rounded-lg" />
+                        <Skeleton className="h-96 rounded-lg" />
+                        <Skeleton className="h-96 rounded-lg" />
+                    </div>
+                 </div>
+                 <div className="lg:col-span-1">
+                    <Skeleton className="h-96 rounded-lg" />
+                 </div>
+              </div>
             </div>
-        </main>
+         </main>
       </div>
     );
   }
@@ -110,80 +121,111 @@ export default function CampaignPage() {
 
   return (
     <>
-    <EditCampaignDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onSave={handleUpdateCampaign}
-        campaign={campaign}
-    />
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="container py-8">
-        <div className="flex justify-between items-start mb-1">
-            <h1 className="font-headline text-4xl font-bold">{campaign.name}</h1>
-            {isCreator && (
-                <Button variant="outline" onClick={() => setEditDialogOpen(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit Campaign
-                </Button>
-            )}
-        </div>
+      <EditCampaignDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSave={handleUpdateCampaign}
+          campaign={campaign}
+      />
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow">
+            <div className="relative w-full h-64 md:h-80">
+                {campaign.image && (
+                   <Image 
+                     src={campaign.image} 
+                     alt={campaign.name} 
+                     fill 
+                     className="object-cover"
+                     priority
+                     data-ai-hint="fantasy landscape"
+                   />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+            </div>
 
-        {grimoire && (
-          <p className="text-muted-foreground mb-1">
-            From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
-          </p>
-        )}
-        <p className="text-muted-foreground mb-8 max-w-3xl">{campaign.description}</p>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {campaign.grimoireId ? (
-              <RecipeGrid grimoireId={campaign.grimoireId} canEdit={isCreator} />
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
-                <h3 className="font-headline text-2xl">No Grimoire Linked</h3>
-                <p className="text-muted-foreground">The Dungeon Master has not linked a recipe book to this campaign yet.</p>
+            <div className="container relative -mt-16 md:-mt-24 pb-8 z-10">
+              <div className="flex justify-between items-start mb-1">
+                  <h1 className="font-headline text-4xl lg:text-5xl font-bold">{campaign.name}</h1>
+                  {isCreator && (
+                      <Button variant="outline" onClick={() => setEditDialogOpen(true)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit Campaign
+                      </Button>
+                  )}
               </div>
-            )}
-          </div>
-          <div className="lg:col-span-1">
-            {isCreator ? (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">Session Notes</CardTitle>
-                        <CardDescription>Your private notes for the campaign. Only you can see and edit this.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Label htmlFor="session-notes" className="sr-only">Session Notes</Label>
-                        <Textarea 
-                            id="session-notes"
-                            placeholder="What happened in the last session? What clues did the party find? What are your plans for the next session?"
-                            value={sessionNotes}
-                            onChange={(e) => setSessionNotes(e.target.value)}
-                            className="min-h-[300px] text-base"
-                        />
-                        <Button onClick={handleSaveNotes} disabled={isSavingNotes} className="w-full">
-                            <Save className="mr-2 h-4 w-4" />
-                            {isSavingNotes ? 'Saving...' : 'Save Notes'}
+
+              {grimoire && (
+                <p className="text-muted-foreground mb-1">
+                  From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
+                </p>
+              )}
+              <p className="text-muted-foreground mb-8 max-w-3xl">{campaign.description}</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  {campaign.grimoireId ? (
+                    <RecipeGrid grimoireId={campaign.grimoireId} canEdit={isCreator} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
+                      <h3 className="font-headline text-2xl">No Grimoire Linked</h3>
+                      <p className="text-muted-foreground">The Dungeon Master has not linked a recipe book to this campaign yet.</p>
+                      {isCreator && (
+                        <Button variant="secondary" className="mt-4" onClick={() => setEditDialogOpen(true)}>
+                            Link a Grimoire
                         </Button>
-                    </CardContent>
-                </Card>
-            ) : campaign.sessionNotes && (
-                 <Card className="bg-card/50 border-dashed">
-                    <CardHeader>
-                        <CardTitle className="font-headline">DM's Campaign Log</CardTitle>
-                         <CardDescription>A summary of events from your Dungeon Master.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>
-                    </CardContent>
-                </Card>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="lg:col-span-1">
+                  {isCreator ? (
+                      <Card>
+                          <CardHeader>
+                              <CardTitle className="font-headline">Session Notes</CardTitle>
+                              <CardDescription>Your private notes for the campaign. Only you can see and edit this.</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                              <Label htmlFor="session-notes" className="sr-only">Session Notes</Label>
+                              <Textarea 
+                                  id="session-notes"
+                                  placeholder="What happened in the last session? What clues did the party find? What are your plans for the next session?"
+                                  value={sessionNotes}
+                                  onChange={(e) => setSessionNotes(e.target.value)}
+                                  className="min-h-[300px] text-base"
+                              />
+                              <Button onClick={handleSaveNotes} disabled={isSavingNotes} className="w-full">
+                                  <Save className="mr-2 h-4 w-4" />
+                                  {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                              </Button>
+                          </CardContent>
+                      </Card>
+                  ) : campaign.sessionNotes ? (
+                       <Card className="bg-card/50 border-dashed">
+                          <CardHeader>
+                              <CardTitle className="font-headline">DM's Campaign Log</CardTitle>
+                               <CardDescription>A summary of events from your Dungeon Master.</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                              <p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>
+                          </CardContent>
+                      </Card>
+                  ) : (
+                     <Card className="bg-card/50 border-dashed">
+                          <CardHeader>
+                              <CardTitle className="font-headline">DM's Campaign Log</CardTitle>
+                               <CardDescription>A summary of events from your Dungeon Master.</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                              <p className="text-muted-foreground italic">The log is currently empty.</p>
+                          </CardContent>
+                      </Card>
+                  )}
+                </div>
+              </div>
+            </div>
+        </main>
+      </div>
     </>
   );
 }

@@ -1,3 +1,4 @@
+'use client';
 // Based on the C# data model provided
 
 export interface User {
@@ -27,7 +28,7 @@ export interface Campaign {
   description: string;
   creatorUsername: string;
   invitedUsernames: string[];
-  image: string;
+  image: string | null;
   grimoireId: string | null; // This links to a Grimoire (data source)
   sessionNotes?: string | null;
 }
@@ -46,8 +47,9 @@ export interface Component {
 }
 
 export interface RecipeComponent {
-  componentId: string;
+  componentId: string; // can be a component OR a recipe id
   quantity: string; 
+  type: 'component' | 'recipe';
 }
 
 export interface Recipe {
@@ -55,8 +57,9 @@ export interface Recipe {
   name: string;
   description: string;
   secretDescription: string | null; // For the DM
-  instructions: string;
+  instructions: string | null;
   categoryId: string;
   rarity: 'Common' | 'Uncommon' | 'Rare' | 'Legendary';
   components: RecipeComponent[];
+  image?: string | null;
 }

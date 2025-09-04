@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,12 +35,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Upload } from 'lucide-react';
+import Image from 'next/image';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Campaign name is required.'),
-  description: z.string(),
+  description: z.string().optional(),
   invitedUsernames: z.string().optional(),
   grimoireId: z.string().nullable(),
+  image: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -47,12 +51,22 @@ type FormData = z.infer<typeof formSchema>;
 interface CreateCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onCreate: (data: { name: string; description: string; invitedUsernames: string[], grimoireId: string | null }) => void;
+    onCreate: (data: { 
+        name: string; 
+        description: string; 
+        invitedUsernames: string[], 
+        grimoireId: string | null,
+        image: string | null,
+        creatorUsername: string;
+        sessionNotes: string | null;
+     }) => void;
 }
 
 export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateCampaignDialogProps) {
   const { user } = useAuth();
   const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,7 +74,8 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
       name: '',
       description: '',
       invitedUsernames: '',
-      grimoireId: null
+      grimoireId: null,
+      image: null,
     },
   });
 
@@ -68,24 +83,53 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
     if (user && user.role === 'dm' && isOpen) {
       getGrimoiresByUsername(user.username).then(setUserGrimoires);
     }
-  }, [user, isOpen]);
+     if (!isOpen) {
+      form.reset();
+      setImagePreview(null);
+    }
+  }, [user, isOpen, form]);
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        form.setValue('image', result);
+        setImagePreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   function onSubmit(values: FormData) {
+    if (!user) return;
     const invitedUsernames = values.invitedUsernames
       ? values.invitedUsernames.split(',').map(u => u.trim()).filter(Boolean)
       : [];
     
-    onCreate({ ...values, invitedUsernames, grimoireId: values.grimoireId === "null" ? null : values.grimoireId });
+    onCreate({ 
+        name: values.name,
+        description: values.description || '',
+        invitedUsernames, 
+        grimoireId: values.grimoireId === "null" ? null : values.grimoireId,
+        image: values.image,
+        creatorUsername: user.username,
+        sessionNotes: ''
+    });
     form.reset();
     onOpenChange(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) form.reset();
+      if (!open) {
+          form.reset();
+          setImagePreview(null);
+      }
       onOpenChange(open);
     }}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-headline">Create New Campaign</DialogTitle>
           <DialogDescription>
@@ -93,7 +137,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <FormField
               control={form.control}
               name="name"
@@ -120,6 +164,36 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Header Image</FormLabel>
+                   <FormControl>
+                     <>
+                      <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleImageChange} 
+                          className="hidden" 
+                          accept="image/*"
+                      />
+                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Image
+                      </Button>
+                     </>
+                  </FormControl>
+                   {imagePreview && (
+                    <div className="mt-4 relative w-full aspect-[16/9] rounded-md overflow-hidden">
+                        <Image src={imagePreview} alt="Header preview" fill className="object-cover" />
+                    </div>
+                   )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -153,9 +227,12 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Invite Players (Usernames)</FormLabel>
-                  <FormControl>
+                   <FormControl>
                     <Input placeholder="volo, drizzt (comma-separated)" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    Separate multiple usernames with a comma.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

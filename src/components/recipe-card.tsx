@@ -1,8 +1,8 @@
 'use client';
 import type { Recipe, Grimoire } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
-import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2 } from 'lucide-react';
+import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   Accordion,
@@ -10,6 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import Image from 'next/image';
 
 interface RecipeCardProps {
     recipe: Recipe;
@@ -36,13 +37,21 @@ const rarityColors: { [key: string]: string } = {
 export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: RecipeCardProps) {
     const category = grimoire?.categories.find(c => c.id === recipe.categoryId);
 
-    const getComponentName = (componentId: string) => {
-        return grimoire?.components.find(c => c.id === componentId)?.name || 'Unknown Ingredient';
+    const getIngredientName = (ingredientId: string, type: 'component' | 'recipe') => {
+        if (type === 'component') {
+            return grimoire?.components.find(c => c.id === ingredientId)?.name || 'Unknown Ingredient';
+        }
+        return grimoire?.recipes.find(r => r.id === ingredientId)?.name || 'Unknown Recipe';
     };
     
     return (
-        <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50">
-            <CardHeader>
+        <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50 overflow-hidden">
+             {recipe.image && (
+                <div className="relative h-48 w-full">
+                    <Image src={recipe.image} alt={recipe.name} fill className="object-cover" data-ai-hint="fantasy food"/>
+                </div>
+            )}
+            <CardHeader className={recipe.image ? 'pt-4' : ''}>
                 <div className="flex justify-between items-start">
                     <CardTitle className="font-headline text-2xl leading-tight mb-2 pr-4">{recipe.name}</CardTitle>
                     {canEdit && (
@@ -58,7 +67,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
                     <Badge className={`${rarityColors[recipe.rarity]}`}>{recipe.rarity}</Badge>
                     {category && (
                         <Badge variant="outline" className="flex items-center gap-1.5">
@@ -74,21 +83,26 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                     <AccordionItem value="ingredients">
                         <AccordionTrigger className="font-headline">Ingredients</AccordionTrigger>
                         <AccordionContent>
-                            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                            <ul className="list-none pl-0 space-y-1 text-muted-foreground">
                                 {recipe.components.map((comp, i) => (
-                                    <li key={i}>
-                                        <span className="font-semibold text-foreground">{getComponentName(comp.componentId)}</span> - {comp.quantity}
+                                    <li key={i} className="flex items-center gap-2">
+                                        {comp.type === 'recipe' ? <BookCopy className="h-4 w-4 text-primary" /> : <div className="h-1.5 w-1.5 bg-foreground rounded-full" />}
+                                        <div>
+                                            <span className="font-semibold text-foreground">{getIngredientName(comp.componentId, comp.type)}</span> - {comp.quantity}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="instructions">
-                        <AccordionTrigger className="font-headline">Instructions</AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground whitespace-pre-line">
-                            {recipe.instructions}
-                        </AccordionContent>
-                    </AccordionItem>
+                    {recipe.instructions && (
+                        <AccordionItem value="instructions">
+                            <AccordionTrigger className="font-headline">Instructions</AccordionTrigger>
+                            <AccordionContent className="text-muted-foreground whitespace-pre-line">
+                                {recipe.instructions}
+                            </AccordionContent>
+                        </AccordionItem>
+                    )}
                     {canEdit && recipe.secretDescription && (
                          <AccordionItem value="secret-description">
                             <AccordionTrigger className="font-headline text-accent">Secret Notes (DM Only)</AccordionTrigger>

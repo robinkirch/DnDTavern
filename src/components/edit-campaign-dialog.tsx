@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,12 +29,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Upload } from 'lucide-react';
+import Image from 'next/image';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Campaign name is required.'),
-  description: z.string(),
+  description: z.string().optional(),
   invitedUsernames: z.string().optional(),
   grimoireId: z.string().nullable(),
+  image: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -41,13 +45,21 @@ type FormData = z.infer<typeof formSchema>;
 interface EditCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (data: { name: string; description: string; invitedUsernames: string[]; grimoireId: string | null }) => void;
+    onSave: (data: { 
+        name: string; 
+        description: string; 
+        invitedUsernames: string[]; 
+        grimoireId: string | null,
+        image: string | null;
+     }) => void;
     campaign: Campaign | null;
 }
 
 export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: EditCampaignDialogProps) {
   const { user } = useAuth();
   const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -66,21 +78,51 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         description: campaign.description,
         invitedUsernames: campaign.invitedUsernames.join(', '),
         grimoireId: campaign.grimoireId,
+        image: campaign.image,
       });
+      setImagePreview(campaign.image);
+    } else if (!isOpen) {
+      form.reset();
+      setImagePreview(null);
     }
   }, [campaign, isOpen, form]);
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        form.setValue('image', result);
+        setImagePreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   function onSubmit(values: FormData) {
     const invitedUsernames = values.invitedUsernames
       ? values.invitedUsernames.split(',').map(u => u.trim()).filter(Boolean)
       : [];
     
-    onSave({ ...values, invitedUsernames, grimoireId: values.grimoireId === "null" ? null : values.grimoireId });
+    onSave({ 
+        name: values.name,
+        description: values.description || '',
+        invitedUsernames, 
+        grimoireId: values.grimoireId === "null" ? null : values.grimoireId,
+        image: values.image
+    });
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+            form.reset();
+            setImagePreview(null);
+        }
+        onOpenChange(open);
+    }}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-headline">Edit Campaign</DialogTitle>
           <DialogDescription>
@@ -88,7 +130,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <FormField
               control={form.control}
               name="name"
@@ -115,6 +157,36 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Header Image</FormLabel>
+                   <FormControl>
+                     <>
+                      <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handleImageChange} 
+                          className="hidden" 
+                          accept="image/*"
+                      />
+                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Image
+                      </Button>
+                     </>
+                  </FormControl>
+                   {imagePreview && (
+                    <div className="mt-4 relative w-full aspect-[16/9] rounded-md overflow-hidden">
+                        <Image src={imagePreview} alt="Header preview" fill className="object-cover" />
+                    </div>
+                   )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -151,6 +223,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                   <FormControl>
                     <Input placeholder="volo, drizzt (comma-separated)" {...field} />
                   </FormControl>
+                   <FormDescription>
+                    Separate multiple usernames with a comma.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
