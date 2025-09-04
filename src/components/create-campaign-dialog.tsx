@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { getGrimoiresByUsername } from '@/lib/data-service';
 import { useAuth } from '@/context/auth-context';
 import type { Grimoire } from '@/lib/types';
+import { useI18n } from '@/context/i18n-context';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -64,6 +65,7 @@ interface CreateCampaignDialogProps {
 
 export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateCampaignDialogProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,9 +133,9 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
     }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Create New Campaign</DialogTitle>
+          <DialogTitle className="font-headline">{t('Create New Campaign')}</DialogTitle>
           <DialogDescription>
-            Fill in the details for your new adventure. You can link a grimoire to make its recipes available.
+            {t('Fill in the details for your new adventure. You can link a grimoire to make its recipes available.')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -143,7 +145,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Campaign Name</FormLabel>
+                  <FormLabel>{t('Campaign Name')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., The Lost Mines of Phandelver" {...field} />
                   </FormControl>
@@ -156,10 +158,10 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('Description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="A short, enticing description of your campaign."
+                      placeholder={t('A short, enticing description of your campaign.')}
                       className="resize-none"
                       {...field}
                     />
@@ -173,7 +175,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Header Image</FormLabel>
+                  <FormLabel>{t('Header Image')}</FormLabel>
                    <FormControl>
                      <>
                       <input 
@@ -185,7 +187,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
                       />
                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                           <Upload className="mr-2 h-4 w-4" />
-                          Upload Image
+                          {t('Upload Image')}
                       </Button>
                      </>
                   </FormControl>
@@ -203,15 +205,15 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               name="grimoireId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Link Grimoire</FormLabel>
+                  <FormLabel>{t('Link Grimoire')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value ?? ""} >
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a grimoire to link" />
+                            <SelectValue placeholder={t('Select a grimoire to link')} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="null">None</SelectItem>
+                          <SelectItem value="null">{t('None')}</SelectItem>
                           {userGrimoires.map(g => (
                             <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                           ))}
@@ -226,20 +228,20 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
               name="invitedUsernames"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Invite Players (Usernames)</FormLabel>
+                  <FormLabel>{t('Invite Players (Usernames)')}</FormLabel>
                    <FormControl>
                     <Input placeholder="volo, drizzt (comma-separated)" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Separate multiple usernames with a comma.
+                    {t('Separate multiple usernames with a comma.')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Create Campaign</Button>
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+                <Button type="submit">{t('Create Campaign')}</Button>
             </DialogFooter>
           </form>
         </Form>

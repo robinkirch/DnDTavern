@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import type { Recipe, Grimoire } from '@/lib/types';
+import { useI18n } from '@/context/i18n-context';
 import { RecipeCard } from './recipe-card';
 import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
@@ -15,6 +16,7 @@ interface RecipeGridProps {
 }
 
 export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
+  const { t } = useI18n();
   const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +57,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
   };
 
   const handleDeleteRecipe = async (id: string) => {
-    if(confirm('Are you sure you want to delete this recipe? This cannot be undone.')) {
+    if(confirm(t('Are you sure you want to delete this recipe? This cannot be undone.'))) {
         await deleteRecipe(grimoireId, id);
         if (grimoire) {
           const updatedRecipes = grimoire.recipes.filter(r => r.id !== id);
@@ -94,8 +96,8 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
   if (!grimoire) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
-        <h3 className="font-headline text-2xl">Grimoire Not Found</h3>
-        <p className="text-muted-foreground">This collection of recipes could not be loaded.</p>
+        <h3 className="font-headline text-2xl">{t('Grimoire Not Found')}</h3>
+        <p className="text-muted-foreground">{t('This collection of recipes could not be loaded.')}</p>
       </div>
     )
   }
@@ -114,7 +116,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
           <div className="relative w-full md:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search recipes or ingredients..."
+              placeholder={t('Search recipes or ingredients...')}
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -123,7 +125,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
           {canEdit && (
             <Button onClick={handleAddRecipe}>
                 <PlusCircle className="mr-2 h-4 w-4"/>
-                Create New Recipe
+                {t('Create New Recipe')}
             </Button>
           )}
         </div>
@@ -136,14 +138,14 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
-            <h3 className="font-headline text-2xl">No Recipes Found</h3>
+            <h3 className="font-headline text-2xl">{t('No Recipes Found')}</h3>
             <p className="text-muted-foreground">
-              {searchTerm ? `No recipes match "${searchTerm}".` : "This grimoire is empty."}
+              {searchTerm ? t('No recipes match "{{searchTerm}}".', { searchTerm }) : t("This grimoire is empty.")}
             </p>
             {canEdit && !searchTerm && (
               <Button onClick={handleAddRecipe} className="mt-4">
                 <PlusCircle className="mr-2 h-4 w-4"/>
-                Create the First Recipe
+                {t('Create the First Recipe')}
               </Button>
             )}
           </div>

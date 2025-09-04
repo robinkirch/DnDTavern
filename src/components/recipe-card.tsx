@@ -1,5 +1,6 @@
 'use client';
 import type { Recipe, Grimoire, Rarity } from '@/lib/types';
+import { useI18n } from '@/context/i18n-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy } from 'lucide-react';
@@ -29,11 +30,12 @@ const categoryIcons: { [key: string]: JSX.Element } = {
 
 
 export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: RecipeCardProps) {
+    const { t } = useI18n();
     const category = grimoire?.categories.find(c => c.id === recipe.categoryId);
     const rarity = grimoire?.rarities.find(r => r.id === recipe.rarityId);
 
     const getIngredientName = (ingredientId: string) => {
-        return grimoire?.recipes.find(r => r.id === ingredientId)?.name || 'Unknown Ingredient';
+        return grimoire?.recipes.find(r => r.id === ingredientId)?.name || t('Unknown Ingredient');
     };
     
     return (
@@ -50,11 +52,11 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                         <div className="flex gap-1 -mr-2 -mt-2">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(recipe.id)}>
                                 <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
+                                <span className="sr-only">{t('Edit')}</span>
                             </Button>
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(recipe.id)}>
                                 <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete</span>
+                                <span className="sr-only">{t('Delete')}</span>
                             </Button>
                         </div>
                     )}
@@ -74,7 +76,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                 <Accordion type="single" collapsible className="w-full">
                     {recipe.components.length > 0 && (
                         <AccordionItem value="ingredients">
-                            <AccordionTrigger className="font-headline">Ingredients</AccordionTrigger>
+                            <AccordionTrigger className="font-headline">{t('Ingredients')}</AccordionTrigger>
                             <AccordionContent>
                                 <ul className="list-none pl-0 space-y-1 text-muted-foreground">
                                     {recipe.components.map((comp, i) => (
@@ -91,7 +93,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                     )}
                     {canEdit && recipe.secretDescription && (
                          <AccordionItem value="secret-description">
-                            <AccordionTrigger className="font-headline text-accent">Secret Notes (DM Only)</AccordionTrigger>
+                            <AccordionTrigger className="font-headline text-accent">{t('Secret Notes (DM Only)')}</AccordionTrigger>
                             <AccordionContent className="text-muted-foreground whitespace-pre-line text-accent/90">
                                 {recipe.secretDescription}
                             </AccordionContent>

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Grimoire } from '@/lib/types';
+import { useI18n } from '@/context/i18n-context';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +39,7 @@ interface GrimoireFormDialogProps {
 }
 
 export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFormDialogProps) {
+  const { t } = useI18n();
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,9 +63,9 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFor
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Grimoire</DialogTitle>
+          <DialogTitle className="font-headline">{t('Add New Grimoire')}</DialogTitle>
           <DialogDescription>
-            Provide a unique ID for your data source and a display name for your Grimoire.
+            {t('Provide a unique ID for your data source and a display name for your Grimoire.')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -74,9 +75,9 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFor
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Grimoire Name</FormLabel>
+                  <FormLabel>{t('Grimoire Name')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Volo's Vile Brews" {...field} />
+                    <Input placeholder={t("e.g., Volo's Vile Brews")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -87,17 +88,17 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFor
               name="id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Data Source ID</FormLabel>
+                  <FormLabel>{t('Data Source ID')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., my-firestore-db" {...field} />
+                    <Input placeholder={t('e.g., my-firestore-db')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Add Grimoire</Button>
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+                <Button type="submit">{t('Add Grimoire')}</Button>
             </DialogFooter>
           </form>
         </Form>

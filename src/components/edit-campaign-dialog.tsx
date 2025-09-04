@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { getGrimoiresByUsername } from '@/lib/data-service';
+import { useI18n } from '@/context/i18n-context';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -57,6 +58,7 @@ interface EditCampaignDialogProps {
 
 export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: EditCampaignDialogProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,9 +126,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Edit Campaign</DialogTitle>
+          <DialogTitle className="font-headline">{t('Edit Campaign')}</DialogTitle>
           <DialogDescription>
-            Update the details for your campaign.
+            {t('Update the details for your campaign.')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -136,7 +138,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Campaign Name</FormLabel>
+                  <FormLabel>{t('Campaign Name')}</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., The Lost Mines of Phandelver" {...field} />
                   </FormControl>
@@ -149,10 +151,10 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('Description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="A short, enticing description of your campaign."
+                      placeholder={t('A short, enticing description of your campaign.')}
                       className="resize-none"
                       {...field}
                     />
@@ -166,7 +168,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               name="image"
               render={() => (
                 <FormItem>
-                  <FormLabel>Header Image</FormLabel>
+                  <FormLabel>{t('Header Image')}</FormLabel>
                    <FormControl>
                      <>
                       <input 
@@ -178,7 +180,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                       />
                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                           <Upload className="mr-2 h-4 w-4" />
-                          Upload Image
+                          {t('Upload Image')}
                       </Button>
                      </>
                   </FormControl>
@@ -196,15 +198,15 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               name="grimoireId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Link Grimoire</FormLabel>
+                  <FormLabel>{t('Link Grimoire')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value ?? ""} >
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a grimoire to link" />
+                            <SelectValue placeholder={t('Select a grimoire to link')} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="null">None</SelectItem>
+                          <SelectItem value="null">{t('None')}</SelectItem>
                           {userGrimoires.map(g => (
                             <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                           ))}
@@ -219,20 +221,20 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               name="invitedUsernames"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Invite Players (Usernames)</FormLabel>
+                  <FormLabel>{t('Invite Players (Usernames)')}</FormLabel>
                   <FormControl>
                     <Input placeholder="volo, drizzt (comma-separated)" {...field} />
                   </FormControl>
                    <FormDescription>
-                    Separate multiple usernames with a comma.
+                    {t('Separate multiple usernames with a comma.')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Save Changes</Button>
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+                <Button type="submit">{t('Save Changes')}</Button>
             </DialogFooter>
           </form>
         </Form>

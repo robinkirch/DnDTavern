@@ -1,14 +1,24 @@
 'use client';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Languages } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useI18n } from '@/context/i18n-context';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 
 export function Header() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { language, setLanguage, t } = useI18n();
 
   const handleLogout = () => {
     logout();
@@ -29,9 +39,23 @@ export function Header() {
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <Link href="/" className="mr-6 flex items-center space-x-3">
             <TankardIcon className="h-7 w-7 text-primary" data-ai-hint="tankard" />
-            <span className="font-headline text-xl font-bold text-primary hidden sm:inline-block">Tavern Keeper</span>
+            <span className="font-headline text-xl font-bold text-primary hidden sm:inline-block">{t('Tavern Keeper')}</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className='h-9 w-9'>
+                  <Languages className="h-4 w-4" />
+                  <span className="sr-only">{t('Change language')}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuRadioGroup value={language} onValueChange={(value) => setLanguage(value as 'en' | 'de')}>
+                  <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="de">Deutsch</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           {user && (
             <>
               <div className="flex items-center gap-3">
@@ -47,7 +71,7 @@ export function Header() {
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="mr-1 h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
+                <span className="hidden sm:inline">{t('Logout')}</span>
               </Button>
             </>
           )}

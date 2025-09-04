@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { createCampaign, getCampaignsForUser } from '@/lib/data-service';
 import type { Campaign } from '@/lib/types';
+import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { Skeleton } from './ui/skeleton';
 
 export default function CampaignsDashboard() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
@@ -71,13 +73,13 @@ export default function CampaignsDashboard() {
       <div className="container py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-              <h1 className="font-headline text-4xl font-bold mb-2">Your Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, {user?.username}. Manage your campaigns and grimoires.</p>
+              <h1 className="font-headline text-4xl font-bold mb-2">{t('Your Dashboard')}</h1>
+              <p className="text-muted-foreground">{t('Welcome back, {{username}}. Manage your campaigns and grimoires.', { username: user?.username || '' })}</p>
           </div>
            {user?.role === 'dm' && (
               <Button onClick={() => setCreateDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Campaign
+                  {t('Create Campaign')}
               </Button>
           )}
         </div>
@@ -86,11 +88,11 @@ export default function CampaignsDashboard() {
             <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
                 <TabsTrigger value="campaigns">
                     <Shield className='mr-2 h-4 w-4' />
-                    Campaigns
+                    {t('Campaigns')}
                 </TabsTrigger>
                 <TabsTrigger value="grimoires">
                     <BookHeart className='mr-2 h-4 w-4'/>
-                    Grimoires
+                    {t('Grimoires')}
                 </TabsTrigger>
             </TabsList>
             <TabsContent value="campaigns" className='py-6'>
@@ -112,7 +114,7 @@ export default function CampaignsDashboard() {
                          )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                         {campaign.creatorUsername === user?.username && (
-                            <Badge variant="destructive" className="absolute top-4 right-4 bg-accent text-accent-foreground">DM</Badge>
+                            <Badge variant="destructive" className="absolute top-4 right-4 bg-accent text-accent-foreground">{t('DM')}</Badge>
                         )}
                         </CardHeader>
                         <div className="flex flex-col flex-1 p-6">
@@ -121,7 +123,7 @@ export default function CampaignsDashboard() {
                           <CardFooter className="p-0 pt-6">
                               <Button asChild className="w-full">
                                   <Link href={`/campaigns/${campaign.id}`}>
-                                    Open Campaign
+                                    {t('Open Campaign')}
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                   </Link>
                               </Button>
@@ -134,16 +136,16 @@ export default function CampaignsDashboard() {
                 <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
                     {user?.role === 'dm' ? (
                         <>
-                            <p className="text-lg text-muted-foreground">You haven't created any campaigns yet.</p>
+                            <p className="text-lg text-muted-foreground">{t("You haven't created any campaigns yet.")}</p>
                             <Button onClick={() => setCreateDialogOpen(true)} className="mt-4">
                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                Create Your First Campaign
+                                {t('Create Your First Campaign')}
                             </Button>
                         </>
                     ) : (
                         <>
-                            <p className="text-lg text-muted-foreground">No campaigns found.</p>
-                            <p className="text-sm text-muted-foreground">Ask your Dungeon Master for an invitation!</p>
+                            <p className="text-lg text-muted-foreground">{t('No campaigns found.')}</p>
+                            <p className="text-sm text-muted-foreground">{t('Ask your Dungeon Master for an invitation!')}</p>
                         </>
 
                     )}
@@ -155,8 +157,8 @@ export default function CampaignsDashboard() {
                 <GrimoireGrid />
               ) : (
                  <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
-                      <p className="text-lg text-muted-foreground">Only Dungeon Masters can manage Grimoires.</p>
-                      <p className="text-sm text-muted-foreground">This is where your DM creates and curates recipe collections.</p>
+                      <p className="text-lg text-muted-foreground">{t('Only Dungeon Masters can manage Grimoires.')}</p>
+                      <p className="text-sm text-muted-foreground">{t('This is where your DM creates and curates recipe collections.')}</p>
                   </div>
               )}
             </TabsContent>

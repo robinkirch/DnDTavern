@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import type { Grimoire, Category, Rarity } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, saveRarity, deleteCategory, deleteRarity } from '@/lib/data-service';
+import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import {
 
 export function GrimoireGrid() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const { toast } = useToast();
   const [grimoires, setGrimoires] = useState<Grimoire[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,8 +51,7 @@ export function GrimoireGrid() {
   }, [user]);
 
   const handleDeleteGrimoire = async (id: string) => {
-    // Re-instating confirm for this top-level action, as it's more critical.
-    if (window.confirm('Are you sure you want to remove this data source? This does not delete the data itself.')) {
+    if (confirm(t('Are you sure you want to remove this data source? This does not delete the data itself.'))) {
       await deleteGrimoire(id);
       setGrimoires(grimoires.filter(g => g.id !== id));
     }
@@ -83,7 +84,7 @@ export function GrimoireGrid() {
     setManagingGrimoire(updatedGrimoire);
     setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
     setNewCategoryName('');
-    toast({title: "Category Added", description: `"${newCategory.name}" has been added.`});
+    toast({title: t("Category Added"), description: t("\"{{categoryName}}\" has been added.", { categoryName: newCategory.name })});
   };
 
    const handleDeleteCategory = async (categoryId: string) => {
@@ -96,7 +97,7 @@ export function GrimoireGrid() {
 
     setManagingGrimoire(updatedGrimoire);
     setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-    toast({ title: 'Category Deleted' });
+    toast({ title: t('Category Deleted') });
   };
 
   const handleAddRarity = async () => {
@@ -117,7 +118,7 @@ export function GrimoireGrid() {
     setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
     setNewRarityName('');
     setNewRarityColor('#6b7280');
-    toast({title: "Rarity Added", description: `"${newRarity.name}" has been added.`});
+    toast({title: t("Rarity Added"), description: t("\"{{rarityName}}\" has been added.", { rarityName: newRarity.name })});
   };
 
   const handleDeleteRarity = async (rarityId: string) => {
@@ -130,7 +131,7 @@ export function GrimoireGrid() {
 
     setManagingGrimoire(updatedGrimoire);
     setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-    toast({ title: 'Rarity Deleted' });
+    toast({ title: t('Rarity Deleted') });
   };
 
 
@@ -154,27 +155,27 @@ export function GrimoireGrid() {
        <Dialog open={isManageOpen} onOpenChange={setManageOpen}>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle className="font-headline">Manage: {managingGrimoire?.name}</DialogTitle>
+                    <DialogTitle className="font-headline">{t('Manage: {{grimoireName}}', { grimoireName: managingGrimoire?.name || '' })}</DialogTitle>
                     <DialogDescription>
-                       Add new categories and rarities to this grimoire.
+                       {t('Add new categories and rarities to this grimoire.')}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-8 max-h-[60vh] overflow-y-auto pr-4">
                   {/* Category Management */}
                   <div className='space-y-4'>
-                    <h4 className='font-headline text-lg flex items-center gap-2'><Tags className='h-5 w-5 text-primary'/> Categories</h4>
+                    <h4 className='font-headline text-lg flex items-center gap-2'><Tags className='h-5 w-5 text-primary'/> {t('Categories')}</h4>
                     <div className='space-y-2'>
-                        <Label htmlFor='new-category'>Add New Category</Label>
+                        <Label htmlFor='new-category'>{t('Add New Category')}</Label>
                         <div className='flex gap-2'>
-                            <Input id="new-category" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="e.g. Potions, Herbs"/>
-                            <Button onClick={handleAddCategory}>Add</Button>
+                            <Input id="new-category" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder={t("e.g. Potions, Herbs")}/>
+                            <Button onClick={handleAddCategory}>{t('Add')}</Button>
                         </div>
                     </div>
                      <Table>
                         <TableHeader>
                             <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>{t('Name')}</TableHead>
+                            <TableHead className="text-right">{t('Actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -194,27 +195,27 @@ export function GrimoireGrid() {
 
                   {/* Rarity Management */}
                   <div className='space-y-4'>
-                    <h4 className='font-headline text-lg flex items-center gap-2'><Star className='h-5 w-5 text-primary'/> Rarities</h4>
+                    <h4 className='font-headline text-lg flex items-center gap-2'><Star className='h-5 w-5 text-primary'/> {t('Rarities')}</h4>
                      <div className='space-y-2'>
-                        <Label>Add New Rarity</Label>
+                        <Label>{t('Add New Rarity')}</Label>
                         <div className='flex gap-2 items-end'>
                             <div className='flex-grow'>
-                                <Label htmlFor='new-rarity-name' className='sr-only'>Rarity Name</Label>
-                                <Input id="new-rarity-name" value={newRarityName} onChange={(e) => setNewRarityName(e.target.value)} placeholder="e.g. Mythical"/>
+                                <Label htmlFor='new-rarity-name' className='sr-only'>{t('Rarity Name')}</Label>
+                                <Input id="new-rarity-name" value={newRarityName} onChange={(e) => setNewRarityName(e.target.value)} placeholder={t("e.g. Mythical")}/>
                             </div>
                              <div>
-                                <Label htmlFor='new-rarity-color' className='sr-only'>Rarity Color</Label>
+                                <Label htmlFor='new-rarity-color' className='sr-only'>{t('Rarity Color')}</Label>
                                 <Input id="new-rarity-color" type="color" value={newRarityColor} onChange={(e) => setNewRarityColor(e.target.value)} className="p-1 h-10 w-14"/>
                             </div>
-                            <Button onClick={handleAddRarity}>Add</Button>
+                            <Button onClick={handleAddRarity}>{t('Add')}</Button>
                         </div>
                     </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Color</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t('Color')}</TableHead>
+                                <TableHead>{t('Name')}</TableHead>
+                                <TableHead className="text-right">{t('Actions')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -234,7 +235,7 @@ export function GrimoireGrid() {
                   </div>
                 </div>
                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setManageOpen(false)}>Close</Button>
+                    <Button variant="outline" onClick={() => setManageOpen(false)}>{t('Close')}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -242,7 +243,7 @@ export function GrimoireGrid() {
       <div className="flex justify-end items-center mb-6">
           <Button onClick={() => setFormOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Grimoire
+              {t('Add Grimoire')}
           </Button>
       </div>
       
@@ -280,10 +281,10 @@ export function GrimoireGrid() {
           </div>
       ) : (
           <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
-              <p className="text-lg text-muted-foreground">You haven't added any grimoires yet.</p>
+              <p className="text-lg text-muted-foreground">{t("You haven't added any grimoires yet.")}</p>
               <Button onClick={() => setFormOpen(true)} className="mt-4">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Your First Grimoire
+                  {t('Add Your First Grimoire')}
               </Button>
           </div>
       )}

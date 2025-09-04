@@ -7,6 +7,7 @@ import { useAuth } from '@/context/auth-context';
 import { getCampaignById, getGrimoireById, updateCampaign } from '@/lib/data-service';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/context/i18n-context';
 
 import { Header } from '@/components/header';
 import { RecipeGrid } from '@/components/recipe-grid';
@@ -23,6 +24,7 @@ export default function CampaignPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
@@ -71,7 +73,7 @@ export default function CampaignPage() {
     await updateCampaign(updatedCampaign);
     setCampaign(updatedCampaign); // Update local state
     setIsSavingNotes(false);
-    toast({ title: 'Success', description: 'Session notes have been saved.' });
+    toast({ title: t('Success'), description: t('Session notes have been saved.') });
   };
 
   const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes'>) => {
@@ -84,7 +86,7 @@ export default function CampaignPage() {
         } else {
           setGrimoire(null);
         }
-        toast({ title: "Campaign Updated", description: "Your campaign details have been saved." });
+        toast({ title: t("Campaign Updated"), description: t("Your campaign details have been saved.") });
         setEditDialogOpen(false);
      });
   };
@@ -150,14 +152,14 @@ export default function CampaignPage() {
                   {isCreator && (
                       <Button variant="outline" onClick={() => setEditDialogOpen(true)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          Edit Campaign
+                          {t('Edit Campaign')}
                       </Button>
                   )}
               </div>
 
               {grimoire && (
                 <p className="text-muted-foreground mb-1">
-                  From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
+                  {t('From the {{grimoireName}} grimoire', { grimoireName: grimoire.name })}
                 </p>
               )}
               <p className="text-muted-foreground mb-8 max-w-3xl">{campaign.description}</p>
@@ -168,11 +170,11 @@ export default function CampaignPage() {
                     <RecipeGrid grimoireId={campaign.grimoireId} canEdit={isCreator} />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
-                      <h3 className="font-headline text-2xl">No Grimoire Linked</h3>
-                      <p className="text-muted-foreground">The Dungeon Master has not linked a recipe book to this campaign yet.</p>
+                      <h3 className="font-headline text-2xl">{t('No Grimoire Linked')}</h3>
+                      <p className="text-muted-foreground">{t('The Dungeon Master has not linked a recipe book to this campaign yet.')}</p>
                       {isCreator && (
                         <Button variant="secondary" className="mt-4" onClick={() => setEditDialogOpen(true)}>
-                            Link a Grimoire
+                            {t('Link a Grimoire')}
                         </Button>
                       )}
                     </div>
@@ -182,29 +184,29 @@ export default function CampaignPage() {
                   {isCreator ? (
                       <Card>
                           <CardHeader>
-                              <CardTitle className="font-headline">Session Notes</CardTitle>
-                              <CardDescription>Your private notes for the campaign. Only you can see and edit this.</CardDescription>
+                              <CardTitle className="font-headline">{t('Session Notes')}</CardTitle>
+                              <CardDescription>{t('Your private notes for the campaign. Only you can see and edit this.')}</CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                              <Label htmlFor="session-notes" className="sr-only">Session Notes</Label>
+                              <Label htmlFor="session-notes" className="sr-only">{t('Session Notes')}</Label>
                               <Textarea 
                                   id="session-notes"
-                                  placeholder="What happened in the last session? What clues did the party find? What are your plans for the next session?"
+                                  placeholder={t('What happened in the last session? What clues did the party find? What are your plans for the next session?')}
                                   value={sessionNotes}
                                   onChange={(e) => setSessionNotes(e.target.value)}
                                   className="min-h-[300px] text-base"
                               />
                               <Button onClick={handleSaveNotes} disabled={isSavingNotes} className="w-full">
                                   <Save className="mr-2 h-4 w-4" />
-                                  {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                                  {isSavingNotes ? t('Saving...') : t('Save Notes')}
                               </Button>
                           </CardContent>
                       </Card>
                   ) : campaign.sessionNotes ? (
                        <Card className="bg-card/50 border-dashed">
                           <CardHeader>
-                              <CardTitle className="font-headline">DM's Campaign Log</CardTitle>
-                               <CardDescription>A summary of events from your Dungeon Master.</CardDescription>
+                              <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
+                               <CardDescription>{t('A summary of events from your Dungeon Master.')}</CardDescription>
                           </CardHeader>
                           <CardContent>
                               <p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>
@@ -213,11 +215,11 @@ export default function CampaignPage() {
                   ) : (
                      <Card className="bg-card/50 border-dashed">
                           <CardHeader>
-                              <CardTitle className="font-headline">DM's Campaign Log</CardTitle>
-                               <CardDescription>A summary of events from your Dungeon Master.</CardDescription>
+                              <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
+                               <CardDescription>{t('A summary of events from your Dungeon Master.')}</CardDescription>
                           </CardHeader>
                           <CardContent>
-                              <p className="text-muted-foreground italic">The log is currently empty.</p>
+                              <p className="text-muted-foreground italic">{t('The log is currently empty.')}</p>
                           </CardContent>
                       </Card>
                   )}

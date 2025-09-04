@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, Upload } from 'lucide-react';
-
+import { useI18n } from '@/context/i18n-context';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const router = useRouter();
   const { login, user, loading } = useAuth();
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -52,17 +53,17 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
        <div className="flex items-center gap-4 mb-8">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-12 w-12 text-primary"><path d="M12 2a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V11a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5zM9 7a3 3 0 0 1 6 0v2H9V7zm-2 6v2h4v-2H7z"/></svg>
-        <h1 className="font-headline text-4xl font-bold text-primary">D&D Tavern Keeper</h1>
+        <h1 className="font-headline text-4xl font-bold text-primary">{t('Tavern Keeper')}</h1>
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Welcome, Traveler</CardTitle>
-          <CardDescription>What name do you go by in these parts, and what is your role?</CardDescription>
+          <CardTitle className="font-headline text-2xl">{t('Welcome, Traveler')}</CardTitle>
+          <CardDescription>{t('What name do you go by in these parts, and what is your role?')}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Profile Picture</Label>
+              <Label>{t('Profile Picture')}</Label>
               <div className="flex items-center gap-4">
                  <Avatar className="h-16 w-16">
                     <AvatarImage src={avatarPreview ?? undefined} alt="Avatar Preview" />
@@ -72,7 +73,7 @@ export default function LoginPage() {
                 </Avatar>
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload Image
+                    {t('Upload Image')}
                 </Button>
                 <input 
                     type="file" 
@@ -84,11 +85,11 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t('Username')}</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="e.g. Elminster"
+                placeholder={t('e.g. Elminster')}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -96,21 +97,21 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-                <Label>Role</Label>
+                <Label>{t('Role')}</Label>
                 <RadioGroup defaultValue="player" value={role} onValueChange={(value: 'player' | 'dm') => setRole(value)} className="flex gap-4 pt-1">
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="player" id="player" />
-                        <Label htmlFor="player" className="font-normal">Player</Label>
+                        <Label htmlFor="player" className="font-normal">{t('Player')}</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="dm" id="dm" />
-                        <Label htmlFor="dm" className="font-normal">Dungeon Master</Label>
+                        <Label htmlFor="dm" className="font-normal">{t('Dungeon Master')}</Label>
                     </div>
                 </RadioGroup>
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full">Enter the Tavern</Button>
+            <Button type="submit" className="w-full">{t('Enter the Tavern')}</Button>
           </CardFooter>
         </form>
       </Card>
