@@ -59,7 +59,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
   const { user } = useAuth();
   const { t } = useI18n();
   const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
-  const [linkedGrimoire, setLinkedGrimoire] = useState<Grimoire | null>(null);
+  const [currentGrimoire, setCurrentGrimoire] = useState<Grimoire | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPermissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
@@ -81,9 +81,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
   
   useEffect(() => {
     if(grimoireId) {
-      getGrimoireById(grimoireId).then(setLinkedGrimoire);
+      getGrimoireById(grimoireId).then(setCurrentGrimoire);
     } else {
-      setLinkedGrimoire(null);
+      setCurrentGrimoire(null);
     }
   }, [grimoireId]);
 
@@ -102,7 +102,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     } else if (!isOpen) {
       form.reset();
       setImagePreview(null);
-      setLinkedGrimoire(null);
+      setCurrentGrimoire(null);
     }
   }, [campaign, isOpen, form]);
 
@@ -198,7 +198,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
           onOpenChange={setPermissionsDialogOpen}
           username={managingUser}
           campaign={campaign}
-          grimoire={linkedGrimoire}
+          grimoire={currentGrimoire}
           onSave={handleSavePermissions}
        />
     )}
@@ -251,7 +251,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
             <FormField
               control={form.control}
               name="image"
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('Header Image')}</FormLabel>
                    <FormControl>
