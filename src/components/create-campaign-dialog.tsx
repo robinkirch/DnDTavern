@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { mockGrimoires } from '@/lib/mock-data';
+import { getGrimoiresByUsername } from '@/lib/data-service';
 import { useAuth } from '@/context/auth-context';
+import type { Grimoire } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -50,6 +52,8 @@ interface CreateCampaignDialogProps {
 
 export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateCampaignDialogProps) {
   const { user } = useAuth();
+  const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,6 +64,12 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
     },
   });
 
+  useEffect(() => {
+    if (user && user.role === 'dm') {
+      getGrimoiresByUsername(user.username).then(setUserGrimoires);
+    }
+  }, [user]);
+
   function onSubmit(values: FormData) {
     const invitedUsernames = values.invitedUsernames
       ? values.invitedUsernames.split(',').map(u => u.trim()).filter(Boolean)
@@ -68,8 +78,6 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
     onCreate({ ...values, invitedUsernames, grimoireId: values.grimoireId === "null" ? null : values.grimoireId });
     form.reset();
   }
-
-  const userGrimoires = user ? mockGrimoires.filter(g => g.creatorUsername === user.username) : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {

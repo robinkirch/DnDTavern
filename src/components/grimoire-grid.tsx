@@ -1,76 +1,54 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Grimoire } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { mockGrimoires } from '@/lib/mock-data';
+import { getGrimoiresByUsername, createGrimoire, deleteGrimoire } from '@/lib/data-service';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, DatabaseZap } from 'lucide-react';
 import { RecipeGrid } from './recipe-grid';
 import { GrimoireFormDialog } from './grimoire-form-dialog';
+import { Skeleton } from './ui/skeleton';
 
 
 export function GrimoireGrid() {
   const { user } = useAuth();
-  const [grimoires, setGrimoires] = useState<Grimoire[]>(() => {
-    if (!user) return [];
-    return mockGrimoires.filter(g => g.creatorUsername === user.username);
-  });
+  const [grimoires, setGrimoires] = useState<Grimoire[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [isFormOpen, setFormOpen] = useState(false);
-  const [editingGrimoire, setEditingGrimoire] = useState<Grimoire | null>(null);
 
-  const handleCreate = () => {
-    setEditingGrimoire(null);
-    setFormOpen(true);
-  };
+  useEffect(() => {
+    if (user) {
+      getGrimoiresByUsername(user.username).then(data => {
+        setGrimoires(data);
+        setIsLoading(false);
+      });
+    }
+  }, [user]);
 
-  const handleEdit = (grimoire: Grimoire) => {
-    setEditingGrimoire(grimoire);
-    setFormOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this grimoire and all its contents? This cannot be undone.')) {
-      const updatedGrimoires = grimoires.filter(g => g.id !== id);
-      setGrimoires(updatedGrimoires);
-      // Also update mock data source
-      const index = mockGrimoires.findIndex(g => g.id === id);
-      if (index !== -1) mockGrimoires.splice(index, 1);
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to remove this data source? This does not delete the data itself.')) {
+      await deleteGrimoire(id);
+      setGrimoires(grimoires.filter(g => g.id !== id));
     }
   };
 
-  const handleSave = (savedData: { name: string; description: string }) => {
+  const handleSave = async (id: string) => {
     if (!user) return;
-    
-    if (editingGrimoire) {
-      // Update existing grimoire
-      const updatedGrimoires = grimoires.map(g => 
-        g.id === editingGrimoire.id ? { ...g, ...savedData } : g
-      );
-      setGrimoires(updatedGrimoires);
-      // Update mock data source
-      const index = mockGrimoires.findIndex(g => g.id === editingGrimoire.id);
-      if (index !== -1) {
-        mockGrimoires[index] = { ...mockGrimoires[index], ...savedData };
-      }
-    } else {
-      // Create new grimoire
-      const newGrimoire: Grimoire = {
-        id: savedData.name.toLowerCase().replace(/\s+/g, '-'),
-        name: savedData.name,
-        description: savedData.description,
-        creatorUsername: user.username,
-        recipes: [],
-        components: [],
-        categories: [],
-      };
-      setGrimoires([...grimoires, newGrimoire]);
-      // Update mock data source
-      mockGrimoires.push(newGrimoire);
-    }
+    const newGrimoire = await createGrimoire(id, user.username);
+    setGrimoires([...grimoires, newGrimoire]);
   };
+
+  if (isLoading) {
+    return (
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <Skeleton className="h-96 w-full" />
+         <Skeleton className="h-96 w-full" />
+       </div>
+    )
+  }
 
   return (
     <>
@@ -78,13 +56,12 @@ export function GrimoireGrid() {
         isOpen={isFormOpen}
         onOpenChange={setFormOpen}
         onSave={handleSave}
-        grimoire={editingGrimoire}
       />
 
       <div className="flex justify-end items-center mb-6">
-          <Button onClick={handleCreate}>
+          <Button onClick={() => setFormOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Create New Grimoire
+              Add Grimoire
           </Button>
       </div>
       
@@ -95,13 +72,13 @@ export function GrimoireGrid() {
                       <CardHeader>
                           <div className='flex justify-between items-start'>
                             <div>
-                               <CardTitle className="font-headline text-2xl mb-2">{grimoire.name}</CardTitle>
+                               <CardTitle className="font-headline text-2xl mb-2 flex items-center gap-3">
+                                <DatabaseZap className="h-6 w-6 text-primary" />
+                                {grimoire.name}
+                               </CardTitle>
                                 <CardDescription>{grimoire.description}</CardDescription>
                             </div>
                             <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(grimoire)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(grimoire.id)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -119,10 +96,10 @@ export function GrimoireGrid() {
           </div>
       ) : (
           <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
-              <p className="text-lg text-muted-foreground">You haven't created any grimoires yet.</p>
-              <Button onClick={handleCreate} className="mt-4">
+              <p className="text-lg text-muted-foreground">You haven't added any grimoires yet.</p>
+              <Button onClick={() => setFormOpen(true)} className="mt-4">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Create Your First Grimoire
+                  Add Your First Grimoire
               </Button>
           </div>
       )}

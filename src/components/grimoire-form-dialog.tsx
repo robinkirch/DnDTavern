@@ -24,11 +24,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
-  name: z.string().min(3, 'Grimoire name must be at least 3 characters.'),
-  description: z.string().min(10, 'Description must be at least 10 characters.'),
+  id: z.string().min(3, 'Data Source ID must be at least 3 characters.'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -36,29 +34,23 @@ type FormData = z.infer<typeof formSchema>;
 interface GrimoireFormDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (data: { name: string; description: string }) => void;
-    grimoire?: Grimoire | null;
+    onSave: (id: string) => void;
 }
 
-export function GrimoireFormDialog({ isOpen, onOpenChange, onSave, grimoire }: GrimoireFormDialogProps) {
+export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFormDialogProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      id: '',
     },
   });
 
   useEffect(() => {
-    if (grimoire) {
-      form.reset(grimoire);
-    } else {
-      form.reset({ name: '', description: '' });
-    }
-  }, [grimoire, isOpen, form]);
+    form.reset({ id: '' });
+  }, [isOpen, form]);
 
   function onSubmit(values: FormData) {
-    onSave(values);
+    onSave(values.id);
     onOpenChange(false);
   }
 
@@ -66,38 +58,21 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave, grimoire }: G
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">{grimoire ? 'Edit Grimoire' : 'Create New Grimoire'}</DialogTitle>
+          <DialogTitle className="font-headline">Add New Grimoire</DialogTitle>
           <DialogDescription>
-            {grimoire ? 'Update the details for this grimoire.' : 'A grimoire is a collection of recipes you can link to your campaigns.'}
+            Provide the identifier for your data source. This could be a database name or connection string identifier.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField
               control={form.control}
-              name="name"
+              name="id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Grimoire Name</FormLabel>
+                  <FormLabel>Data Source ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Elminster's Everyday Eats" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="A short, enticing description of this recipe collection."
-                      className="resize-none"
-                      {...field}
-                    />
+                    <Input placeholder="e.g., my-firestore-db" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,7 +80,7 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave, grimoire }: G
             />
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">{grimoire ? 'Save Changes' : 'Create Grimoire'}</Button>
+                <Button type="submit">Add Grimoire</Button>
             </DialogFooter>
           </form>
         </Form>

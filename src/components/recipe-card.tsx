@@ -10,11 +10,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { mockGrimoires } from '@/lib/mock-data'; // Need this to find component names
 
 interface RecipeCardProps {
     recipe: Recipe;
-    grimoireId: string;
+    grimoire: Grimoire;
     canEdit: boolean;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
@@ -34,8 +33,7 @@ const rarityColors: { [key: string]: string } = {
     Legendary: 'bg-primary text-primary-foreground hover:bg-primary/90',
 };
 
-export function RecipeCard({ recipe, grimoireId, canEdit, onEdit, onDelete }: RecipeCardProps) {
-    const grimoire = mockGrimoires.find(g => g.id === grimoireId);
+export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: RecipeCardProps) {
     const category = grimoire?.categories.find(c => c.id === recipe.categoryId);
 
     const getComponentName = (componentId: string) => {

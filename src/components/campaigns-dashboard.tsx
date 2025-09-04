@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/context/auth-context';
-import { mockCampaigns as initialCampaigns } from '@/lib/mock-data';
+import { createCampaign, getCampaignsForUser } from '@/lib/data-service';
 import type { Campaign } from '@/lib/types';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,39 +15,54 @@ import { Badge } from './ui/badge';
 import { CreateCampaignDialog } from './create-campaign-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GrimoireGrid } from './grimoire-grid';
+import { Skeleton } from './ui/skeleton';
 
 export default function CampaignsDashboard() {
   const { user } = useAuth();
-  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
-    if (!user) return [];
-    // This will be replaced by a real data fetch
-    return initialCampaigns.filter(
-      (c) => c.creatorUsername === user.username || c.invitedUsernames.includes(user.username)
-    );
-  });
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const handleCreateCampaign = (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' >) => {
+  useEffect(() => {
+    if (user) {
+      getCampaignsForUser(user).then(data => {
+        setCampaigns(data);
+        setIsLoading(false);
+      });
+    }
+  }, [user]);
+
+  const handleCreateCampaign = async (newCampaignData: Omit<Campaign, 'id' | 'creatorUsername' | 'image' >) => {
     if (!user) return;
     
-    const newCampaign: Campaign = {
-      id: newCampaignData.name.toLowerCase().replace(/\s+/g, '-'),
+    const newCampaign = await createCampaign({
       ...newCampaignData,
       creatorUsername: user.username,
-      image: `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 1000)}`,
-    };
+    });
 
     setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
-    // Also update the mock data source so it persists across navigations
-    initialCampaigns.push(newCampaign);
     setCreateDialogOpen(false);
   };
 
-  const userCampaigns = user
-    ? campaigns.filter(
-        (c) => c.creatorUsername === user.username || c.invitedUsernames.includes(user.username)
-      )
-    : [];
+  if (isLoading) {
+    return (
+        <div className="container py-8">
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <Skeleton className="h-10 w-72 mb-2" />
+                    <Skeleton className="h-6 w-96" />
+                </div>
+                <Skeleton className="h-10 w-36" />
+            </div>
+            <Skeleton className="h-10 w-[400px] mb-6" />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <Skeleton className="h-80 w-full rounded-lg" />
+                <Skeleton className="h-80 w-full rounded-lg" />
+                <Skeleton className="h-80 w-full rounded-lg" />
+            </div>
+        </div>
+    );
+  }
 
   return (
     <>
@@ -82,9 +97,9 @@ export default function CampaignsDashboard() {
                 </TabsTrigger>
             </TabsList>
             <TabsContent value="campaigns" className='py-6'>
-                {userCampaigns.length > 0 ? (
+                {campaigns.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {userCampaigns.map((campaign) => (
+                    {campaigns.map((campaign) => (
                     <Card key={campaign.id} className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                         <CardHeader className="relative p-0 h-48 w-full">
                         <Image

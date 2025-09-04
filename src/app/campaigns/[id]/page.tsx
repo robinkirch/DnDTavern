@@ -3,7 +3,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/context/auth-context';
-import { mockCampaigns, mockGrimoires } from '@/lib/mock-data';
+import { getCampaignById, getGrimoireById } from '@/lib/data-service';
 import type { Campaign, Grimoire } from '@/lib/types';
 
 import { Header } from '@/components/header';
@@ -26,30 +26,30 @@ export default function CampaignPage() {
   }, [user, authLoading, router]);
   
   useEffect(() => {
-    const campaignId = params.id;
-    const foundCampaign = mockCampaigns.find(c => c.id === campaignId);
-
-    if (foundCampaign) {
-        const isInvited = foundCampaign.invitedUsernames.includes(user?.username || '');
-        const isCreator = foundCampaign.creatorUsername === user?.username;
-        
-        if (user && (isCreator || isInvited)) {
-            setCampaign(foundCampaign);
-            if (foundCampaign.grimoireId) {
-                const foundGrimoire = mockGrimoires.find(g => g.id === foundCampaign.grimoireId);
-                setGrimoire(foundGrimoire || null);
+    const campaignId = params.id as string;
+    if (user && campaignId) {
+      getCampaignById(campaignId).then(foundCampaign => {
+        if (foundCampaign) {
+            const isInvited = foundCampaign.invitedUsernames.includes(user.username);
+            const isCreator = foundCampaign.creatorUsername === user.username;
+            
+            if (isCreator || isInvited) {
+                setCampaign(foundCampaign);
+                if (foundCampaign.grimoireId) {
+                    getGrimoireById(foundCampaign.grimoireId).then(setGrimoire);
+                }
+            } else {
+                router.push('/'); // Not authorized for this campaign
             }
-        } else if (user) {
-            router.push('/'); // Not authorized for this campaign
         }
-    }
-    
-    if(!authLoading) {
+        setLoading(false);
+      });
+    } else if (!authLoading) {
         setLoading(false);
     }
   }, [params.id, router, user, authLoading]);
 
-  if (loading || authLoading || !campaign || !grimoire) {
+  if (loading || authLoading || !campaign) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -68,19 +68,29 @@ export default function CampaignPage() {
   }
 
   const isDM = user?.role === 'dm';
-  // A DM can edit the grimoire if they created it, even if they aren't the campaign creator.
-  const canEditGrimoire = isDM && grimoire.creatorUsername === user.username;
+  // A DM can edit the grimoire if they created it.
+  const canEditGrimoire = !!(isDM && grimoire && grimoire.creatorUsername === user.username);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="container py-8">
         <h1 className="font-headline text-4xl font-bold mb-2">{campaign.name}</h1>
-        <p className="text-muted-foreground mb-1">
-          From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
-        </p>
+        {grimoire && (
+          <p className="text-muted-foreground mb-1">
+            From the <span className='font-semibold text-primary'>{grimoire.name}</span> grimoire
+          </p>
+        )}
         <p className="text-muted-foreground mb-8 max-w-2xl">{campaign.description}</p>
-        <RecipeGrid grimoireId={grimoire.id} canEdit={canEditGrimoire} />
+        
+        {campaign.grimoireId ? (
+          <RecipeGrid grimoireId={campaign.grimoireId} canEdit={canEditGrimoire} />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
+            <h3 className="font-headline text-2xl">No Grimoire Linked</h3>
+            <p className="text-muted-foreground">The Dungeon Master has not linked a recipe book to this campaign yet.</p>
+          </div>
+        )}
       </main>
     </div>
   );

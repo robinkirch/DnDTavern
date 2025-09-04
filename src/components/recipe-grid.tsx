@@ -1,12 +1,13 @@
 'use client';
-import { useState, useMemo } from 'react';
-import type { Recipe } from '@/lib/types';
+import { useState, useMemo, useEffect } from 'react';
+import type { Recipe, Grimoire } from '@/lib/types';
 import { RecipeCard } from './recipe-card';
 import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { RecipeFormDialog } from './recipe-form-dialog';
-import { mockGrimoires } from '@/lib/mock-data'; 
+import { getGrimoireById, saveRecipe, deleteRecipe } from '@/lib/data-service'; 
+import { Skeleton } from './ui/skeleton';
 
 interface RecipeGridProps {
   grimoireId: string;
@@ -14,25 +15,31 @@ interface RecipeGridProps {
 }
 
 export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
-  const grimoire = useMemo(() => mockGrimoires.find(g => g.id === grimoireId), [grimoireId]);
-  
-  const [recipes, setRecipes] = useState(grimoire?.recipes || []);
+  const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+
+  useEffect(() => {
+    getGrimoireById(grimoireId).then(data => {
+      setGrimoire(data);
+      setIsLoading(false);
+    });
+  }, [grimoireId]);
 
   const getComponentName = (componentId: string) => {
     return grimoire?.components.find(c => c.id === componentId)?.name.toLowerCase() || '';
   };
 
-  const filteredRecipes = recipes.filter(recipe => {
+  const filteredRecipes = grimoire?.recipes.filter(recipe => {
     const term = searchTerm.toLowerCase();
     return (
       recipe.name.toLowerCase().includes(term) ||
       recipe.description.toLowerCase().includes(term) ||
       recipe.components.some(c => getComponentName(c.componentId).includes(term))
     );
-  });
+  }) || [];
   
   const handleAddRecipe = () => {
     setEditingRecipe(null);
@@ -40,42 +47,49 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
   };
 
   const handleEditRecipe = (id: string) => {
-    const recipeToEdit = recipes.find(r => r.id === id);
+    const recipeToEdit = grimoire?.recipes.find(r => r.id === id);
     if(recipeToEdit) {
         setEditingRecipe(recipeToEdit);
         setFormOpen(true);
     }
   };
 
-  const handleDeleteRecipe = (id: string) => {
+  const handleDeleteRecipe = async (id: string) => {
     if(confirm('Are you sure you want to delete this recipe? This cannot be undone.')) {
-        const updatedRecipes = recipes.filter(r => r.id !== id);
-        setRecipes(updatedRecipes);
-        
-        const grimoireIndex = mockGrimoires.findIndex(g => g.id === grimoireId);
-        if (grimoireIndex !== -1) {
-            mockGrimoires[grimoireIndex].recipes = updatedRecipes;
+        await deleteRecipe(grimoireId, id);
+        if (grimoire) {
+          const updatedRecipes = grimoire.recipes.filter(r => r.id !== id);
+          setGrimoire({ ...grimoire, recipes: updatedRecipes });
         }
     }
   };
 
-  const handleSaveRecipe = (savedRecipe: Recipe) => {
-    let updatedRecipes;
-    if (editingRecipe) {
-      updatedRecipes = recipes.map(r => (r.id === savedRecipe.id ? savedRecipe : r));
-    } else {
-      updatedRecipes = [...recipes, savedRecipe];
-    }
-    setRecipes(updatedRecipes);
-
-    const grimoireIndex = mockGrimoires.findIndex(g => g.id === grimoireId);
-    if (grimoireIndex !== -1) {
-        mockGrimoires[grimoireIndex].recipes = updatedRecipes;
+  const handleSaveRecipe = async (savedRecipe: Recipe) => {
+    await saveRecipe(grimoireId, savedRecipe);
+    if (grimoire) {
+      const existingIndex = grimoire.recipes.findIndex(r => r.id === savedRecipe.id);
+      let updatedRecipes;
+      if (existingIndex !== -1) {
+        updatedRecipes = grimoire.recipes.map(r => r.id === savedRecipe.id ? savedRecipe : r);
+      } else {
+        updatedRecipes = [...grimoire.recipes, savedRecipe];
+      }
+      setGrimoire({ ...grimoire, recipes: updatedRecipes });
     }
 
     setFormOpen(false);
     setEditingRecipe(null);
   };
+
+  if (isLoading) {
+    return (
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         <Skeleton className="h-96 rounded-lg" />
+         <Skeleton className="h-96 rounded-lg" />
+         <Skeleton className="h-96 rounded-lg" />
+       </div>
+    )
+  }
 
   if (!grimoire) {
     return (
@@ -93,7 +107,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
         onOpenChange={setFormOpen}
         onSave={handleSaveRecipe}
         recipe={editingRecipe}
-        grimoireId={grimoireId}
+        grimoire={grimoire}
       />
       <div>
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
@@ -117,7 +131,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
         {filteredRecipes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} grimoireId={grimoireId} canEdit={canEdit} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} grimoire={grimoire} canEdit={canEdit} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
             ))}
           </div>
         ) : (

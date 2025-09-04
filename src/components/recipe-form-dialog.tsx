@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Recipe } from '@/lib/types';
+import type { Recipe, Grimoire } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { mockGrimoires } from '@/lib/mock-data';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Recipe name must be at least 3 characters.'),
@@ -54,12 +53,10 @@ interface RecipeFormDialogProps {
   onOpenChange: (isOpen: boolean) => void;
   onSave: (recipe: Recipe) => void;
   recipe?: Recipe | null;
-  grimoireId: string;
+  grimoire: Grimoire;
 }
 
-export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoireId }: RecipeFormDialogProps) {
-  const grimoire = useMemo(() => mockGrimoires.find(g => g.id === grimoireId), [grimoireId]);
-
+export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoire }: RecipeFormDialogProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
@@ -275,7 +272,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                 <FormItem>
                   <FormLabel>Instructions</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="1. Mix the things.&#10;2. Cook the things.&#10;3. Serve the things." className="min-h-[120px]" {...field} />
+                    <Textarea placeholder="1. Mix the things.
+2. Cook the things.
+3. Serve the things." className="min-h-[120px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
