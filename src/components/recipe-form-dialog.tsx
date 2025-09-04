@@ -17,7 +17,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -71,21 +70,23 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
   });
 
   useEffect(() => {
-    if (recipe) {
-      form.reset({
-        ...recipe,
-        secretDescription: recipe.secretDescription || '',
-      });
-    } else {
-      form.reset({
-        name: '',
-        description: '',
-        secretDescription: '',
-        categoryId: grimoire?.categories[0]?.id || '',
-        rarity: 'Common',
-        components: [{ componentId: '', quantity: '' }],
-        instructions: '',
-      });
+    if (grimoire) {
+        if (recipe) {
+          form.reset({
+            ...recipe,
+            secretDescription: recipe.secretDescription || '',
+          });
+        } else {
+          form.reset({
+            name: '',
+            description: '',
+            secretDescription: '',
+            categoryId: grimoire?.categories[0]?.id || '',
+            rarity: 'Common',
+            components: [{ componentId: '', quantity: '' }],
+            instructions: '',
+          });
+        }
     }
   }, [recipe, isOpen, form, grimoire]);
 
