@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import type { Grimoire, Category, Rarity } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, saveRarity } from '@/lib/data-service';
+import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, saveRarity, deleteCategory, deleteRarity } from '@/lib/data-service';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,16 +48,16 @@ export function GrimoireGrid() {
     }
   }, [user]);
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteGrimoire = async (id: string) => {
     if (confirm('Are you sure you want to remove this data source? This does not delete the data itself.')) {
       await deleteGrimoire(id);
       setGrimoires(grimoires.filter(g => g.id !== id));
     }
   };
 
-  const handleSave = async (id: string) => {
+  const handleSaveGrimoire = async (id: string, name: string) => {
     if (!user) return;
-    const newGrimoire = await createGrimoire(id, user.username);
+    const newGrimoire = await createGrimoire(id, name, user.username);
     setGrimoires([...grimoires, newGrimoire]);
   };
   
@@ -71,7 +71,8 @@ export function GrimoireGrid() {
     
     const newCategory: Category = {
         id: `cat-${newCategoryName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-        name: newCategoryName.trim()
+        name: newCategoryName.trim(),
+        isDeletable: true
     };
 
     const updatedCategories = [...managingGrimoire.categories, newCategory];
@@ -85,13 +86,28 @@ export function GrimoireGrid() {
     toast({title: "Category Added", description: `"${newCategory.name}" has been added.`});
   };
 
+   const handleDeleteCategory = async (categoryId: string) => {
+    if (!managingGrimoire) return;
+    if (confirm('Are you sure you want to delete this category?')) {
+      const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
+      const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
+
+      await deleteCategory(managingGrimoire.id, categoryId);
+
+      setManagingGrimoire(updatedGrimoire);
+      setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+      toast({ title: 'Category Deleted' });
+    }
+  };
+
   const handleAddRarity = async () => {
     if (!managingGrimoire || !newRarityName.trim()) return;
 
     const newRarity: Rarity = {
         id: `rarity-${newRarityName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
         name: newRarityName.trim(),
-        color: newRarityColor
+        color: newRarityColor,
+        isDeletable: true
     };
     
     const updatedRarities = [...managingGrimoire.rarities, newRarity];
@@ -105,6 +121,21 @@ export function GrimoireGrid() {
     setNewRarityColor('#6b7280');
     toast({title: "Rarity Added", description: `"${newRarity.name}" has been added.`});
   };
+
+  const handleDeleteRarity = async (rarityId: string) => {
+    if (!managingGrimoire) return;
+    if (confirm('Are you sure you want to delete this rarity?')) {
+      const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
+      const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
+
+      await deleteRarity(managingGrimoire.id, rarityId);
+
+      setManagingGrimoire(updatedGrimoire);
+      setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+      toast({ title: 'Rarity Deleted' });
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -120,7 +151,7 @@ export function GrimoireGrid() {
       <GrimoireFormDialog
         isOpen={isFormOpen}
         onOpenChange={setFormOpen}
-        onSave={handleSave}
+        onSave={handleSaveGrimoire}
       />
       
        <Dialog open={isManageOpen} onOpenChange={setManageOpen}>
@@ -146,14 +177,20 @@ export function GrimoireGrid() {
                         <TableHeader>
                             <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>ID</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {managingGrimoire?.categories.map(cat => (
                                 <TableRow key={cat.id}>
                                     <TableCell className="font-medium">{cat.name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{cat.id}</TableCell>
+                                    <TableCell className="text-right">
+                                        {cat.isDeletable && (
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteCategory(cat.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -182,7 +219,7 @@ export function GrimoireGrid() {
                             <TableRow>
                                 <TableHead>Color</TableHead>
                                 <TableHead>Name</TableHead>
-                                <TableHead>ID</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -190,7 +227,13 @@ export function GrimoireGrid() {
                                 <TableRow key={rarity.id}>
                                     <TableCell><div className='h-5 w-5 rounded-full border' style={{backgroundColor: rarity.color}} /></TableCell>
                                     <TableCell className="font-medium">{rarity.name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{rarity.id}</TableCell>
+                                    <TableCell className="text-right">
+                                        {rarity.isDeletable && (
+                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteRarity(rarity.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -227,7 +270,7 @@ export function GrimoireGrid() {
                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenManageDialog(grimoire)}>
                                     <Settings className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(grimoire.id)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteGrimoire(grimoire.id)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>

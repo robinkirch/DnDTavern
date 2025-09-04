@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 
 const formSchema = z.object({
   id: z.string().min(3, 'Data Source ID must be at least 3 characters.'),
+  name: z.string().min(3, 'Grimoire Name must be at least 3 characters.')
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -34,7 +35,7 @@ type FormData = z.infer<typeof formSchema>;
 interface GrimoireFormDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (id: string) => void;
+    onSave: (id: string, name: string) => void;
 }
 
 export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFormDialogProps) {
@@ -42,17 +43,18 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       id: '',
+      name: '',
     },
   });
 
   useEffect(() => {
     if (isOpen) {
-      form.reset({ id: '' });
+      form.reset({ id: '', name: '' });
     }
   }, [isOpen, form]);
 
   function onSubmit(values: FormData) {
-    onSave(values.id);
+    onSave(values.id, values.name);
     onOpenChange(false);
   }
 
@@ -62,11 +64,24 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFor
         <DialogHeader>
           <DialogTitle className="font-headline">Add New Grimoire</DialogTitle>
           <DialogDescription>
-            Provide the identifier for your data source. This could be a database name or connection string identifier.
+            Provide a unique ID for your data source and a display name for your Grimoire.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+             <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grimoire Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Volo's Vile Brews" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="id"

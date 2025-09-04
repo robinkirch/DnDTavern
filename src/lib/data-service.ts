@@ -57,17 +57,17 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         name: 'Elminster\'s Everyday Eats',
         description: 'A collection of recipes found in a sentient, and very hungry, spellbook.',
         categories: [
-          { id: 'cat-potion', name: 'Potions' },
-          { id: 'cat-meal', name: 'Meals' },
-          { id: 'cat-snack', name: 'Snacks' },
-          { id: 'cat-drink', name: 'Drinks' },
-          { id: 'cat-base', name: 'Ingredients' },
+          { id: 'cat-potion', name: 'Potions', isDeletable: false },
+          { id: 'cat-meal', name: 'Meals', isDeletable: false },
+          { id: 'cat-snack', name: 'Snacks', isDeletable: false },
+          { id: 'cat-drink', name: 'Drinks', isDeletable: false },
+          { id: 'cat-base', name: 'Ingredients', isDeletable: false },
         ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
-            { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
-            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: false },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a', isDeletable: false },
+            { id: 'rarity-rare', name: 'Rare', color: '#2563eb', isDeletable: false },
+            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3', isDeletable: false },
         ],
         recipes: [
              // Base ingredients are now recipes without components
@@ -105,6 +105,7 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                   { recipeId: 'comp-cave-mushroom', quantity: '1 cup, sliced' },
                   { recipeId: 'comp-dwarven-cheese', quantity: '1/2 cup, grated' },
                 ],
+                image: 'https://picsum.photos/400/300?random=11'
             },
         ],
     },
@@ -114,12 +115,12 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         name: 'Volo\'s Vile Brews',
         description: 'Brews and concoctions from the famed (and often embellished) world traveler, Volothamp Geddarm.',
         categories: [
-          { id: 'cat-drink', name: 'Drinks' },
-          { id: 'cat-snack', name: 'Snacks' },
-          { id: 'cat-base', name: 'Ingredients' },
+          { id: 'cat-drink', name: 'Drinks', isDeletable: false },
+          { id: 'cat-snack', name: 'Snacks', isDeletable: true },
+          { id: 'cat-base', name: 'Ingredients', isDeletable: false },
         ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: false },
         ],
         recipes: [
             { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
@@ -136,6 +137,7 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                     { recipeId: 'comp-grog', quantity: '1 mug' },
                     { recipeId: 'comp-kobold-spice', quantity: '1 pinch' },
                 ],
+                 image: 'https://picsum.photos/400/300?random=12'
             },
         ],
     }
@@ -206,7 +208,7 @@ export async function getGrimoireById(id: string): Promise<Grimoire | null> {
     return grimoire;
 }
 
-export async function createGrimoire(id: string, creatorUsername: string): Promise<Grimoire> {
+export async function createGrimoire(id: string, name: string, creatorUsername: string): Promise<Grimoire> {
     console.log(`Attempting to add grimoire with source "${id}"...`);
     
     // DEVELOPER: This is the critical point for connecting to a real data source.
@@ -228,14 +230,15 @@ export async function createGrimoire(id: string, creatorUsername: string): Promi
     const newGrimoire: Grimoire = {
         id: id,
         creatorUsername: creatorUsername,
-        name: `Grimoire of ${id}`,
+        name: name,
         description: `A newly discovered collection of recipes from the source '${id}'.`,
-        categories: [{ id: 'cat-base', name: 'Ingredients' }],
+        categories: [
+            { id: 'cat-base', name: 'Ingredients', isDeletable: false },
+            { id: 'cat-new-cat', name: 'My new Category', isDeletable: true },
+        ],
         rarities: [
-            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
-            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
-            { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
-            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
+            { id: 'rarity-common', name: 'Common', color: '#6b7280', isDeletable: false },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a', isDeletable: false },
         ],
         recipes: []
     };
@@ -303,6 +306,22 @@ export async function saveCategory(grimoireId: string, category: Category): Prom
     return category;
 }
 
+export async function deleteCategory(grimoireId: string, categoryId: string): Promise<void> {
+    console.log(`Deleting category ${categoryId} from grimoire ${grimoireId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
+    if (!grimoire) throw new Error("Grimoire not found");
+
+    const categoryIndex = grimoire.categories.findIndex(c => c.id === categoryId);
+    if (categoryIndex !== -1) {
+        if (!grimoire.categories[categoryIndex].isDeletable) {
+            console.warn(`Attempted to delete non-deletable category: ${categoryId}`);
+            return; // Or throw an error
+        }
+        grimoire.categories.splice(categoryIndex, 1);
+    }
+}
+
 export async function saveRarity(grimoireId: string, rarity: Rarity): Promise<Rarity> {
     console.log(`Saving rarity to grimoire ${grimoireId}...`);
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -316,4 +335,20 @@ export async function saveRarity(grimoireId: string, rarity: Rarity): Promise<Ra
         grimoire.rarities.push(rarity);
     }
     return rarity;
+}
+
+export async function deleteRarity(grimoireId: string, rarityId: string): Promise<void> {
+    console.log(`Deleting rarity ${rarityId} from grimoire ${grimoireId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
+    if (!grimoire) throw new Error("Grimoire not found");
+
+    const rarityIndex = grimoire.rarities.findIndex(c => c.id === rarityId);
+    if (rarityIndex !== -1) {
+         if (!grimoire.rarities[rarityIndex].isDeletable) {
+            console.warn(`Attempted to delete non-deletable rarity: ${rarityId}`);
+            return; // Or throw an error
+        }
+        grimoire.rarities.splice(rarityIndex, 1);
+    }
 }
