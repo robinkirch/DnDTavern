@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import type { Grimoire, Category, Rarity } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, deleteCategory, saveRarity, deleteRarity } from '@/lib/data-service';
+import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, deleteCategory, saveRarity, deleteRarity, clearCategories, clearRarities } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,15 +89,26 @@ export function GrimoireGrid() {
 
    const handleDeleteCategory = async (categoryId: string) => {
     if (!managingGrimoire) return;
-    if (confirm(t('Are you sure you want to delete this category?'))) {
-        await deleteCategory(managingGrimoire.id, categoryId);
+    
+    await deleteCategory(managingGrimoire.id, categoryId);
 
-        const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
-        const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
+    const updatedCategories = managingGrimoire.categories.filter(c => c.id !== categoryId);
+    const updatedGrimoire = { ...managingGrimoire, categories: updatedCategories };
 
-        setManagingGrimoire(updatedGrimoire);
-        setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-        toast({ title: t('Category Deleted') });
+    setManagingGrimoire(updatedGrimoire);
+    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+    toast({ title: t('Category Deleted') });
+    
+  };
+
+  const handleClearCategories = async () => {
+    if (!managingGrimoire) return;
+    if (confirm(t('Are you sure you want to delete all categories?'))) {
+      await clearCategories(managingGrimoire.id);
+      const updatedGrimoire = { ...managingGrimoire, categories: [] };
+      setManagingGrimoire(updatedGrimoire);
+      setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+      toast({ title: t('All Categories Deleted') });
     }
   };
 
@@ -124,15 +135,25 @@ export function GrimoireGrid() {
 
   const handleDeleteRarity = async (rarityId: string) => {
     if (!managingGrimoire) return;
-    if (confirm(t('Are you sure you want to delete this rarity?'))) {
-        await deleteRarity(managingGrimoire.id, rarityId);
+    
+    await deleteRarity(managingGrimoire.id, rarityId);
 
-        const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
-        const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
+    const updatedRarities = managingGrimoire.rarities.filter(r => r.id !== rarityId);
+    const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
 
-        setManagingGrimoire(updatedGrimoire);
-        setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-        toast({ title: t('Rarity Deleted') });
+    setManagingGrimoire(updatedGrimoire);
+    setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+    toast({ title: t('Rarity Deleted') });
+  };
+  
+  const handleClearRarities = async () => {
+    if (!managingGrimoire) return;
+    if (confirm(t('Are you sure you want to delete all rarities?'))) {
+      await clearRarities(managingGrimoire.id);
+      const updatedGrimoire = { ...managingGrimoire, rarities: [] };
+      setManagingGrimoire(updatedGrimoire);
+      setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
+      toast({ title: t('All Rarities Deleted') });
     }
   };
 
@@ -165,7 +186,12 @@ export function GrimoireGrid() {
                 <div className="py-4 space-y-8 max-h-[60vh] overflow-y-auto pr-4">
                   {/* Category Management */}
                   <div className='space-y-4'>
-                    <h4 className='font-headline text-lg flex items-center gap-2'><Tags className='h-5 w-5 text-primary'/> {t('Categories')}</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className='font-headline text-lg flex items-center gap-2'><Tags className='h-5 w-5 text-primary'/> {t('Categories')}</h4>
+                      {managingGrimoire && managingGrimoire.categories.length > 0 && (
+                          <Button variant="destructive" size="sm" onClick={handleClearCategories}><Trash2 className='mr-2 h-4 w-4' /> {t('Delete All')}</Button>
+                      )}
+                    </div>
                     <div className='space-y-2'>
                         <Label htmlFor='new-category'>{t('Add New Category')}</Label>
                         <div className='flex gap-2'>
@@ -197,7 +223,12 @@ export function GrimoireGrid() {
 
                   {/* Rarity Management */}
                   <div className='space-y-4'>
-                    <h4 className='font-headline text-lg flex items-center gap-2'><Star className='h-5 w-5 text-primary'/> {t('Rarities')}</h4>
+                     <div className="flex justify-between items-center">
+                        <h4 className='font-headline text-lg flex items-center gap-2'><Star className='h-5 w-5 text-primary'/> {t('Rarities')}</h4>
+                        {managingGrimoire && managingGrimoire.rarities.length > 0 && (
+                          <Button variant="destructive" size="sm" onClick={handleClearRarities}><Trash2 className='mr-2 h-4 w-4' /> {t('Delete All')}</Button>
+                        )}
+                    </div>
                      <div className='space-y-2'>
                         <Label>{t('Add New Rarity')}</Label>
                         <div className='flex gap-2 items-end'>
@@ -207,7 +238,7 @@ export function GrimoireGrid() {
                             </div>
                             <div>
                                 <Label htmlFor="new-rarity-color" className='sr-only'>{t('Rarity Color')}</Label>
-                                <Input id="new-rarity-color" type="color" value={newRarityColor} onChange={(e) => setNewRarityColor(e.target.value)} className='p-1 h-10' />
+                                <Input id="new-rarity-color" type="color" value={newRarityColor} onChange={(e) => setNewRarityColor(e.target.value)} className='h-10 w-16 p-1' />
                             </div>
                             <Button onClick={handleAddRarity}>{t('Add')}</Button>
                         </div>

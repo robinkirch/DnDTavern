@@ -27,6 +27,18 @@ const STANDARD_RARITIES: Rarity[] = [
     { id: 'rarity-godly', name: 'Godly', color: '#ca8a04' },
 ];
 
+const STANDARD_CATEGORIES: Category[] = [
+    { id: 'cat-component', name: 'Component' },
+    { id: 'cat-recipe', name: 'Recipe' },
+    { id: 'cat-plant', name: 'Plant' },
+    { id: 'cat-food', name: 'Food' },
+    { id: 'cat-scroll', name: 'Scroll' },
+    { id: 'cat-ore', name: 'Ore' },
+    { id: 'cat-potion', name: 'Potion' },
+    { id: 'cat-arrow', name: 'Arrow' },
+    { id: 'cat-alchemie', name: 'Alchemie' },
+];
+
 
 const FAKE_DB_CAMPAIGNS: Campaign[] = [
   {
@@ -67,22 +79,16 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         creatorUsername: 'elminster',
         name: 'Elminster\'s Everyday Eats',
         description: 'A collection of recipes found in a sentient, and very hungry, spellbook.',
-        categories: [
-          { id: 'cat-potion', name: 'Potions' },
-          { id: 'cat-meal', name: 'Meals' },
-          { id: 'cat-snack', name: 'Snacks' },
-          { id: 'cat-drink', name: 'Drinks' },
-          { id: 'cat-base', name: 'Ingredients' },
-        ],
+        categories: STANDARD_CATEGORIES,
         rarities: STANDARD_RARITIES,
         recipes: [
              // Base ingredients are now recipes without components
-            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
-            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryId: 'cat-base', rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21' },
-            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22' },
-            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23' },
-            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24' },
-            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryId: 'cat-base', rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25' },
+            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryId: 'cat-plant', rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
+            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryId: 'cat-food', rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21' },
+            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryId: 'cat-component', rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22' },
+            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryId: 'cat-plant', rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23' },
+            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryId: 'cat-plant', rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24' },
+            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryId: 'cat-food', rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25' },
 
             // Actual recipes
             {
@@ -102,7 +108,7 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
             {
                 id: 'owlbear-omelette',
                 name: 'Owlbear Omelette',
-                categoryId: 'cat-meal',
+                categoryId: 'cat-food',
                 rarityId: 'rarity-rare',
                 description: 'A famously large and hearty meal, said to be able to feed a whole party. Ethically sourced, of course.',
                 secretDescription: null,
@@ -120,20 +126,16 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         creatorUsername: 'volo',
         name: 'Volo\'s Vile Brews',
         description: 'Brews and concoctions from the famed (and often embellished) world traveler, Volothamp Geddarm.',
-        categories: [
-          { id: 'cat-drink', name: 'Drinks' },
-          { id: 'cat-snack', name: 'Snacks' },
-          { id: 'cat-base', name: 'Ingredients' },
-        ],
+        categories: STANDARD_CATEGORIES,
         rarities: STANDARD_RARITIES,
         recipes: [
-            { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
-            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
+            { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-component', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
+            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryId: 'cat-component', rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
 
             {
                 id: 'spicy-grog',
                 name: 'Volo\'s Spicy Grog',
-                categoryId: 'cat-drink',
+                categoryId: 'cat-recipe',
                 rarityId: 'rarity-common',
                 description: 'A classic grog with a spicy kick that clears the sinuses.',
                 secretDescription: null,
@@ -236,11 +238,8 @@ export async function createGrimoire(id: string, name: string, creatorUsername: 
         creatorUsername: creatorUsername,
         name: name,
         description: `A newly discovered collection of recipes from the source '${id}'.`,
-        categories: [
-            { id: 'cat-base', name: 'Ingredients' },
-            { id: 'cat-new-cat', name: 'My new Category' },
-        ],
-        rarities: STANDARD_RARITIES,
+        categories: [...STANDARD_CATEGORIES],
+        rarities: [...STANDARD_RARITIES],
         recipes: []
     };
     FAKE_DB_GRIMOIRES.push(newGrimoire);
@@ -319,6 +318,14 @@ export async function deleteCategory(grimoireId: string, categoryId: string): Pr
     }
 }
 
+export async function clearCategories(grimoireId: string): Promise<void> {
+    console.log(`Clearing all categories from grimoire ${grimoireId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
+    if (!grimoire) throw new Error("Grimoire not found");
+    grimoire.categories = [];
+}
+
 export async function saveRarity(grimoireId: string, rarity: Rarity): Promise<Rarity> {
     console.log(`Saving rarity to grimoire ${grimoireId}...`);
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -344,4 +351,12 @@ export async function deleteRarity(grimoireId: string, rarityId: string): Promis
     if (rarityIndex !== -1) {
         grimoire.rarities.splice(rarityIndex, 1);
     }
+}
+
+export async function clearRarities(grimoireId: string): Promise<void> {
+    console.log(`Clearing all rarities from grimoire ${grimoireId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
+    if (!grimoire) throw new Error("Grimoire not found");
+    grimoire.rarities = [];
 }

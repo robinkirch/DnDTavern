@@ -127,5 +127,10 @@
     "Are you sure you want to delete this recipe? This cannot be undone.": "Are you sure you want to delete this recipe? This cannot be undone.",
     "Are you sure you want to delete this category?": "Are you sure you want to delete this category?",
     "Add New Rarity": "Add New Rarity",
-    "Are you sure you want to delete this rarity?": "Are you sure you want to delete this rarity?"
+    "Are you sure you want to delete this rarity?": "Are you sure you want to delete this rarity?",
+    "Delete All": "Delete All",
+    "Are you sure you want to delete all categories?": "Are you sure you want to delete all categories?",
+    "Are you sure you want to delete all rarities?": "Are you sure you want to delete all rarities?",
+    "All Categories Deleted": "All Categories Deleted",
+    "All Rarities Deleted": "All Rarities Deleted"
 }
