@@ -164,7 +164,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a rarity" />
-                            </Trigger>
+                            </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                             <SelectItem value="Common">Common</SelectItem>
