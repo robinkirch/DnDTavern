@@ -18,7 +18,7 @@ export interface Grimoire {
   name: string;
   description: string;
   categories: Category[];
-  components: Component[];
+  rarities: Rarity[];
   recipes: Recipe[];
 }
 
@@ -38,18 +38,16 @@ export interface Category {
   name: string;
 }
 
-export interface Component {
-  id:string;
-  name: string;
-  description: string | null;
-  secretDescription: string | null; // For the DM
-  categoryId: string;
+export interface Rarity {
+    id: string;
+    name: string;
+    color: string; // hex color string
 }
 
 export interface RecipeComponent {
-  componentId: string; // can be a component OR a recipe id
+  // Recipes are now the base components
+  recipeId: string;
   quantity: string; 
-  type: 'component' | 'recipe';
 }
 
 export interface Recipe {
@@ -57,9 +55,8 @@ export interface Recipe {
   name: string;
   description: string;
   secretDescription: string | null; // For the DM
-  instructions: string | null;
   categoryId: string;
-  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Legendary';
+  rarityId: string;
   components: RecipeComponent[];
   image?: string | null;
 }

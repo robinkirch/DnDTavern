@@ -9,7 +9,7 @@
 // replace the mock data and logic in this file with your actual
 // data access code.
 
-import type { Campaign, Grimoire, User, Recipe, Category, Component } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity } from './types';
 
 // --- MOCK DATA ---
 // This data simulates what would be returned from a database.
@@ -61,44 +61,50 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
           { id: 'cat-meal', name: 'Meals' },
           { id: 'cat-snack', name: 'Snacks' },
           { id: 'cat-drink', name: 'Drinks' },
+          { id: 'cat-base', name: 'Ingredients' },
         ],
-        components: [
-          { id: 'comp-glimmer-root', name: 'Glimmer-root', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', categoryId: 'cat-herb' },
-          { id: 'comp-owlbear-egg', name: 'Owlbear Egg', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', categoryId: 'cat-monster-part' },
-          { id: 'comp-spring-water', name: 'Sparkling Spring Water', description: 'Effervescent water from a mountain spring.', secretDescription: null, categoryId: 'cat-drink' },
-          { id: 'comp-wild-berry', name: 'A Single Wild Berry', description: 'A perfectly ripe berry.', secretDescription: null, categoryId: 'cat-herb' },
-          { id: 'comp-cave-mushroom', name: 'Cave Mushroom', description: 'An edible fungus found in damp caves.', secretDescription: null, categoryId: 'cat-herb' },
-          { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', categoryId: 'cat-dairy' },
+        rarities: [
+            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
+            { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
+            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
         ],
         recipes: [
+             // Base ingredients are now recipes without components
+            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
+            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryId: 'cat-base', rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21' },
+            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22' },
+            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23' },
+            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24' },
+            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryId: 'cat-base', rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25' },
+
+            // Actual recipes
             {
                 id: 'health-potion-cocktail',
                 name: 'Health Potion Cocktail',
                 categoryId: 'cat-potion',
-                rarity: 'Uncommon',
+                rarityId: 'rarity-uncommon',
                 description: 'A fizzy, red concoction that makes you feel reinvigorated. Tastes of strawberries and hope.',
                 secretDescription: 'The "hope" is mostly placebo.',
                 components: [
-                  { componentId: 'comp-glimmer-root', quantity: '2 oz infusion', type: 'component' },
-                  { componentId: 'comp-spring-water', quantity: '4 oz', type: 'component' },
-                  { componentId: 'comp-wild-berry', quantity: '1', type: 'component' },
+                  { recipeId: 'comp-glimmer-root', quantity: '2 oz infusion' },
+                  { recipeId: 'comp-spring-water', quantity: '4 oz' },
+                  { recipeId: 'comp-wild-berry', quantity: '1' },
                 ],
-                instructions: 'Mix the Glimmer-root infusion and sparkling water in a chilled glass. Drop the wild berry in gently. Serve immediately.',
                 image: 'https://picsum.photos/400/300?random=10'
             },
             {
                 id: 'owlbear-omelette',
                 name: 'Owlbear Omelette',
                 categoryId: 'cat-meal',
-                rarity: 'Rare',
+                rarityId: 'rarity-rare',
                 description: 'A famously large and hearty meal, said to be able to feed a whole party. Ethically sourced, of course.',
                 secretDescription: null,
                 components: [
-                  { componentId: 'comp-owlbear-egg', quantity: '1', type: 'component' },
-                  { componentId: 'comp-cave-mushroom', quantity: '1 cup, sliced', type: 'component' },
-                  { componentId: 'comp-dwarven-cheese', quantity: '1/2 cup, grated', type: 'component' },
+                  { recipeId: 'comp-owlbear-egg', quantity: '1' },
+                  { recipeId: 'comp-cave-mushroom', quantity: '1 cup, sliced' },
+                  { recipeId: 'comp-dwarven-cheese', quantity: '1/2 cup, grated' },
                 ],
-                instructions: 'Whisk the egg in a comically large bowl. Pour into a greased, cauldron-sized pan over medium heat. Add mushrooms and cheese as it begins to set. Fold and serve on a platter or shield.',
             },
         ],
     },
@@ -110,25 +116,26 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         categories: [
           { id: 'cat-drink', name: 'Drinks' },
           { id: 'cat-snack', name: 'Snacks' },
+          { id: 'cat-base', name: 'Ingredients' },
         ],
-        components: [
-          { id: 'comp-grog', name: 'Basic Grog', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', categoryId: 'cat-drink' },
-          { id: 'comp-kobold-spice', name: 'Kobold Spice', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', categoryId: 'cat-spice' },
-          { id: 'comp-dried-meat', name: 'Dried Meat Strip', description: 'Of indeterminate origin.', secretDescription: null, categoryId: 'cat-monster-part' },
+        rarities: [
+            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
         ],
         recipes: [
+            { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
+            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryId: 'cat-base', rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
+
             {
                 id: 'spicy-grog',
                 name: 'Volo\'s Spicy Grog',
                 categoryId: 'cat-drink',
-                rarity: 'Common',
+                rarityId: 'rarity-common',
                 description: 'A classic grog with a spicy kick that clears the sinuses.',
                 secretDescription: null,
                 components: [
-                    { componentId: 'comp-grog', quantity: '1 mug', type: 'component' },
-                    { componentId: 'comp-kobold-spice', quantity: '1 pinch', type: 'component' },
+                    { recipeId: 'comp-grog', quantity: '1 mug' },
+                    { recipeId: 'comp-kobold-spice', quantity: '1 pinch' },
                 ],
-                instructions: 'Pour grog into mug. Add spice. Stir once. Drink before you reconsider.',
             },
         ],
     }
@@ -223,8 +230,13 @@ export async function createGrimoire(id: string, creatorUsername: string): Promi
         creatorUsername: creatorUsername,
         name: `Grimoire of ${id}`,
         description: `A newly discovered collection of recipes from the source '${id}'.`,
-        categories: [],
-        components: [],
+        categories: [{ id: 'cat-base', name: 'Ingredients' }],
+        rarities: [
+            { id: 'rarity-common', name: 'Common', color: '#6b7280' },
+            { id: 'rarity-uncommon', name: 'Uncommon', color: '#16a34a' },
+            { id: 'rarity-rare', name: 'Rare', color: '#2563eb' },
+            { id: 'rarity-legendary', name: 'Legendary', color: '#c026d3' },
+        ],
         recipes: []
     };
     FAKE_DB_GRIMOIRES.push(newGrimoire);
@@ -291,17 +303,17 @@ export async function saveCategory(grimoireId: string, category: Category): Prom
     return category;
 }
 
-export async function saveComponent(grimoireId: string, component: Component): Promise<Component> {
-    console.log(`Saving component to grimoire ${grimoireId}...`);
+export async function saveRarity(grimoireId: string, rarity: Rarity): Promise<Rarity> {
+    console.log(`Saving rarity to grimoire ${grimoireId}...`);
     await new Promise(resolve => setTimeout(resolve, 500));
     const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
     if (!grimoire) throw new Error("Grimoire not found");
 
-    const componentIndex = grimoire.components.findIndex(c => c.id === component.id);
-    if (componentIndex !== -1) {
-        grimoire.components[componentIndex] = component;
+    const rarityIndex = grimoire.rarities.findIndex(c => c.id === rarity.id);
+    if (rarityIndex !== -1) {
+        grimoire.rarities[rarityIndex] = rarity;
     } else {
-        grimoire.components.push(component);
+        grimoire.rarities.push(rarity);
     }
-    return component;
+    return rarity;
 }

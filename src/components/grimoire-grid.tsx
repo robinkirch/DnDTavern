@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import type { Grimoire, Category, Component } from '@/lib/types';
+import type { Grimoire, Category, Rarity } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, saveComponent } from '@/lib/data-service';
+import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, saveCategory, saveRarity } from '@/lib/data-service';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, DatabaseZap, Settings, Tags, Package } from 'lucide-react';
+import { PlusCircle, Trash2, DatabaseZap, Settings, Tags, Palette, Star } from 'lucide-react';
 import { RecipeGrid } from './recipe-grid';
 import { GrimoireFormDialog } from './grimoire-form-dialog';
 import { Skeleton } from './ui/skeleton';
@@ -35,7 +35,8 @@ export function GrimoireGrid() {
   const [managingGrimoire, setManagingGrimoire] = useState<Grimoire | null>(null);
 
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newComponentName, setNewComponentName] = useState('');
+  const [newRarityName, setNewRarityName] = useState('');
+  const [newRarityColor, setNewRarityColor] = useState('#6b7280');
 
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export function GrimoireGrid() {
     if (!managingGrimoire || !newCategoryName.trim()) return;
     
     const newCategory: Category = {
-        id: `cat-${newCategoryName.trim().toLowerCase().replace(/\s+/g, '-')}`,
+        id: `cat-${newCategoryName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
         name: newCategoryName.trim()
     };
 
@@ -84,26 +85,25 @@ export function GrimoireGrid() {
     toast({title: "Category Added", description: `"${newCategory.name}" has been added.`});
   };
 
-  const handleAddComponent = async () => {
-    if (!managingGrimoire || !newComponentName.trim()) return;
+  const handleAddRarity = async () => {
+    if (!managingGrimoire || !newRarityName.trim()) return;
 
-    const newComponent: Component = {
-        id: `comp-${newComponentName.trim().toLowerCase().replace(/\s+/g, '-')}`,
-        name: newComponentName.trim(),
-        description: '',
-        secretDescription: '',
-        categoryId: 'default' // This could be improved with a selector
+    const newRarity: Rarity = {
+        id: `rarity-${newRarityName.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+        name: newRarityName.trim(),
+        color: newRarityColor
     };
     
-    const updatedComponents = [...managingGrimoire.components, newComponent];
-    const updatedGrimoire = { ...managingGrimoire, components: updatedComponents };
+    const updatedRarities = [...managingGrimoire.rarities, newRarity];
+    const updatedGrimoire = { ...managingGrimoire, rarities: updatedRarities };
     
-    await saveComponent(managingGrimoire.id, newComponent);
+    await saveRarity(managingGrimoire.id, newRarity);
 
     setManagingGrimoire(updatedGrimoire);
     setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-    setNewComponentName('');
-    toast({title: "Component Added", description: `"${newComponent.name}" has been added.`});
+    setNewRarityName('');
+    setNewRarityColor('#6b7280');
+    toast({title: "Rarity Added", description: `"${newRarity.name}" has been added.`});
   };
 
   if (isLoading) {
@@ -128,7 +128,7 @@ export function GrimoireGrid() {
                 <DialogHeader>
                     <DialogTitle className="font-headline">Manage: {managingGrimoire?.name}</DialogTitle>
                     <DialogDescription>
-                       Add new categories and components to this grimoire.
+                       Add new categories and rarities to this grimoire.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-8 max-h-[60vh] overflow-y-auto pr-4">
@@ -159,28 +159,38 @@ export function GrimoireGrid() {
                         </TableBody>
                     </Table>
                   </div>
-                  {/* Component Management */}
-                   <div className='space-y-4'>
-                    <h4 className='font-headline text-lg flex items-center gap-2'><Package className='h-5 w-5 text-primary'/> Components</h4>
-                    <div className='space-y-2'>
-                        <Label htmlFor='new-component'>Add New Component</Label>
-                        <div className='flex gap-2'>
-                            <Input id="new-component" value={newComponentName} onChange={(e) => setNewComponentName(e.target.value)} placeholder="e.g. Owlbear Egg, Glimmer-root"/>
-                            <Button onClick={handleAddComponent}>Add</Button>
+
+                  {/* Rarity Management */}
+                  <div className='space-y-4'>
+                    <h4 className='font-headline text-lg flex items-center gap-2'><Star className='h-5 w-5 text-primary'/> Rarities</h4>
+                     <div className='space-y-2'>
+                        <Label>Add New Rarity</Label>
+                        <div className='flex gap-2 items-end'>
+                            <div className='flex-grow'>
+                                <Label htmlFor='new-rarity-name' className='sr-only'>Rarity Name</Label>
+                                <Input id="new-rarity-name" value={newRarityName} onChange={(e) => setNewRarityName(e.target.value)} placeholder="e.g. Mythical"/>
+                            </div>
+                             <div>
+                                <Label htmlFor='new-rarity-color' className='sr-only'>Rarity Color</Label>
+                                <Input id="new-rarity-color" type="color" value={newRarityColor} onChange={(e) => setNewRarityColor(e.target.value)} className="p-1 h-10 w-14"/>
+                            </div>
+                            <Button onClick={handleAddRarity}>Add</Button>
                         </div>
                     </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>ID</TableHead>
+                                <TableHead>Color</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>ID</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {managingGrimoire?.components.map(comp => (
-                                <TableRow key={comp.id}>
-                                    <TableCell className="font-medium">{comp.name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{comp.id}</TableCell>
+                            {managingGrimoire?.rarities.map(rarity => (
+                                <TableRow key={rarity.id}>
+                                    <TableCell><div className='h-5 w-5 rounded-full border' style={{backgroundColor: rarity.color}} /></TableCell>
+                                    <TableCell className="font-medium">{rarity.name}</TableCell>
+                                    <TableCell className="text-muted-foreground">{rarity.id}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

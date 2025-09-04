@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlusCircle, Trash2, Upload } from 'lucide-react';
-import { Switch } from './ui/switch';
 import Image from 'next/image';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
@@ -73,13 +72,11 @@ const formSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   secretDescription: z.string().optional(),
   categoryId: z.string().min(1, "Category is required."),
-  rarity: z.enum(['Common', 'Uncommon', 'Rare', 'Legendary']),
+  rarityId: z.string().min(1, "Rarity is required."),
   components: z.array(z.object({
-    componentId: z.string().min(1, 'Ingredient is required.'),
+    recipeId: z.string().min(1, 'Ingredient is required.'),
     quantity: z.string().min(1, 'Quantity is required.'),
-    type: z.enum(['component', 'recipe']),
-  })).min(1, 'At least one ingredient is required.'),
-  instructions: z.string().optional(),
+  })).optional(),
   image: z.string().nullable(),
 });
 
@@ -111,7 +108,6 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
       if (recipe) {
         form.reset({
           ...recipe,
-          instructions: recipe.instructions || '',
           secretDescription: recipe.secretDescription || '',
           image: recipe.image || null,
         });
@@ -122,9 +118,8 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
           description: '',
           secretDescription: '',
           categoryId: grimoire?.categories[0]?.id || '',
-          rarity: 'Common',
-          components: [{ componentId: '', quantity: '', type: 'component' }],
-          instructions: '',
+          rarityId: grimoire?.rarities[0]?.id || '',
+          components: [],
           image: null,
         });
         setImagePreview(null);
@@ -150,9 +145,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
     const newRecipe: Recipe = {
       ...values,
       secretDescription: values.secretDescription || null,
-      instructions: values.instructions || null,
       id: recipe?.id || new Date().toISOString() + Math.random(),
       image: values.image || null,
+      components: values.components || [],
     };
     onSave(newRecipe);
     onOpenChange(false);
@@ -179,7 +174,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
             <DialogHeader>
               <DialogTitle className="font-headline">{recipe ? 'Edit Recipe' : 'Create New Recipe'}</DialogTitle>
               <DialogDescription>
-                {recipe ? 'Update the details for this recipe.' : 'Fill in the details for your new creation.'}
+                {recipe ? 'Update the details for this recipe.' : 'Fill in the details for your new creation. Recipes without ingredients are considered base components.'}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -189,9 +184,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Recipe Name</FormLabel>
+                      <FormLabel>Recipe/Component Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Owlbear Omelette" {...field} />
+                        <Input placeholder="e.g., Owlbear Omelette or Glimmer-root" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -203,7 +198,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                     name="image"
                     render={() => (
                         <FormItem>
-                            <FormLabel>Recipe Image</FormLabel>
+                            <FormLabel>Image</FormLabel>
                             <div className="flex items-center gap-4">
                                 {imagePreview && (
                                     <Image src={imagePreview} alt="Recipe Preview" width={80} height={60} className="rounded-md object-cover" />
@@ -254,7 +249,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                     />
                     <FormField
                     control={form.control}
-                    name="rarity"
+                    name="rarityId"
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Rarity</FormLabel>
@@ -265,10 +260,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="Common">Common</SelectItem>
-                            <SelectItem value="Uncommon">Uncommon</SelectItem>
-                            <SelectItem value="Rare">Rare</SelectItem>
-                            <SelectItem value="Legendary">Legendary</SelectItem>
+                              {grimoire.rarities.map(rarity => (
+                                <SelectItem key={rarity.id} value={rarity.id}>{rarity.name}</SelectItem>
+                              ))}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -306,30 +300,10 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                 />
                 
                 <div>
-                  <FormLabel>Ingredients</FormLabel>
+                  <FormLabel>Ingredients (Optional)</FormLabel>
                   <div className="space-y-3 pt-1">
                     {fields.map((field, index) => (
-                      <div key={field.id} className="grid grid-cols-[auto,1fr,2fr,auto] gap-2 items-center p-3 border rounded-md">
-                        <FormField
-                            control={form.control}
-                            name={`components.${index}.type`}
-                            render={({ field: typeField }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <div className="flex flex-col items-center gap-1.5">
-                                            <span className="text-xs text-muted-foreground">{typeField.value === 'component' ? 'Item' : 'Recipe'}</span>
-                                            <Switch
-                                                checked={typeField.value === 'recipe'}
-                                                onCheckedChange={(checked) => {
-                                                    form.setValue(`components.${index}.componentId`, '');
-                                                    typeField.onChange(checked ? 'recipe' : 'component');
-                                                }}
-                                            />
-                                        </div>
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
+                      <div key={field.id} className="grid grid-cols-[1fr,2fr,auto] gap-2 items-center p-3 border rounded-md">
                         <FormField
                           control={form.control}
                           name={`components.${index}.quantity`}
@@ -345,26 +319,20 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                         />
                         <FormField
                           control={form.control}
-                          name={`components.${index}.componentId`}
-                          render={({ field: componentIdField }) => (
+                          name={`components.${index}.recipeId`}
+                          render={({ field: recipeIdField }) => (
                             <FormItem>
                                 <FormLabel className="sr-only">Ingredient</FormLabel>
-                                <Select onValueChange={componentIdField.onChange} value={componentIdField.value}>
+                                <Select onValueChange={recipeIdField.onChange} value={recipeIdField.value}>
                                     <FormControl>
                                     <SelectTrigger>
-                                        <SelectValue placeholder={form.getValues(`components.${index}.type`) === 'component' ? 'Select an item' : 'Select a recipe'} />
+                                        <SelectValue placeholder={'Select an ingredient...'} />
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                    {form.getValues(`components.${index}.type`) === 'component' ? (
-                                        grimoire.components.map(comp => (
-                                            <SelectItem key={comp.id} value={comp.id}>{comp.name}</SelectItem>
-                                        ))
-                                    ) : (
-                                        grimoire.recipes.filter(r => r.id !== recipe?.id).map(rec => (
+                                        {grimoire.recipes.filter(r => r.id !== recipe?.id).map(rec => (
                                             <SelectItem key={rec.id} value={rec.id}>{rec.name}</SelectItem>
-                                        ))
-                                    )}
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                <FormMessage />
@@ -377,7 +345,6 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                           size="icon"
                           className="text-destructive hover:text-destructive"
                           onClick={() => remove(index)}
-                          disabled={fields.length <= 1}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -389,29 +356,13 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => append({ componentId: '', quantity: '', type: 'component' })}
+                      onClick={() => append({ recipeId: '', quantity: '' })}
                     >
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Add Ingredient
                     </Button>
                 </div>
                 
-                 <FormField
-                  control={form.control}
-                  name="instructions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructions (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="1. Mix the things.
-2. Cook the things.
-3. Serve the things." className="min-h-[120px]" {...field} value={field.value ?? ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <DialogFooter className="pt-4">
                     <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button type="submit">Save Recipe</Button>

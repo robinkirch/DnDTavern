@@ -28,8 +28,8 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
     });
   }, [grimoireId]);
 
-  const getComponentName = (componentId: string) => {
-    return grimoire?.components.find(c => c.id === componentId)?.name.toLowerCase() || '';
+  const getRecipeName = (recipeId: string) => {
+    return grimoire?.recipes.find(r => r.id === recipeId)?.name.toLowerCase() || '';
   };
 
   const filteredRecipes = grimoire?.recipes.filter(recipe => {
@@ -37,7 +37,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
     return (
       recipe.name.toLowerCase().includes(term) ||
       recipe.description.toLowerCase().includes(term) ||
-      recipe.components.some(c => getComponentName(c.componentId).includes(term))
+      recipe.components.some(c => getRecipeName(c.recipeId).includes(term))
     );
   }) || [];
   

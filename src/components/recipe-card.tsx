@@ -1,5 +1,5 @@
 'use client';
-import type { Recipe, Grimoire } from '@/lib/types';
+import type { Recipe, Grimoire, Rarity } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy } from 'lucide-react';
@@ -27,21 +27,13 @@ const categoryIcons: { [key: string]: JSX.Element } = {
     'cat-potion': <TestTube className="h-4 w-4" />,
 };
 
-const rarityColors: { [key: string]: string } = {
-    Common: 'bg-stone-500 hover:bg-stone-600',
-    Uncommon: 'bg-green-600 hover:bg-green-700',
-    Rare: 'bg-blue-600 hover:bg-blue-700',
-    Legendary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-};
 
 export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: RecipeCardProps) {
     const category = grimoire?.categories.find(c => c.id === recipe.categoryId);
+    const rarity = grimoire?.rarities.find(r => r.id === recipe.rarityId);
 
-    const getIngredientName = (ingredientId: string, type: 'component' | 'recipe') => {
-        if (type === 'component') {
-            return grimoire?.components.find(c => c.id === ingredientId)?.name || 'Unknown Ingredient';
-        }
-        return grimoire?.recipes.find(r => r.id === ingredientId)?.name || 'Unknown Recipe';
+    const getIngredientName = (ingredientId: string) => {
+        return grimoire?.recipes.find(r => r.id === ingredientId)?.name || 'Unknown Ingredient';
     };
     
     return (
@@ -68,7 +60,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                     )}
                 </div>
                 <div className="flex items-center gap-2 text-sm flex-wrap">
-                    <Badge className={`${rarityColors[recipe.rarity]}`}>{recipe.rarity}</Badge>
+                    {rarity && <Badge style={{ backgroundColor: rarity.color }} className="text-white hover:opacity-90">{rarity.name}</Badge>}
                     {category && (
                         <Badge variant="outline" className="flex items-center gap-1.5">
                             {categoryIcons[category.id] || null}
@@ -80,26 +72,20 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
             </CardHeader>
             <CardContent className="flex-grow flex flex-col">
                 <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="ingredients">
-                        <AccordionTrigger className="font-headline">Ingredients</AccordionTrigger>
-                        <AccordionContent>
-                            <ul className="list-none pl-0 space-y-1 text-muted-foreground">
-                                {recipe.components.map((comp, i) => (
-                                    <li key={i} className="flex items-center gap-2">
-                                        {comp.type === 'recipe' ? <BookCopy className="h-4 w-4 text-primary" /> : <div className="h-1.5 w-1.5 bg-foreground rounded-full" />}
-                                        <div>
-                                            <span className="font-semibold text-foreground">{getIngredientName(comp.componentId, comp.type)}</span> - {comp.quantity}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                    {recipe.instructions && (
-                        <AccordionItem value="instructions">
-                            <AccordionTrigger className="font-headline">Instructions</AccordionTrigger>
-                            <AccordionContent className="text-muted-foreground whitespace-pre-line">
-                                {recipe.instructions}
+                    {recipe.components.length > 0 && (
+                        <AccordionItem value="ingredients">
+                            <AccordionTrigger className="font-headline">Ingredients</AccordionTrigger>
+                            <AccordionContent>
+                                <ul className="list-none pl-0 space-y-1 text-muted-foreground">
+                                    {recipe.components.map((comp, i) => (
+                                        <li key={i} className="flex items-center gap-2">
+                                            <BookCopy className="h-4 w-4 text-primary" />
+                                            <div>
+                                                <span className="font-semibold text-foreground">{getIngredientName(comp.recipeId)}</span> - {comp.quantity}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
                             </AccordionContent>
                         </AccordionItem>
                     )}
