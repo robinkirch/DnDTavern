@@ -360,7 +360,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                         <FormItem>
                             <FormLabel>{t('Default Inventory Size')}</FormLabel>
                             <FormControl>
-                            <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                            <Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                             </FormControl>
                             <FormDescription>
                                 {t('Set a default inventory size for new players.')}
