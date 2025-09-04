@@ -154,5 +154,20 @@
     "Inventory Rules": "Inventory Rules",
     "Default Inventory Size": "Default Inventory Size",
     "Set a default inventory size for new players.": "Set a default inventory size for new players.",
-    "Inventory is not restricted.": "Inventory is not restricted."
+    "Inventory is not restricted.": "Inventory is not restricted.",
+    "Copy": "Copy",
+    "Copy Campaign": "Copy Campaign",
+    "Campaign Copied": "Campaign Copied",
+    "The campaign was successfully copied.": "The campaign was successfully copied.",
+    "Inventories": "Inventories",
+    "Add Item to Inventory": "Add Item to Inventory",
+    "Add an item from the grimoire or create a custom one.": "Add an item from the grimoire or create a custom one.",
+    "Grimoire Item": "Grimoire Item",
+    "Select an item...": "Select an item...",
+    "Item": "Item",
+    "Item Added": "Item Added",
+    "The item has been added to your inventory.": "The item has been added to your inventory.",
+    "Item Removed": "Item Removed",
+    "The item has been removed from your inventory.": "The item has been removed from your inventory."
 }
+    

@@ -154,5 +154,20 @@
     "Inventory Rules": "Inventarregeln",
     "Default Inventory Size": "Standard-Inventargröße",
     "Set a default inventory size for new players.": "Legen Sie eine Standard-Inventargröße für neue Spieler fest.",
-    "Inventory is not restricted.": "Inventar ist nicht eingeschränkt."
+    "Inventory is not restricted.": "Inventar ist nicht eingeschränkt.",
+    "Copy": "Kopieren",
+    "Copy Campaign": "Kampagne kopieren",
+    "Campaign Copied": "Kampagne kopiert",
+    "The campaign was successfully copied.": "Die Kampagne wurde erfolgreich kopiert.",
+    "Inventories": "Inventare",
+    "Add Item to Inventory": "Gegenstand zum Inventar hinzufügen",
+    "Add an item from the grimoire or create a custom one.": "Füge einen Gegenstand aus dem Grimoire hinzu oder erstelle einen eigenen.",
+    "Grimoire Item": "Grimoire-Gegenstand",
+    "Select an item...": "Wähle einen Gegenstand...",
+    "Item": "Gegenstand",
+    "Item Added": "Gegenstand hinzugefügt",
+    "The item has been added to your inventory.": "Der Gegenstand wurde deinem Inventar hinzugefügt.",
+    "Item Removed": "Gegenstand entfernt",
+    "The item has been removed from your inventory.": "Der Gegenstand wurde aus deinem Inventar entfernt."
 }
+    

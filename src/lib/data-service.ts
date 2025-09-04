@@ -201,7 +201,7 @@ export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'invent
     await new Promise(resolve => setTimeout(resolve, 500));
     const newCampaign: Campaign = {
         ...campaignData,
-        id: campaignData.name.toLowerCase().replace(/\s+/g, '-'),
+        id: campaignData.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
         sessionNotesDate: null,
         inventorySettings: { type: 'free' },
         userPermissions: {},
@@ -407,3 +407,5 @@ export async function saveInventory(campaignId: string, username: string, items:
 
     campaign.userInventories[username].items = items;
 }
+
+    

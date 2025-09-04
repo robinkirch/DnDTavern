@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon, Backpack, User, Users } from 'lucide-react';
+import { Pencil, Save, CalendarIcon, Backpack, User, Users, BookHeart, ScrollText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlayerInventory } from '@/components/player-inventory';
 
@@ -107,7 +107,7 @@ export default function CampaignPage() {
       return format(new Date(dateString), "PP", { locale });
   }
 
-  if (loading || authLoading || !campaign) {
+  if (loading || authLoading || !campaign || !user) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -135,7 +135,7 @@ export default function CampaignPage() {
     );
   }
 
-  const isCreator = campaign.creatorUsername === user?.username;
+  const isCreator = campaign.creatorUsername === user.username;
 
   return (
     <>
@@ -190,10 +190,12 @@ export default function CampaignPage() {
                             <ScrollText className='mr-2 h-4 w-4'/>
                             {t("DM's Campaign Log")}
                         </TabsTrigger>
-                        <TabsTrigger value="inventories">
-                            <Backpack className='mr-2 h-4 w-4'/>
-                            {t('Inventories')}
-                        </TabsTrigger>
+                        {user.role === 'player' && (
+                            <TabsTrigger value="inventories">
+                                <Backpack className='mr-2 h-4 w-4'/>
+                                {t('Inventories')}
+                            </TabsTrigger>
+                        )}
                     </TabsList>
                     
                     <TabsContent value="recipes">
@@ -268,9 +270,11 @@ export default function CampaignPage() {
                             </Card>
                         )}
                     </TabsContent>
-                     <TabsContent value="inventories">
-                        <PlayerInventory campaign={campaign} setCampaign={setCampaign} />
-                    </TabsContent>
+                    {user.role === 'player' && (
+                        <TabsContent value="inventories">
+                            <PlayerInventory campaign={campaign} setCampaign={setCampaign} grimoire={grimoire} />
+                        </TabsContent>
+                    )}
                 </Tabs>
             </div>
         </main>
@@ -278,7 +282,4 @@ export default function CampaignPage() {
     </>
   );
 }
-
-// Dummy components to avoid TypeScript errors
-const BookHeart = (props: any) => <svg {...props}><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>;
-const ScrollText = (props: any) => <svg {...props}><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm0 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1ZM17 3h-1a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm0 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/></svg>;
+    
