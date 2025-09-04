@@ -31,7 +31,7 @@ const categoryIcons: { [key: string]: JSX.Element } = {
 
 export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: RecipeCardProps) {
     const { t } = useI18n();
-    const category = grimoire?.categories.find(c => c.id === recipe.categoryId);
+    const categories = grimoire?.categories.filter(c => recipe.categoryIds.includes(c.id)) || [];
     const rarity = grimoire?.rarities.find(r => r.id === recipe.rarityId);
 
     const getIngredientName = (ingredientId: string) => {
@@ -63,12 +63,12 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                 </div>
                 <div className="flex items-center gap-2 text-sm flex-wrap">
                     {rarity && <Badge style={{ backgroundColor: rarity.color }} className="text-white hover:opacity-90">{rarity.name}</Badge>}
-                    {category && (
-                        <Badge variant="outline" className="flex items-center gap-1.5">
+                    {categories.map(category => (
+                        <Badge key={category.id} variant="outline" className="flex items-center gap-1.5">
                             {categoryIcons[category.id] || null}
                             {category.name}
                         </Badge>
-                    )}
+                    ))}
                 </div>
                 <CardDescription className="pt-2">{recipe.description}</CardDescription>
             </CardHeader>

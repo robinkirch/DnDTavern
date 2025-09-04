@@ -55,7 +55,7 @@ export interface Recipe {
   name: string;
   description: string;
   secretDescription: string | null; // For the DM
-  categoryId: string;
+  categoryIds: string[];
   rarityId: string;
   components: RecipeComponent[];
   image?: string | null;

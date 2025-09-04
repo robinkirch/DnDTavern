@@ -83,18 +83,18 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         rarities: STANDARD_RARITIES,
         recipes: [
              // Base ingredients are now recipes without components
-            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryId: 'cat-plant', rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
-            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryId: 'cat-food', rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21' },
-            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryId: 'cat-component', rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22' },
-            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryId: 'cat-plant', rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23' },
-            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryId: 'cat-plant', rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24' },
-            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryId: 'cat-food', rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25' },
+            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
+            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryIds: ['cat-food', 'cat-component'], rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21' },
+            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22' },
+            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23' },
+            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24' },
+            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryIds: ['cat-food', 'cat-component'], rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25' },
 
             // Actual recipes
             {
                 id: 'health-potion-cocktail',
                 name: 'Health Potion Cocktail',
-                categoryId: 'cat-potion',
+                categoryIds: ['cat-potion', 'cat-recipe'],
                 rarityId: 'rarity-uncommon',
                 description: 'A fizzy, red concoction that makes you feel reinvigorated. Tastes of strawberries and hope.',
                 secretDescription: 'The "hope" is mostly placebo.',
@@ -108,7 +108,7 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
             {
                 id: 'owlbear-omelette',
                 name: 'Owlbear Omelette',
-                categoryId: 'cat-food',
+                categoryIds: ['cat-food', 'cat-recipe'],
                 rarityId: 'rarity-rare',
                 description: 'A famously large and hearty meal, said to be able to feed a whole party. Ethically sourced, of course.',
                 secretDescription: null,
@@ -129,13 +129,13 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         categories: STANDARD_CATEGORIES,
         rarities: STANDARD_RARITIES,
         recipes: [
-            { id: 'comp-grog', name: 'Basic Grog', categoryId: 'cat-component', rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
-            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryId: 'cat-component', rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
+            { id: 'comp-grog', name: 'Basic Grog', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
+            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
 
             {
                 id: 'spicy-grog',
                 name: 'Volo\'s Spicy Grog',
-                categoryId: 'cat-recipe',
+                categoryIds: ['cat-recipe'],
                 rarityId: 'rarity-common',
                 description: 'A classic grog with a spicy kick that clears the sinuses.',
                 secretDescription: null,

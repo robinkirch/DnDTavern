@@ -34,12 +34,17 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
     return grimoire?.recipes.find(r => r.id === recipeId)?.name.toLowerCase() || '';
   };
 
+  const getCategoryName = (categoryId: string) => {
+    return grimoire?.categories.find(c => c.id === categoryId)?.name.toLowerCase() || '';
+  }
+
   const filteredRecipes = grimoire?.recipes.filter(recipe => {
     const term = searchTerm.toLowerCase();
     return (
       recipe.name.toLowerCase().includes(term) ||
       recipe.description.toLowerCase().includes(term) ||
-      recipe.components.some(c => getRecipeName(c.recipeId).includes(term))
+      recipe.components.some(c => getRecipeName(c.recipeId).includes(term)) ||
+      recipe.categoryIds.some(c => getCategoryName(c).includes(term))
     );
   }) || [];
   

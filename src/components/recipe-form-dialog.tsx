@@ -34,6 +34,8 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
+import { Checkbox } from './ui/checkbox';
+import { ScrollArea } from './ui/scroll-area';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -72,7 +74,7 @@ const formSchema = z.object({
   name: z.string().min(3, 'Recipe name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   secretDescription: z.string().optional(),
-  categoryId: z.string().min(1, "Category is required."),
+  categoryIds: z.array(z.string()).min(1, "At least one category is required."),
   rarityId: z.string().min(1, "Rarity is required."),
   components: z.array(z.object({
     recipeId: z.string().min(1, 'Ingredient is required.'),
@@ -119,7 +121,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
           name: '',
           description: '',
           secretDescription: '',
-          categoryId: grimoire?.categories[0]?.id || '',
+          categoryIds: [],
           rarityId: grimoire?.rarities[0]?.id || '',
           components: [],
           image: null,
@@ -228,26 +230,49 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                 
                 <div className="grid grid-cols-2 gap-4">
                     <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
+                      control={form.control}
+                      name="categoryIds"
+                      render={() => (
                         <FormItem>
-                        <FormLabel>{t('Category')}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select a category')} />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {grimoire.categories.map(cat => (
-                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                          <FormLabel>{t('Category')}</FormLabel>
+                          <ScrollArea className="h-32 w-full rounded-md border p-4">
+                            {grimoire.categories.map((item) => (
+                              <FormField
+                                key={item.id}
+                                control={form.control}
+                                name="categoryIds"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={item.id}
+                                      className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(item.id)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...(field.value || []), item.id])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== item.id
+                                                  )
+                                                )
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        {item.name}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </ScrollArea>
+                          <FormMessage />
                         </FormItem>
-                    )}
+                      )}
                     />
                     <FormField
                     control={form.control}
