@@ -56,6 +56,8 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         categories: [
           { id: 'cat-potion', name: 'Potions' },
           { id: 'cat-meal', name: 'Meals' },
+          { id: 'cat-snack', name: 'Snacks' },
+          { id: 'cat-drink', name: 'Drinks' },
         ],
         components: [
           { id: 'comp-glimmer-root', name: 'Glimmer-root', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', categoryId: 'cat-herb' },
@@ -188,22 +190,24 @@ export async function getGrimoireById(id: string): Promise<Grimoire | null> {
 export async function createGrimoire(id: string, creatorUsername: string): Promise<Grimoire> {
     console.log(`Attempting to add grimoire with source "${id}"...`);
     
-    // DEVELOPER: In a real app, you would use 'id' to connect to your data source here,
-    // fetch its metadata (name, description), and confirm it's a valid source.
-    // Since we can't connect to a real DB, we'll check if it exists in our mock data.
-    // If not, we will throw an error to simulate a failed connection.
-    
+    // DEVELOPER: This is the critical point for connecting to a real data source.
+    // The AI environment cannot perform actual database connections.
+    // In a real application, you would replace the logic below with your
+    // database connection and data fetching code.
+
+    // 1. Check if the grimoire is already "connected" (in our mock DB)
     const existing = FAKE_DB_GRIMOIRES.find(g => g.id === id);
     if (existing) {
-        // In a real app, you might want to handle this differently, e.g.,
-        // claim ownership or just return the existing one.
         console.log(`Grimoire with id "${id}" already exists.`);
         return existing;
     }
     
-    // Simulate failure because the id is not in our "database" of mock grimoires.
-    // In a real app, this would be a real connection failure.
-    throw new Error(`Could not connect to or find a data source with the ID "${id}". Please ensure the ID is correct.`);
+    // 2. Simulate failure
+    // In a real app, you would attempt `const db = await connect(id)` here.
+    // If it fails, you'd throw an error. If it succeeds, you'd fetch
+    // the data and build the Grimoire object. Since we can't connect,
+    // we will always throw an error for new, unknown IDs.
+    throw new Error(`Could not connect to the data source with ID "${id}". This is a placeholder. To connect to a real database, you must implement the connection logic in 'src/lib/data-service.ts' in the 'createGrimoire' function.`);
 }
 
 
