@@ -32,6 +32,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Separator } from './ui/separator';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Campaign name is required.'),
@@ -39,6 +41,8 @@ const formSchema = z.object({
   invitedUsernames: z.string().optional(),
   grimoireId: z.string().nullable(),
   image: z.string().nullable(),
+  inventoryType: z.enum(['free', 'limited']),
+  defaultInventorySize: z.number().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -46,13 +50,7 @@ type FormData = z.infer<typeof formSchema>;
 interface EditCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (data: { 
-        name: string; 
-        description: string; 
-        invitedUsernames: string[]; 
-        grimoireId: string | null,
-        image: string | null;
-     }) => void;
+    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'userPermissions' | 'userInventories'>) => void;
     campaign: Campaign | null;
 }
 
@@ -66,6 +64,8 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
+
+  const inventoryType = form.watch('inventoryType');
 
   useEffect(() => {
     if (user && user.role === 'dm' && isOpen) {
@@ -81,6 +81,8 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         invitedUsernames: campaign.invitedUsernames.join(', '),
         grimoireId: campaign.grimoireId,
         image: campaign.image,
+        inventoryType: campaign.inventorySettings.type,
+        defaultInventorySize: campaign.inventorySettings.defaultSize,
       });
       setImagePreview(campaign.image);
     } else if (!isOpen) {
@@ -112,7 +114,11 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         description: values.description || '',
         invitedUsernames, 
         grimoireId: values.grimoireId === "null" ? null : values.grimoireId,
-        image: values.image
+        image: values.image,
+        inventorySettings: {
+            type: values.inventoryType,
+            defaultSize: values.inventoryType === 'limited' ? values.defaultInventorySize : undefined,
+        },
     });
   }
 
@@ -232,6 +238,59 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 </FormItem>
               )}
             />
+             <Separator />
+
+            <FormField
+                control={form.control}
+                name="inventoryType"
+                render={({ field }) => (
+                <FormItem className="space-y-3">
+                    <FormLabel>{t('Inventory Rules')}</FormLabel>
+                    <FormControl>
+                    <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                    >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                                <RadioGroupItem value="free" />
+                            </FormControl>
+                            <FormLabel className="font-normal">{t('Free')}</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                                <RadioGroupItem value="limited" />
+                            </FormControl>
+                            <FormLabel className="font-normal">{t('Limited')}</FormLabel>
+                        </FormItem>
+                    </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            {inventoryType === 'limited' ? (
+                <FormField
+                    control={form.control}
+                    name="defaultInventorySize"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>{t('Default Inventory Size')}</FormLabel>
+                        <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                        </FormControl>
+                         <FormDescription>
+                            {t('Set a default inventory size for new players.')}
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            ) : (
+                <p className='text-sm text-muted-foreground'>{t('Inventory is not restricted.')}</p>
+            )}
+
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
                 <Button type="submit">{t('Save Changes')}</Button>

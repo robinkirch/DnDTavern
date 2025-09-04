@@ -81,6 +81,7 @@ const formSchema = z.object({
     quantity: z.string().min(1, 'Quantity is required.'),
   })).optional(),
   image: z.string().nullable(),
+  value: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -114,6 +115,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
           ...recipe,
           secretDescription: recipe.secretDescription || '',
           image: recipe.image || null,
+          value: recipe.value || null,
         });
         setImagePreview(recipe.image || null);
       } else {
@@ -125,6 +127,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
           rarityId: grimoire?.rarities[0]?.id || '',
           components: [],
           image: null,
+          value: null,
         });
         setImagePreview(null);
       }
@@ -151,6 +154,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
       secretDescription: values.secretDescription || null,
       id: recipe?.id || new Date().toISOString() + Math.random(),
       image: values.image || null,
+      value: values.value || null,
       components: values.components || [],
     };
     onSave(newRecipe);
@@ -274,28 +278,43 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                         </FormItem>
                       )}
                     />
-                    <FormField
-                    control={form.control}
-                    name="rarityId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>{t('Rarity')}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder={t('Select a rarity')} />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {grimoire.rarities.map(rarity => (
-                                <SelectItem key={rarity.id} value={rarity.id}>{rarity.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                    <div className='space-y-2'>
+                        <FormField
+                        control={form.control}
+                        name="rarityId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('Rarity')}</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select a rarity')} />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {grimoire.rarities.map(rarity => (
+                                    <SelectItem key={rarity.id} value={rarity.id}>{rarity.name}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="value"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>{t('Value (Optional)')}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder={t('e.g., 50gp')} {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
 
                 <FormField

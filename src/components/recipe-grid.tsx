@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
-import type { Recipe, Grimoire } from '@/lib/types';
+import type { Recipe, Grimoire, Category } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { RecipeCard } from './recipe-card';
 import { Input } from './ui/input';
@@ -9,6 +9,13 @@ import { Button } from './ui/button';
 import { RecipeFormDialog } from './recipe-form-dialog';
 import { getGrimoireById, saveRecipe, deleteRecipe } from '@/lib/data-service'; 
 import { Skeleton } from './ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface RecipeGridProps {
   grimoireId: string;
@@ -20,6 +27,7 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
   const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
 
@@ -40,12 +48,16 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
 
   const filteredRecipes = grimoire?.recipes.filter(recipe => {
     const term = searchTerm.toLowerCase();
-    return (
+    const categoryFilter = selectedCategory === 'all' || recipe.categoryIds.includes(selectedCategory);
+    
+    const searchFilter = (
       recipe.name.toLowerCase().includes(term) ||
       recipe.description.toLowerCase().includes(term) ||
       recipe.components.some(c => getRecipeName(c.recipeId).includes(term)) ||
       recipe.categoryIds.some(c => getCategoryName(c).includes(term))
     );
+    
+    return categoryFilter && searchFilter;
   }) || [];
   
   const handleAddRecipe = () => {
@@ -118,17 +130,30 @@ export function RecipeGrid({ canEdit, grimoireId }: RecipeGridProps) {
       />
       <div>
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
-          <div className="relative w-full md:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder={t('Search recipes or ingredients...')}
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex gap-2 w-full flex-col sm:flex-row">
+            <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                placeholder={t('Search recipes or ingredients...')}
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Select onValueChange={setSelectedCategory} value={selectedCategory}>
+                <SelectTrigger className='w-full sm:max-w-[200px]'>
+                    <SelectValue placeholder={t('Filter by category...')} />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">{t('All Categories')}</SelectItem>
+                    {grimoire.categories.map((cat: Category) => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
           </div>
           {canEdit && (
-            <Button onClick={handleAddRecipe}>
+            <Button onClick={handleAddRecipe} className='w-full mt-2 md:mt-0 md:w-auto flex-shrink-0'>
                 <PlusCircle className="mr-2 h-4 w-4"/>
                 {t('Create New Recipe')}
             </Button>

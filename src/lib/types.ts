@@ -22,6 +22,16 @@ export interface Grimoire {
   recipes: Recipe[];
 }
 
+export interface InventoryItem {
+    id: string; // Unique ID for the inventory item instance
+    recipeId: string | null; // Link to the recipe if it's from a grimoire
+    name: string;
+    description: string | null;
+    quantity: number;
+    value: string | null;
+    isCustom: boolean; // True if it's a user-defined item
+}
+
 export interface Campaign {
   id: string;
   name: string;
@@ -32,6 +42,25 @@ export interface Campaign {
   grimoireId: string | null; // This links to a Grimoire (data source)
   sessionNotes?: string | null;
   sessionNotesDate?: string | null;
+  
+  // New properties for advanced settings
+  inventorySettings: {
+    type: 'free' | 'limited';
+    defaultSize?: number;
+  };
+  userPermissions: {
+    [username: string]: {
+      // Key is categoryId, value is permission level
+      [categoryId: string]: 'full' | 'partial' | 'none';
+    }
+  };
+   userInventories: {
+    // Key is username
+    [username: string]: {
+        items: InventoryItem[];
+        maxSize?: number; // Overrides campaign default if set
+    }
+  };
 }
 
 export interface Category {
@@ -60,4 +89,5 @@ export interface Recipe {
   rarityId: string;
   components: RecipeComponent[];
   image?: string | null;
+  value: string | null; // Optional value (e.g., gold pieces)
 }

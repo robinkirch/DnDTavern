@@ -20,7 +20,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon } from 'lucide-react';
+import { Pencil, Save, CalendarIcon, Backpack, User, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PlayerInventory } from '@/components/player-inventory';
 
 export default function CampaignPage() {
   const params = useParams();
@@ -178,83 +180,105 @@ export default function CampaignPage() {
               )}
               <p className="text-muted-foreground mb-8 max-w-3xl">{campaign.description}</p>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  {campaign.grimoireId ? (
-                    <RecipeGrid grimoireId={campaign.grimoireId} canEdit={false} />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
-                      <h3 className="font-headline text-2xl">{t('No Grimoire Linked')}</h3>
-                      <p className="text-muted-foreground">{t('The Dungeon Master has not linked a recipe book to this campaign yet.')}</p>
-                      {isCreator && (
-                        <Button variant="secondary" className="mt-4" onClick={() => setEditDialogOpen(true)}>
-                            {t('Link a Grimoire')}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="lg:col-span-1">
-                  {isCreator ? (
-                      <Card>
-                          <CardHeader>
-                              <CardTitle className="font-headline">{t('Session Notes')}</CardTitle>
-                              <CardDescription>{t('Your private notes for the campaign. Only you can see and edit this.')}</CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                              <Label htmlFor="session-notes" className="sr-only">{t('Session Notes')}</Label>
-                              <Textarea 
-                                  id="session-notes"
-                                  placeholder={t('What happened in the last session? What clues did the party find? What are your plans for the next session?')}
-                                  value={sessionNotes}
-                                  onChange={(e) => setSessionNotes(e.target.value)}
-                                  className="min-h-[300px] text-base"
-                              />
-                              <Button onClick={handleSaveNotes} disabled={isSavingNotes} className="w-full">
-                                  <Save className="mr-2 h-4 w-4" />
-                                  {isSavingNotes ? t('Saving...') : t('Save Notes')}
-                              </Button>
-                                {campaign.sessionNotesDate && (
-                                     <div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-2">
-                                        <CalendarIcon className="h-4 w-4" />
-                                        <span>{t('Last updated on {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
-                                    </div>
-                                )}
-                          </CardContent>
-                      </Card>
-                  ) : campaign.sessionNotes ? (
-                       <Card className="bg-card/50 border-dashed">
-                          <CardHeader>
-                              <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
-                               <CardDescription className="flex items-center gap-2">
-                                 {campaign.sessionNotesDate && (
-                                     <>
-                                        <CalendarIcon className="h-4 w-4" />
-                                        <span>{t('Log entry from {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
-                                     </>
-                                 )}
-                               </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                              <p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>
-                          </CardContent>
-                      </Card>
-                  ) : (
-                     <Card className="bg-card/50 border-dashed">
-                          <CardHeader>
-                              <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
-                               <CardDescription>{t('A summary of events from your Dungeon Master.')}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                              <p className="text-muted-foreground italic">{t('The log is currently empty.')}</p>
-                          </CardContent>
-                      </Card>
-                  )}
-                </div>
-              </div>
+                <Tabs defaultValue="recipes" className="w-full">
+                    <TabsList className='mb-6'>
+                        <TabsTrigger value="recipes">
+                            <BookHeart className='mr-2 h-4 w-4'/>
+                            {t('Grimoire')}
+                        </TabsTrigger>
+                        <TabsTrigger value="dm-log">
+                            <ScrollText className='mr-2 h-4 w-4'/>
+                            {t("DM's Campaign Log")}
+                        </TabsTrigger>
+                        <TabsTrigger value="inventories">
+                            <Backpack className='mr-2 h-4 w-4'/>
+                            {t('Inventories')}
+                        </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="recipes">
+                        {campaign.grimoireId ? (
+                            <RecipeGrid grimoireId={campaign.grimoireId} canEdit={false} />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
+                            <h3 className="font-headline text-2xl">{t('No Grimoire Linked')}</h3>
+                            <p className="text-muted-foreground">{t('The Dungeon Master has not linked a recipe book to this campaign yet.')}</p>
+                            {isCreator && (
+                                <Button variant="secondary" className="mt-4" onClick={() => setEditDialogOpen(true)}>
+                                    {t('Link a Grimoire')}
+                                </Button>
+                            )}
+                            </div>
+                        )}
+                    </TabsContent>
+                    <TabsContent value="dm-log">
+                         {isCreator ? (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline">{t('Session Notes')}</CardTitle>
+                                    <CardDescription>{t('Your private notes for the campaign. Only you can see and edit this.')}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <Label htmlFor="session-notes" className="sr-only">{t('Session Notes')}</Label>
+                                    <Textarea 
+                                        id="session-notes"
+                                        placeholder={t('What happened in the last session? What clues did the party find? What are your plans for the next session?')}
+                                        value={sessionNotes}
+                                        onChange={(e) => setSessionNotes(e.target.value)}
+                                        className="min-h-[300px] text-base"
+                                    />
+                                    <Button onClick={handleSaveNotes} disabled={isSavingNotes} className="w-full">
+                                        <Save className="mr-2 h-4 w-4" />
+                                        {isSavingNotes ? t('Saving...') : t('Save Notes')}
+                                    </Button>
+                                        {campaign.sessionNotesDate && (
+                                            <div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-2">
+                                                <CalendarIcon className="h-4 w-4" />
+                                                <span>{t('Last updated on {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
+                                            </div>
+                                        )}
+                                </CardContent>
+                            </Card>
+                        ) : campaign.sessionNotes ? (
+                            <Card className="bg-card/50 border-dashed">
+                                <CardHeader>
+                                    <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
+                                    <CardDescription className="flex items-center gap-2">
+                                        {campaign.sessionNotesDate && (
+                                            <>
+                                                <CalendarIcon className="h-4 w-4" />
+                                                <span>{t('Log entry from {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
+                                            </>
+                                        )}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <Card className="bg-card/50 border-dashed">
+                                <CardHeader>
+                                    <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
+                                    <CardDescription>{t('A summary of events from your Dungeon Master.')}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-muted-foreground italic">{t('The log is currently empty.')}</p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </TabsContent>
+                     <TabsContent value="inventories">
+                        <PlayerInventory campaign={campaign} setCampaign={setCampaign} />
+                    </TabsContent>
+                </Tabs>
             </div>
         </main>
       </div>
     </>
   );
 }
+
+// Dummy components to avoid TypeScript errors
+const BookHeart = (props: any) => <svg {...props}><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>;
+const ScrollText = (props: any) => <svg {...props}><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm0 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1ZM17 3h-1a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm0 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/></svg>;

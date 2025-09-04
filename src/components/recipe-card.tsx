@@ -3,7 +3,7 @@ import type { Recipe, Grimoire, Rarity } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
-import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy } from 'lucide-react';
+import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy, Coins } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   Accordion,
@@ -101,6 +101,14 @@ export function RecipeCard({ recipe, grimoire, canEdit, onEdit, onDelete }: Reci
                     )}
                 </Accordion>
             </CardContent>
+            {recipe.value && (
+                <CardFooter className='bg-muted/50 p-2 px-4 justify-end'>
+                    <div className='flex items-center gap-2 text-sm font-semibold text-amber-600'>
+                        <Coins className='h-4 w-4' />
+                        <span>{recipe.value}</span>
+                    </div>
+                </CardFooter>
+            )}
         </Card>
     );
 }

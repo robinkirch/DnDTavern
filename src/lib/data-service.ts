@@ -9,7 +9,7 @@
 // replace the mock data and logic in this file with your actual
 // data access code.
 
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem } from './types';
 
 // --- MOCK DATA ---
 // This data simulates what would be returned from a database.
@@ -39,7 +39,6 @@ const STANDARD_CATEGORIES: Category[] = [
     { id: 'cat-alchemie', name: 'Alchemie' },
 ];
 
-
 const FAKE_DB_CAMPAIGNS: Campaign[] = [
   {
     id: 'the-guzzling-grimoire-campaign',
@@ -50,7 +49,26 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     image: 'https://picsum.photos/1200/400?random=1',
     grimoireId: 'elminsters-eats',
     sessionNotes: 'The party successfully deciphered the first three pages of the grimoire, revealing a recipe for a potent truth serum. They are now heading towards the Whispering Caves to find Glimmer-root, a key ingredient. A group of goblins is tailing them, hired by a mysterious figure who also wants the grimoire.',
-    sessionNotesDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
+    sessionNotesDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    inventorySettings: { type: 'free' },
+    userPermissions: {
+        'volo': { 'cat-potion': 'partial' },
+        'drizzt': {}
+    },
+    userInventories: {
+        'volo': {
+            items: [
+                { id: 'inv-item-1', recipeId: 'health-potion-cocktail', name: 'Health Potion Cocktail', description: null, quantity: 2, value: '50gp', isCustom: false },
+                { id: 'inv-item-2', recipeId: null, name: 'A Mysterious Key', description: 'A small, ornate silver key.', quantity: 1, value: null, isCustom: true },
+            ]
+        },
+        'drizzt': {
+            items: [
+                { id: 'inv-item-3', recipeId: 'comp-glimmer-root', name: 'Glimmer-root', description: null, quantity: 5, value: '2gp', isCustom: false },
+            ],
+            maxSize: 20
+        }
+    }
   },
   {
     id: 'the-tipsy-beholder-campaign',
@@ -61,7 +79,10 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     image: 'https://picsum.photos/1200/400?random=2',
     grimoireId: 'volos-vile-brews',
     sessionNotes: null,
-    sessionNotesDate: null
+    sessionNotesDate: null,
+    inventorySettings: { type: 'limited', defaultSize: 25 },
+    userPermissions: {},
+    userInventories: {}
   },
    {
     id: 'a-new-adventure',
@@ -73,6 +94,9 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     grimoireId: null,
     sessionNotes: '',
     sessionNotesDate: null,
+    inventorySettings: { type: 'free' },
+    userPermissions: {},
+    userInventories: {}
   },
 ];
 
@@ -86,18 +110,18 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         rarities: STANDARD_RARITIES,
         recipes: [
              // Base ingredients are now recipes without components
-            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20' },
-            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryIds: ['cat-food', 'cat-component'], rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21' },
-            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22' },
-            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23' },
-            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24' },
-            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryIds: ['cat-food', 'cat-component'], rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25' },
+            { id: 'comp-glimmer-root', name: 'Glimmer-root', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'A root that faintly glows.', secretDescription: 'Actually just a glow-worm-infested carrot.', components: [], image: 'https://picsum.photos/400/300?random=20', value: '2gp' },
+            { id: 'comp-owlbear-egg', name: 'Owlbear Egg', categoryIds: ['cat-food', 'cat-component'], rarityId: 'rarity-uncommon', description: 'A very, very large egg.', secretDescription: 'Chicken eggs work just fine if you use enough of them.', components: [], image: 'https://picsum.photos/400/300?random=21', value: '15gp' },
+            { id: 'comp-spring-water', name: 'Sparkling Spring Water', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'Effervescent water from a mountain spring.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=22', value: '1cp' },
+            { id: 'comp-wild-berry', name: 'A Single Wild Berry', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'A perfectly ripe berry.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=23', value: '5cp' },
+            { id: 'comp-cave-mushroom', name: 'Cave Mushroom', categoryIds: ['cat-plant', 'cat-component'], rarityId: 'rarity-common', description: 'An edible fungus found in damp caves.', secretDescription: null, components: [], image: 'https://picsum.photos/400/300?random=24', value: '1sp' },
+            { id: 'comp-dwarven-cheese', name: 'Dwarven "Strong" Cheese', categoryIds: ['cat-food', 'cat-component'], rarityId: 'rarity-uncommon', description: 'A pungent, hard cheese.', secretDescription: 'Its strength comes from the smell, not the taste.', components: [], image: 'https://picsum.photos/400/300?random=25', value: '5sp' },
 
             // Actual recipes
             {
                 id: 'health-potion-cocktail',
                 name: 'Health Potion Cocktail',
-                categoryIds: ['cat-potion', 'cat-recipe'],
+                categoryIds: ['cat-potion', 'cat-recipe', 'cat-alchemie'],
                 rarityId: 'rarity-uncommon',
                 description: 'A fizzy, red concoction that makes you feel reinvigorated. Tastes of strawberries and hope.',
                 secretDescription: 'The "hope" is mostly placebo.',
@@ -106,7 +130,8 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                   { recipeId: 'comp-spring-water', quantity: '4 oz' },
                   { recipeId: 'comp-wild-berry', quantity: '1' },
                 ],
-                image: 'https://picsum.photos/400/300?random=10'
+                image: 'https://picsum.photos/400/300?random=10',
+                value: '50gp'
             },
             {
                 id: 'owlbear-omelette',
@@ -120,7 +145,8 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                   { recipeId: 'comp-cave-mushroom', quantity: '1 cup, sliced' },
                   { recipeId: 'comp-dwarven-cheese', quantity: '1/2 cup, grated' },
                 ],
-                image: 'https://picsum.photos/400/300?random=11'
+                image: 'https://picsum.photos/400/300?random=11',
+                value: '25gp'
             },
         ],
     },
@@ -132,8 +158,8 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
         categories: STANDARD_CATEGORIES,
         rarities: STANDARD_RARITIES,
         recipes: [
-            { id: 'comp-grog', name: 'Basic Grog', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [] },
-            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [] },
+            { id: 'comp-grog', name: 'Basic Grog', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', components: [], value: '2sp' },
+            { id: 'comp-kobold-spice', name: 'Kobold Spice', categoryIds: ['cat-component'], rarityId: 'rarity-common', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', components: [], value: '1sp' },
 
             {
                 id: 'spicy-grog',
@@ -146,7 +172,8 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
                     { recipeId: 'comp-grog', quantity: '1 mug' },
                     { recipeId: 'comp-kobold-spice', quantity: '1 pinch' },
                 ],
-                 image: 'https://picsum.photos/400/300?random=12'
+                 image: 'https://picsum.photos/400/300?random=12',
+                 value: '5sp'
             },
         ],
     }
@@ -169,13 +196,16 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     return FAKE_DB_CAMPAIGNS.find(c => c.id === id) || null;
 }
 
-export async function createCampaign(campaignData: Omit<Campaign, 'id'>): Promise<Campaign> {
+export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories'>): Promise<Campaign> {
     console.log(`Creating campaign "${campaignData.name}"...`);
     await new Promise(resolve => setTimeout(resolve, 500));
     const newCampaign: Campaign = {
         ...campaignData,
         id: campaignData.name.toLowerCase().replace(/\s+/g, '-'),
-        sessionNotesDate: null
+        sessionNotesDate: null,
+        inventorySettings: { type: 'free' },
+        userPermissions: {},
+        userInventories: {}
     };
      if (!newCampaign.image) {
         newCampaign.image = `https://picsum.photos/1200/400?random=${Math.floor(Math.random() * 1000)}`;
@@ -363,4 +393,17 @@ export async function clearRarities(grimoireId: string): Promise<void> {
     const grimoire = FAKE_DB_GRIMOIRES.find(g => g.id === grimoireId);
     if (!grimoire) throw new Error("Grimoire not found");
     grimoire.rarities = [];
+}
+
+export async function saveInventory(campaignId: string, username: string, items: InventoryItem[]): Promise<void> {
+    console.log(`Saving inventory for ${username} in campaign ${campaignId}...`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const campaign = FAKE_DB_CAMPAIGNS.find(c => c.id === campaignId);
+    if (!campaign) throw new Error("Campaign not found");
+    
+    if (!campaign.userInventories[username]) {
+        campaign.userInventories[username] = { items: [] };
+    }
+
+    campaign.userInventories[username].items = items;
 }
