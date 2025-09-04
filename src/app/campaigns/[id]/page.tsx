@@ -20,9 +20,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon, Backpack, User, Users, BookHeart, ScrollText } from 'lucide-react';
+import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlayerInventory } from '@/components/player-inventory';
+import { CampaignTracker } from '@/components/campaign-tracker';
 
 export default function CampaignPage() {
   const params = useParams();
@@ -85,16 +86,13 @@ export default function CampaignPage() {
     toast({ title: t('Success'), description: t('Session notes have been saved.') });
   };
 
-  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => {
+  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'tracking'>) => {
     if (!campaign) return;
     
     // Create a fully formed campaign object for updating
     const updatedCampaign = {
         ...campaign,
         ...updatedData,
-        // Ensure fields not in the dialog are preserved
-        sessionNotes: campaign.sessionNotes,
-        sessionNotesDate: campaign.sessionNotesDate,
     };
 
     updateCampaign(updatedCampaign).then(savedCampaign => {
@@ -189,6 +187,8 @@ export default function CampaignPage() {
               )}
               <p className="text-muted-foreground mb-8 max-w-3xl">{campaign.description}</p>
               
+               {isCreator && <CampaignTracker campaign={campaign} setCampaign={setCampaign} />}
+
                 <Tabs defaultValue="recipes" className="w-full">
                     <TabsList className='mb-6'>
                         <TabsTrigger value="recipes">
@@ -295,4 +295,3 @@ export default function CampaignPage() {
     </>
   );
 }
-    

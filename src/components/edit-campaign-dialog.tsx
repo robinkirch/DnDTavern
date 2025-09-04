@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef, ChangeEvent } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Campaign, Grimoire, UserPermissions } from '@/lib/types';
+import type { Campaign, Grimoire, UserPermissions, WeatherRegion, WeatherCondition } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { getGrimoiresByUsername, getGrimoireById } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
@@ -30,11 +30,25 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, KeyRound, UserCog } from 'lucide-react';
+import { Upload, KeyRound, UserCog, CalendarDays, CloudSun, PlusCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Separator } from './ui/separator';
 import { UserPermissionsDialog } from './user-permissions-dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+
+const weatherConditionSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Condition name is required.'),
+  probability: z.number().min(0).max(100),
+});
+
+const weatherRegionSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Region name is required.'),
+  conditions: z.array(weatherConditionSchema),
+});
+
 
 const formSchema = z.object({
   name: z.string().min(1, 'Campaign name is required.'),
@@ -44,6 +58,10 @@ const formSchema = z.object({
   image: z.string().nullable(),
   inventoryType: z.enum(['free', 'limited']),
   defaultInventorySize: z.number().optional(),
+  daysPerMonth: z.number().min(1),
+  monthsPerYear: z.number().min(1),
+  yearName: z.string(),
+  weatherRegions: z.array(weatherRegionSchema),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -51,7 +69,7 @@ type FormData = z.infer<typeof formSchema>;
 interface EditCampaignDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => void;
+    onSave: (data: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate' | 'tracking'>) => void;
     campaign: Campaign | null;
 }
 
@@ -69,9 +87,10 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     resolver: zodResolver(formSchema),
   });
   
-  const { watch, setValue } = form;
+  const { watch, setValue, control } = form;
   const inventoryType = watch('inventoryType');
   const grimoireId = watch('grimoireId');
+  const { fields: regionFields, append: appendRegion, remove: removeRegion } = useFieldArray({ control, name: 'weatherRegions' });
 
   useEffect(() => {
     if (user && user.role === 'dm' && isOpen) {
@@ -97,6 +116,10 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         image: campaign.image,
         inventoryType: campaign.inventorySettings.type,
         defaultInventorySize: campaign.inventorySettings.defaultSize,
+        daysPerMonth: campaign.calendarSettings.daysPerMonth,
+        monthsPerYear: campaign.calendarSettings.monthsPerYear,
+        yearName: campaign.calendarSettings.yearName,
+        weatherRegions: campaign.weatherSettings.regions,
       });
       setImagePreview(campaign.image);
     } else if (!isOpen) {
@@ -141,9 +164,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 }
             }
         };
-
-        // This is a temporary save. The final save happens when the main dialog is submitted.
-        // We update the parent's state directly.
+        // This is a bit of a hack since we are not submitting the form yet.
+        // We directly call onSave to update the state in the parent component.
+        // This is necessary because the dialog is complex.
         onSave(updatedCampaign);
         setPermissionsDialogOpen(false);
   };
@@ -185,6 +208,14 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         },
         userPermissions: updatedPermissions,
         userInventories: updatedInventories, 
+        calendarSettings: {
+            daysPerMonth: values.daysPerMonth,
+            monthsPerYear: values.monthsPerYear,
+            yearName: values.yearName,
+        },
+        weatherSettings: {
+            regions: values.weatherRegions,
+        }
     });
   }
 
@@ -318,83 +349,144 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               )}
             />
              <Separator />
-
-             <div className="space-y-3">
-                 <h4 className="font-headline text-lg flex items-center gap-2"><UserCog className='h-5 w-5 text-primary' /> {t('Advanced Settings')}</h4>
-                 
-                 <FormField
-                    control={form.control}
-                    name="inventoryType"
-                    render={({ field }) => (
-                    <FormItem className="space-y-3 rounded-md border p-4">
-                        <FormLabel>{t('Inventory Rules')}</FormLabel>
-                        <FormControl>
-                        <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                        >
-                            <FormItem className="flex items-center space-x-3 space-y-0">
+            <Accordion type="multiple" className="w-full">
+                <AccordionItem value="advanced-settings">
+                     <AccordionTrigger className="text-lg font-headline hover:no-underline">
+                        <div className="flex items-center gap-2 text-base">
+                            <UserCog className='h-5 w-5 text-primary' /> {t('Advanced Settings')}
+                        </div>
+                     </AccordionTrigger>
+                     <AccordionContent className="pt-4 space-y-6">
+                         <FormField
+                            control={form.control}
+                            name="inventoryType"
+                            render={({ field }) => (
+                            <FormItem className="space-y-3 rounded-md border p-4">
+                                <FormLabel>{t('Inventory Rules')}</FormLabel>
                                 <FormControl>
-                                    <RadioGroupItem value="free" />
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex flex-col space-y-1"
+                                >
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl>
+                                            <RadioGroupItem value="free" />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">{t('Free')}</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl>
+                                            <RadioGroupItem value="limited" />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">{t('Limited')}</FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
                                 </FormControl>
-                                <FormLabel className="font-normal">{t('Free')}</FormLabel>
+                                <FormMessage />
                             </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                    <RadioGroupItem value="limited" />
-                                </FormControl>
-                                <FormLabel className="font-normal">{t('Limited')}</FormLabel>
-                            </FormItem>
-                        </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                {inventoryType === 'limited' ? (
-                    <FormField
-                        control={form.control}
-                        name="defaultInventorySize"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{t('Default Inventory Size')}</FormLabel>
-                            <FormControl>
-                            <Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
-                            </FormControl>
-                            <FormDescription>
-                                {t('Set a default inventory size for new players.')}
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
+                            )}
+                        />
+                        {inventoryType === 'limited' ? (
+                            <FormField
+                                control={form.control}
+                                name="defaultInventorySize"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('Default Inventory Size')}</FormLabel>
+                                    <FormControl>
+                                    <Input type="number" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        {t('Set a default inventory size for new players.')}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        ) : (
+                            <p className='text-sm text-muted-foreground'>{t('Inventory is not restricted.')}</p>
                         )}
-                    />
-                ) : (
-                    <p className='text-sm text-muted-foreground'>{t('Inventory is not restricted.')}</p>
-                )}
 
-                 <div className="space-y-3 rounded-md border p-4">
-                    <FormLabel>{t('Player Permissions')}</FormLabel>
-                    <FormDescription>
-                        {t('Manage what each player can see in the grimoire.')}
-                    </FormDescription>
-                     {!grimoireId && <p className="text-sm text-amber-500">{t('Link a grimoire to manage permissions.')}</p>}
-                    <div className="space-y-2">
-                        {invitedUsernames.map(username => (
-                            <div key={username} className="flex justify-between items-center">
-                                <p className="text-sm font-medium">{username}</p>
-                                <Button type="button" variant="outline" size="sm" onClick={() => handleManagePermissions(username)} disabled={!grimoireId}>
-                                    <KeyRound className="mr-2 h-4 w-4" />
-                                    {t('Permissions')}
-                                </Button>
+                        <div className="space-y-3 rounded-md border p-4">
+                            <FormLabel>{t('Player Permissions')}</FormLabel>
+                            <FormDescription>
+                                {t('Manage what each player can see in the grimoire.')}
+                            </FormDescription>
+                            {!grimoireId && <p className="text-sm text-amber-500">{t('Link a grimoire to manage permissions.')}</p>}
+                            <div className="space-y-2">
+                                {invitedUsernames.map(username => (
+                                    <div key={username} className="flex justify-between items-center">
+                                        <p className="text-sm font-medium">{username}</p>
+                                        <Button type="button" variant="outline" size="sm" onClick={() => handleManagePermissions(username)} disabled={!grimoireId}>
+                                            <KeyRound className="mr-2 h-4 w-4" />
+                                            {t('Permissions')}
+                                        </Button>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="time-weather">
+                    <AccordionTrigger className="text-lg font-headline hover:no-underline">
+                        <div className="flex items-center gap-2 text-base">
+                             <CalendarDays className='h-5 w-5 text-primary' /> {t('Time & Weather')}
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-6">
+                        <div className="rounded-md border p-4 space-y-4">
+                            <h4 className="font-medium">{t("Calendar Settings")}</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={control} name="daysPerMonth" render={({ field }) => (
+                                    <FormItem><FormLabel>{t("Days per Month")}</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={control} name="monthsPerYear" render={({ field }) => (
+                                    <FormItem><FormLabel>{t("Months per Year")}</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                            </div>
+                             <FormField control={control} name="yearName" render={({ field }) => (
+                                <FormItem><FormLabel>{t("Epoch/Year Name")}</FormLabel><FormControl><Input {...field} placeholder={t("e.g. Year of the Phoenix")} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                        <div className="rounded-md border p-4 space-y-4">
+                             <h4 className="font-medium">{t("Weather Settings")}</h4>
+                             {regionFields.map((region, regionIndex) => {
+                                const { fields: conditionFields, append: appendCondition, remove: removeCondition } = useFieldArray({ control, name: `weatherRegions.${regionIndex}.conditions` });
+                                const totalProb = conditionFields.reduce((acc, c) => acc + (c.probability || 0), 0);
+                                return (
+                                    <div key={region.id} className="p-3 border rounded-md bg-background/50">
+                                         <FormField control={control} name={`weatherRegions.${regionIndex}.name`} render={({ field }) => (
+                                            <FormItem><FormLabel>{t("Region Name")}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <Label className="mt-2 mb-1 block">{t("Conditions")}</Label>
+                                         {conditionFields.map((condition, conditionIndex) => (
+                                            <div key={condition.id} className="grid grid-cols-[2fr,1fr,auto] gap-2 items-center mb-2">
+                                                <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.name`} render={({ field }) => (
+                                                    <FormItem><FormControl><Input placeholder={t("e.g. Sunny")} {...field} /></FormControl><FormMessage /></FormItem>
+                                                )} />
+                                                 <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.probability`} render={({ field }) => (
+                                                    <FormItem><FormControl><Input type="number" placeholder="%" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl><FormMessage /></FormItem>
+                                                )} />
+                                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeCondition(conditionIndex)}><Trash2 className="h-4 w-4" /></Button>
+                                            </div>
+                                         ))}
+                                         <div className="flex justify-between items-center mt-2">
+                                            <Button type="button" variant="outline" size="sm" onClick={() => appendCondition({ id: `cond-${Date.now()}`, name: '', probability: 0 })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Condition")}</Button>
+                                            <div className={`text-sm ${totalProb !== 100 ? 'text-destructive' : 'text-green-600'}`}>{t("Total")}: {totalProb}%</div>
+                                         </div>
+                                         <Button type="button" variant="destructive" size="sm" className="mt-4 w-full" onClick={() => removeRegion(regionIndex)}>{t("Delete Region")}</Button>
+                                    </div>
+                                )
+                             })}
+                            <Button type="button" className="w-full" variant="secondary" onClick={() => appendRegion({ id: `reg-${Date.now()}`, name: '', conditions: [] })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Region")}</Button>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
 
-            </div>
 
-            <DialogFooter>
+            <DialogFooter className="mt-6">
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
                 <Button type="submit">{t('Save Changes')}</Button>
             </DialogFooter>

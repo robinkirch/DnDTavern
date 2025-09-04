@@ -38,6 +38,21 @@ export interface UserPermissions {
     [categoryId: string]: PermissionLevel;
 }
 
+export interface WeatherCondition {
+    id: string;
+    name: string;
+    probability: number; // Percentage
+}
+
+export interface WeatherRegion {
+    id: string;
+    name: string;
+    conditions: WeatherCondition[];
+}
+
+export type TimeOfDay = 'morning' | 'noon' | 'evening' | 'night';
+
+
 export interface Campaign {
   id: string;
   name: string;
@@ -63,6 +78,26 @@ export interface Campaign {
         items: InventoryItem[];
         maxSize?: number; // Overrides campaign default if set
     }
+  };
+
+  // Time and Weather Tracking
+  calendarSettings: {
+    daysPerMonth: number;
+    monthsPerYear: number;
+    yearName: string;
+  };
+  weatherSettings: {
+    regions: WeatherRegion[];
+  };
+  tracking: {
+    currentDate: {
+        day: number;
+        month: number;
+        year: number;
+    };
+    currentTimeOfDay: TimeOfDay;
+    currentRegionId: string | null;
+    currentWeather: string | null; // Name of the current weather condition
   };
 }
 

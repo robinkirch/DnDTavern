@@ -68,6 +68,22 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
             ],
             maxSize: 20
         }
+    },
+    calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Year of the Rising Dragon' },
+    weatherSettings: { 
+        regions: [
+            { id: 'region-1', name: 'Sword Coast', conditions: [
+                { id: 'weather-1', name: 'Sunny', probability: 60 },
+                { id: 'weather-2', name: 'Light Rain', probability: 30 },
+                { id: 'weather-3', name: 'Stormy', probability: 10 },
+            ]}
+        ]
+    },
+    tracking: {
+        currentDate: { day: 15, month: 4, year: 1491 },
+        currentTimeOfDay: 'noon',
+        currentRegionId: 'region-1',
+        currentWeather: 'Sunny'
     }
   },
   {
@@ -82,7 +98,15 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     sessionNotesDate: null,
     inventorySettings: { type: 'limited', defaultSize: 25 },
     userPermissions: {},
-    userInventories: {}
+    userInventories: {},
+    calendarSettings: { daysPerMonth: 28, monthsPerYear: 14, yearName: 'Age of Worms' },
+    weatherSettings: { regions: [] },
+    tracking: {
+        currentDate: { day: 1, month: 1, year: 1 },
+        currentTimeOfDay: 'morning',
+        currentRegionId: null,
+        currentWeather: null
+    }
   },
    {
     id: 'a-new-adventure',
@@ -96,7 +120,15 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     sessionNotesDate: null,
     inventorySettings: { type: 'free' },
     userPermissions: {},
-    userInventories: {}
+    userInventories: {},
+    calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Present Day' },
+    weatherSettings: { regions: [] },
+    tracking: {
+        currentDate: { day: 1, month: 1, year: 1 },
+        currentTimeOfDay: 'morning',
+        currentRegionId: null,
+        currentWeather: null
+    }
   },
 ];
 
@@ -196,7 +228,7 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     return FAKE_DB_CAMPAIGNS.find(c => c.id === id) || null;
 }
 
-export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories'>): Promise<Campaign> {
+export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories' | 'calendarSettings' | 'weatherSettings' | 'tracking'>): Promise<Campaign> {
     console.log(`Creating campaign "${campaignData.name}"...`);
     await new Promise(resolve => setTimeout(resolve, 500));
     const newCampaign: Campaign = {
@@ -205,7 +237,15 @@ export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'invent
         sessionNotesDate: null,
         inventorySettings: { type: 'free' },
         userPermissions: {},
-        userInventories: {}
+        userInventories: {},
+        calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Year of Beginnings' },
+        weatherSettings: { regions: [] },
+        tracking: {
+            currentDate: { day: 1, month: 1, year: 1 },
+            currentTimeOfDay: 'morning',
+            currentRegionId: null,
+            currentWeather: null,
+        }
     };
      if (!newCampaign.image) {
         newCampaign.image = `https://picsum.photos/1200/400?random=${Math.floor(Math.random() * 1000)}`;
@@ -407,5 +447,3 @@ export async function saveInventory(campaignId: string, username: string, items:
 
     campaign.userInventories[username].items = items;
 }
-
-    
