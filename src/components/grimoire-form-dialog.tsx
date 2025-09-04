@@ -46,7 +46,9 @@ export function GrimoireFormDialog({ isOpen, onOpenChange, onSave }: GrimoireFor
   });
 
   useEffect(() => {
-    form.reset({ id: '' });
+    if (isOpen) {
+      form.reset({ id: '' });
+    }
   }, [isOpen, form]);
 
   function onSubmit(values: FormData) {

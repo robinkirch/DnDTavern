@@ -93,6 +93,36 @@ const FAKE_DB_GRIMOIRES: Grimoire[] = [
             },
         ],
     },
+    {
+        id: 'volos-vile-brews',
+        creatorUsername: 'volo',
+        name: 'Volo\'s Vile Brews',
+        description: 'Brews and concoctions from the famed (and often embellished) world traveler, Volothamp Geddarm.',
+        categories: [
+          { id: 'cat-drink', name: 'Drinks' },
+          { id: 'cat-snack', name: 'Snacks' },
+        ],
+        components: [
+          { id: 'comp-grog', name: 'Basic Grog', description: 'Every pirate\'s favorite.', secretDescription: 'Just use rum.', categoryId: 'cat-drink' },
+          { id: 'comp-kobold-spice', name: 'Kobold Spice', description: 'A surprisingly zesty seasoning.', secretDescription: 'It\'s just paprika.', categoryId: 'cat-spice' },
+          { id: 'comp-dried-meat', name: 'Dried Meat Strip', description: 'Of indeterminate origin.', secretDescription: null, categoryId: 'cat-monster-part' },
+        ],
+        recipes: [
+            {
+                id: 'spicy-grog',
+                name: 'Volo\'s Spicy Grog',
+                categoryId: 'cat-drink',
+                rarity: 'Common',
+                description: 'A classic grog with a spicy kick that clears the sinuses.',
+                secretDescription: null,
+                components: [
+                    { componentId: 'comp-grog', quantity: '1 mug' },
+                    { componentId: 'comp-kobold-spice', quantity: '1 pinch' },
+                ],
+                instructions: 'Pour grog into mug. Add spice. Stir once. Drink before you reconsider.',
+            },
+        ],
+    }
 ];
 
 // --- CAMPAIGN SERVICE ---
@@ -148,15 +178,46 @@ export async function createGrimoire(id: string, creatorUsername: string): Promi
     
     // In a real app, you would connect to the data source `id` here,
     // fetch its name/description, and confirm it's valid.
-    // For now, we'll just create a placeholder.
+    // For this mock, we'll create a new grimoire with some default content.
     const newGrimoire: Grimoire = {
         id: id,
         creatorUsername: creatorUsername,
-        name: `Grimoire: ${id}`, // Placeholder name
-        description: `Data sourced from "${id}"`, // Placeholder desc
-        categories: [],
-        components: [],
-        recipes: [],
+        name: `New Grimoire: ${id}`,
+        description: `A collection of newly discovered recipes, sourced from "${id}".`,
+        categories: [
+            { id: 'cat-snack', name: 'Snacks' },
+            { id: 'cat-drink', name: 'Drinks' },
+        ],
+        components: [
+            { id: 'comp-mana-biscuit', name: 'Mana Biscuit', description: 'A dry, but nourishing biscuit.', secretDescription: 'Tastes like cardboard.', categoryId: 'cat-snack' },
+            { id: 'comp-purified-water', name: 'Purified Water', description: 'Clean, safe water.', secretDescription: null, categoryId: 'cat-drink' },
+        ],
+        recipes: [
+            {
+                id: 'simple-mana-biscuit',
+                name: 'Simple Mana Biscuit',
+                categoryId: 'cat-snack',
+                rarity: 'Common',
+                description: 'The most basic travel ration. Fills the stomach, but not the soul.',
+                secretDescription: null,
+                components: [
+                    { componentId: 'comp-mana-biscuit', quantity: '1' },
+                ],
+                instructions: 'Unwrap and eat. Try not to think about it too much.',
+            },
+            {
+                id: 'water',
+                name: 'Water',
+                categoryId: 'cat-drink',
+                rarity: 'Common',
+                description: 'Just water. Refreshing and vital.',
+                secretDescription: 'Can be found... anywhere there is water.',
+                components: [
+                    { componentId: 'comp-purified-water', quantity: '1 flask' },
+                ],
+                instructions: 'Open flask. Drink.',
+            },
+        ],
     };
     FAKE_DB_GRIMOIRES.push(newGrimoire);
     return newGrimoire;
