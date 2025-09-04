@@ -212,7 +212,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                                     <Image src={imagePreview} alt="Recipe Preview" width={80} height={60} className="rounded-md object-cover" />
                                 )}
                                 <FormControl>
-                                    <>
+                                    <div>
                                         <input
                                             type="file"
                                             ref={fileInputRef}
@@ -224,7 +224,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                                             <Upload className="mr-2 h-4 w-4" />
                                             {t('Upload (400x300)')}
                                         </Button>
-                                    </>
+                                    </div>
                                 </FormControl>
                             </div>
                              <FormMessage />
