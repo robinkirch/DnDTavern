@@ -132,5 +132,7 @@
     "Are you sure you want to delete all categories?": "Are you sure you want to delete all categories?",
     "Are you sure you want to delete all rarities?": "Are you sure you want to delete all rarities?",
     "All Categories Deleted": "All Categories Deleted",
-    "All Rarities Deleted": "All Rarities Deleted"
+    "All Rarities Deleted": "All Rarities Deleted",
+    "Last updated on {{date}}": "Last updated on {{date}}",
+    "Log entry from {{date}}": "Log entry from {{date}}"
 }

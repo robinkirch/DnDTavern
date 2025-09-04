@@ -2,6 +2,9 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+
 
 import { useAuth } from '@/context/auth-context';
 import { getCampaignById, getGrimoireById, updateCampaign } from '@/lib/data-service';
@@ -17,14 +20,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save } from 'lucide-react';
+import { Pencil, Save, CalendarIcon } from 'lucide-react';
 
 export default function CampaignPage() {
   const params = useParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
@@ -69,27 +72,38 @@ export default function CampaignPage() {
   const handleSaveNotes = async () => {
     if (!campaign) return;
     setIsSavingNotes(true);
-    const updatedCampaign = { ...campaign, sessionNotes };
+    const updatedCampaign = { 
+        ...campaign, 
+        sessionNotes, 
+        sessionNotesDate: new Date().toISOString()
+    };
     await updateCampaign(updatedCampaign);
     setCampaign(updatedCampaign); // Update local state
     setIsSavingNotes(false);
     toast({ title: t('Success'), description: t('Session notes have been saved.') });
   };
 
-  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes'>) => {
+  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => {
     if (!campaign) return;
     const updatedCampaign = { ...campaign, ...updatedData };
      updateCampaign(updatedCampaign).then(savedCampaign => {
         setCampaign(savedCampaign);
-        if (savedCampaign.grimoireId) {
-          getGrimoireById(savedCampaign.grimoireId).then(setGrimoire);
-        } else {
-          setGrimoire(null);
+        if (savedCampaign.grimoireId !== campaign.grimoireId) {
+            if (savedCampaign.grimoireId) {
+                getGrimoireById(savedCampaign.grimoireId).then(setGrimoire);
+            } else {
+                setGrimoire(null);
+            }
         }
         toast({ title: t("Campaign Updated"), description: t("Your campaign details have been saved.") });
         setEditDialogOpen(false);
      });
   };
+
+  const formatDate = (dateString: string) => {
+      const locale = language === 'de' ? de : undefined;
+      return format(new Date(dateString), "PP", { locale });
+  }
 
   if (loading || authLoading || !campaign) {
     return (
@@ -167,7 +181,7 @@ export default function CampaignPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                   {campaign.grimoireId ? (
-                    <RecipeGrid grimoireId={campaign.grimoireId} canEdit={isCreator} />
+                    <RecipeGrid grimoireId={campaign.grimoireId} canEdit={false} />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
                       <h3 className="font-headline text-2xl">{t('No Grimoire Linked')}</h3>
@@ -200,13 +214,26 @@ export default function CampaignPage() {
                                   <Save className="mr-2 h-4 w-4" />
                                   {isSavingNotes ? t('Saving...') : t('Save Notes')}
                               </Button>
+                                {campaign.sessionNotesDate && (
+                                     <div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-2">
+                                        <CalendarIcon className="h-4 w-4" />
+                                        <span>{t('Last updated on {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
+                                    </div>
+                                )}
                           </CardContent>
                       </Card>
                   ) : campaign.sessionNotes ? (
                        <Card className="bg-card/50 border-dashed">
                           <CardHeader>
                               <CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
-                               <CardDescription>{t('A summary of events from your Dungeon Master.')}</CardDescription>
+                               <CardDescription className="flex items-center gap-2">
+                                 {campaign.sessionNotesDate && (
+                                     <>
+                                        <CalendarIcon className="h-4 w-4" />
+                                        <span>{t('Log entry from {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
+                                     </>
+                                 )}
+                               </CardDescription>
                           </CardHeader>
                           <CardContent>
                               <p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>

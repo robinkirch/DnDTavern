@@ -132,5 +132,7 @@
     "Are you sure you want to delete all categories?": "Sind Sie sicher, dass Sie alle Kategorien löschen möchten?",
     "Are you sure you want to delete all rarities?": "Sind Sie sicher, dass Sie alle Seltenheiten löschen möchten?",
     "All Categories Deleted": "Alle Kategorien gelöscht",
-    "All Rarities Deleted": "Alle Seltenheiten gelöscht"
+    "All Rarities Deleted": "Alle Seltenheiten gelöscht",
+    "Last updated on {{date}}": "Zuletzt aktualisiert am {{date}}",
+    "Log entry from {{date}}": "Protokolleintrag vom {{date}}"
 }

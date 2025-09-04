@@ -49,7 +49,8 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     invitedUsernames: ['volo', 'drizzt'],
     image: 'https://picsum.photos/1200/400?random=1',
     grimoireId: 'elminsters-eats',
-    sessionNotes: 'The party successfully deciphered the first three pages of the grimoire, revealing a recipe for a potent truth serum. They are now heading towards the Whispering Caves to find Glimmer-root, a key ingredient. A group of goblins is tailing them, hired by a mysterious figure who also wants the grimoire.'
+    sessionNotes: 'The party successfully deciphered the first three pages of the grimoire, revealing a recipe for a potent truth serum. They are now heading towards the Whispering Caves to find Glimmer-root, a key ingredient. A group of goblins is tailing them, hired by a mysterious figure who also wants the grimoire.',
+    sessionNotesDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
   },
   {
     id: 'the-tipsy-beholder-campaign',
@@ -60,6 +61,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     image: 'https://picsum.photos/1200/400?random=2',
     grimoireId: 'volos-vile-brews',
     sessionNotes: null,
+    sessionNotesDate: null
   },
    {
     id: 'a-new-adventure',
@@ -70,6 +72,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     image: 'https://picsum.photos/1200/400?random=3',
     grimoireId: null,
     sessionNotes: '',
+    sessionNotesDate: null,
   },
 ];
 
@@ -172,6 +175,7 @@ export async function createCampaign(campaignData: Omit<Campaign, 'id'>): Promis
     const newCampaign: Campaign = {
         ...campaignData,
         id: campaignData.name.toLowerCase().replace(/\s+/g, '-'),
+        sessionNotesDate: null
     };
      if (!newCampaign.image) {
         newCampaign.image = `https://picsum.photos/1200/400?random=${Math.floor(Math.random() * 1000)}`;

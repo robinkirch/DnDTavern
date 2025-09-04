@@ -31,6 +31,7 @@ export interface Campaign {
   image: string | null;
   grimoireId: string | null; // This links to a Grimoire (data source)
   sessionNotes?: string | null;
+  sessionNotesDate?: string | null;
 }
 
 export interface Category {
