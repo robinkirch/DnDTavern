@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (username: string, role: 'player' | 'dm') => void;
+  login: (username: string, role: 'player' | 'dm', avatar: string | null) => void;
   logout: () => void;
 }
 
@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (username: string, role: 'player' | 'dm') => {
-    const newUser: User = { username, role };
+  const login = (username: string, role: 'player' | 'dm', avatar: string | null) => {
+    const newUser: User = { username, role, avatar };
     try {
       localStorage.setItem('tavern-user', JSON.stringify(newUser));
       setUser(newUser);

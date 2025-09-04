@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, ChangeEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User as UserIcon, Upload } from 'lucide-react';
+
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<'player' | 'dm'>('player');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const router = useRouter();
   const { login, user, loading } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     if (!loading && user) {
@@ -21,11 +28,22 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (username.trim()) {
-      login(username.trim(), role);
+      login(username.trim(), role, avatarPreview);
       router.push('/');
     }
   };
@@ -43,6 +61,28 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Profile Picture</Label>
+              <div className="flex items-center gap-4">
+                 <Avatar className="h-16 w-16">
+                    <AvatarImage src={avatarPreview ?? undefined} alt="Avatar Preview" />
+                    <AvatarFallback className='bg-muted'>
+                        <UserIcon className="h-8 w-8 text-muted-foreground" />
+                    </AvatarFallback>
+                </Avatar>
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Image
+                </Button>
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleAvatarChange} 
+                    className="hidden" 
+                    accept="image/*"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input

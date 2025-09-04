@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -33,10 +34,17 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           {user && (
             <>
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <UserIcon className="h-4 w-4" />
-                {user.username}
-              </span>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.avatar ?? undefined} alt={user.username} />
+                  <AvatarFallback>
+                    <UserIcon className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground hidden sm:inline-block">
+                  {user.username}
+                </span>
+              </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="mr-1 h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>

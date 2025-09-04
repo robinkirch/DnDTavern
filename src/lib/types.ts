@@ -3,6 +3,7 @@
 export interface User {
   username: string;
   role: 'player' | 'dm'; 
+  avatar?: string | null;
 }
 
 // A Grimoire is now just a pointer to a data source.
