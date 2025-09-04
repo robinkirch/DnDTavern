@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, ChangeEvent } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Campaign, Grimoire, UserPermissions, WeatherRegion, WeatherCondition } from '@/lib/types';
@@ -36,6 +36,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Separator } from './ui/separator';
 import { UserPermissionsDialog } from './user-permissions-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { Label } from './ui/label';
 
 const weatherConditionSchema = z.object({
   id: z.string(),
@@ -73,28 +74,30 @@ interface EditCampaignDialogProps {
     campaign: Campaign | null;
 }
 
-const WeatherRegionFields = ({ control, regionIndex, removeRegion }: { control: any, regionIndex: number, removeRegion: (index: number) => void }) => {
+const WeatherRegionFields = ({ control, regionIndex, removeRegion, watch }: { control: any, regionIndex: number, removeRegion: (index: number) => void, watch: any }) => {
     const { t } = useI18n();
     const { fields: conditionFields, append: appendCondition, remove: removeCondition } = useFieldArray({
         control,
         name: `weatherRegions.${regionIndex}.conditions`
     });
 
-    const totalProb = watch({
-        control,
-        name: `weatherRegions.${regionIndex}.conditions`
-    }).reduce((acc: number, c: any) => acc + (c.probability || 0), 0);
+    const conditions = watch(`weatherRegions.${regionIndex}.conditions`);
+    const totalProb = (conditions || []).reduce((acc: number, c: any) => acc + (c.probability || 0), 0);
 
     return (
         <div className="p-3 border rounded-md bg-background/50">
-            <FormField control={control} name={`weatherRegions.${regionIndex}.name`} render={({ field }) => (
-                <FormItem>
-                    <FormLabel>{t("Region Name")}</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                </FormItem>
-            )} />
-            <Label className="mt-2 mb-1 block">{t("Conditions")}</Label>
+            <div className='flex justify-between items-start'>
+                <FormField control={control} name={`weatherRegions.${regionIndex}.name`} render={({ field }) => (
+                    <FormItem className='flex-grow pr-4'>
+                        <FormLabel>{t("Region Name")}</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+                <Button type="button" variant="destructive" size="sm" className="mt-2" onClick={() => removeRegion(regionIndex)}>{t("Delete Region")}</Button>
+            </div>
+
+            <Label className="mt-4 mb-2 block">{t("Conditions")}</Label>
             {conditionFields.map((condition, conditionIndex) => (
                 <div key={condition.id} className="grid grid-cols-[2fr,1fr,auto] gap-2 items-center mb-2">
                     <FormField control={control} name={`weatherRegions.${regionIndex}.conditions.${conditionIndex}.name`} render={({ field }) => (
@@ -110,7 +113,6 @@ const WeatherRegionFields = ({ control, regionIndex, removeRegion }: { control: 
                 <Button type="button" variant="outline" size="sm" onClick={() => appendCondition({ id: `cond-${Date.now()}`, name: '', probability: 0 })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Condition")}</Button>
                 <div className={`text-sm ${totalProb !== 100 ? 'text-destructive' : 'text-green-600'}`}>{t("Total")}: {totalProb}%</div>
             </div>
-            <Button type="button" variant="destructive" size="sm" className="mt-4 w-full" onClick={() => removeRegion(regionIndex)}>{t("Delete Region")}</Button>
         </div>
     );
 };
@@ -493,15 +495,18 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                             )} />
                         </div>
                         <div className="rounded-md border p-4 space-y-4">
-                            <h4 className="font-medium">{t("Weather Settings")}</h4>
-                            {regionFields.map((region, regionIndex) => (
-                                <WeatherRegionFields 
-                                    key={region.id}
-                                    control={control} 
-                                    regionIndex={regionIndex} 
-                                    removeRegion={removeRegion} 
-                                />
-                            ))}
+                             <h4 className="font-medium">{t("Weather Settings")}</h4>
+                            <div className='space-y-4'>
+                                {regionFields.map((region, regionIndex) => (
+                                    <WeatherRegionFields 
+                                        key={region.id}
+                                        control={control} 
+                                        regionIndex={regionIndex} 
+                                        removeRegion={removeRegion}
+                                        watch={watch}
+                                    />
+                                ))}
+                            </div>
                             <Button type="button" className="w-full" variant="secondary" onClick={() => appendRegion({ id: `reg-${Date.now()}`, name: '', conditions: [] })}><PlusCircle className="mr-2 h-4 w-4" />{t("Add Region")}</Button>
                         </div>
                     </AccordionContent>
