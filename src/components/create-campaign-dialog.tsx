@@ -65,10 +65,10 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
   });
 
   useEffect(() => {
-    if (user && user.role === 'dm') {
+    if (user && user.role === 'dm' && isOpen) {
       getGrimoiresByUsername(user.username).then(setUserGrimoires);
     }
-  }, [user]);
+  }, [user, isOpen]);
 
   function onSubmit(values: FormData) {
     const invitedUsernames = values.invitedUsernames
