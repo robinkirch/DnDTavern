@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 
 interface NotesSectionProps {
     campaign: Campaign;
@@ -109,9 +110,24 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
                         {filteredNotes.map(note => (
                             <Card key={note.id} className="flex flex-col">
                                 {note.image && (
-                                     <div className="relative h-48 w-full">
-                                        <Image src={note.image} alt={note.title} fill className="object-cover rounded-t-lg" data-ai-hint="old parchment paper" />
-                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <button className="relative h-48 w-full cursor-pointer overflow-hidden rounded-t-lg group">
+                                                <Image 
+                                                    src={note.image} 
+                                                    alt={note.title} 
+                                                    fill 
+                                                    className="object-cover transition-transform duration-300 group-hover:scale-105" 
+                                                    data-ai-hint="old parchment paper" 
+                                                />
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl h-auto p-2">
+                                            <div className="relative w-full h-[80vh]">
+                                                <Image src={note.image} alt={note.title} fill className="object-contain rounded-md" />
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 )}
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
@@ -153,5 +169,3 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
         </>
     );
 }
-
-    
