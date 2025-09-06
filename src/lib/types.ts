@@ -34,6 +34,16 @@ export interface Monster {
     creatorUsername: string;
 }
 
+export interface Note {
+    id: string;
+    title: string;
+    content: string;
+    image: string | null;
+    location: string;
+    tags: string[];
+    creatorUsername: string;
+}
+
 export interface InventoryItem {
     id: string; // Unique ID for the inventory item instance
     recipeId: string | null; // Link to the recipe if it's from a grimoire
@@ -80,6 +90,7 @@ export interface Campaign {
   sessionNotes?: string | null;
   sessionNotesDate?: string | null;
   bestiary: Monster[];
+  notes: Note[];
   
   // New properties for advanced settings
   inventorySettings: {
@@ -153,3 +164,5 @@ export interface Recipe {
   image?: string | null;
   value: string | null; // Optional value (e.g., gold pieces)
 }
+
+    

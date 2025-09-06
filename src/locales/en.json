@@ -267,5 +267,30 @@
     "neutral": "Neutral",
     "friendly": "Friendly",
     "HP": "HP",
-    "Added by": "Added by"
+    "Added by": "Added by",
+    "Books & Notes": "Books & Notes",
+    "Search by title, content, location, or tag...": "Search by title, content, location, or tag...",
+    "Add Note": "Add Note",
+    "No notes match your search.": "No notes match your search.",
+    "No notes have been added yet. Add the first one!": "No notes have been added yet. Add the first one!",
+    "Edit Note": "Edit Note",
+    "Add New Note": "Add New Note",
+    "Record a document, letter, or piece of information you have found.": "Record a document, letter, or piece of information you have found.",
+    "Title": "Title",
+    "e.g., A Blood-Stained Letter": "e.g., A Blood-Stained Letter",
+    "Content": "Content",
+    "Transcribe the content of the note here.": "Transcribe the content of the note here.",
+    "Location Found": "Location Found",
+    "e.g., In the secret compartment of the desk.": "e.g., In the secret compartment of the desk.",
+    "Tags": "Tags",
+    "secret, letter, plot, ... (comma-separated)": "secret, letter, plot, ... (comma-separated)",
+    "Note Added": "Note Added",
+    "A new document has been added to your collection.": "A new document has been added to your collection.",
+    "Note Updated": "Note Updated",
+    "The document's details have been updated.": "The document's details have been updated.",
+    "Note Removed": "Note Removed",
+    "The document has been removed from your collection.": "The document has been removed from your collection.",
+    "Are you sure you want to delete this note? This cannot be undone.": "Are you sure you want to delete this note? This cannot be undone."
 }
+
+    

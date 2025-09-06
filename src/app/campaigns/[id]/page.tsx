@@ -20,11 +20,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords } from 'lucide-react';
+import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords, BookMarked } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlayerInventory } from '@/components/player-inventory';
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { Bestiary } from '@/components/bestiary';
+import { NotesSection } from '@/components/notes-section';
 
 export default function CampaignPage() {
   const params = useParams();
@@ -200,6 +201,10 @@ export default function CampaignPage() {
                             <Swords className='mr-2 h-4 w-4'/>
                             {t('Bestiary')}
                         </TabsTrigger>
+                         <TabsTrigger value="notes">
+                            <BookMarked className='mr-2 h-4 w-4'/>
+                            {t('Books & Notes')}
+                        </TabsTrigger>
                         <TabsTrigger value="dm-log">
                             <ScrollText className='mr-2 h-4 w-4'/>
                             {t("DM's Campaign Log")}
@@ -233,6 +238,9 @@ export default function CampaignPage() {
                     </TabsContent>
                     <TabsContent value="bestiary">
                         <Bestiary campaign={campaign} setCampaign={setCampaign} />
+                    </TabsContent>
+                    <TabsContent value="notes">
+                        <NotesSection campaign={campaign} setCampaign={setCampaign} />
                     </TabsContent>
                     <TabsContent value="dm-log">
                          {isCreator ? (
@@ -303,3 +311,5 @@ export default function CampaignPage() {
     </>
   );
 }
+
+    
