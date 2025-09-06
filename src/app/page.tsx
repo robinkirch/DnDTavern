@@ -6,10 +6,12 @@ import { useAuth } from '@/context/auth-context';
 import CampaignsDashboard from '@/components/campaigns-dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
+import { useI18n } from '@/context/i18n-context';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -36,7 +38,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header helpText={t('This is your main dashboard. From here, you can create new campaigns (DMs only), view your existing campaigns, or manage your grimoires (recipe books).')} />
       <main className="flex-1">
         <CampaignsDashboard />
       </main>

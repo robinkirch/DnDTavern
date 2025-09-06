@@ -20,10 +20,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText } from 'lucide-react';
+import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlayerInventory } from '@/components/player-inventory';
 import { CampaignTracker } from '@/components/campaign-tracker';
+import { Bestiary } from '@/components/bestiary';
 
 export default function CampaignPage() {
   const params = useParams();
@@ -153,7 +154,7 @@ export default function CampaignPage() {
           campaign={campaign}
       />
       <div className="min-h-screen flex flex-col">
-        <Header />
+        <Header helpText={t('This is the main view for a single campaign. Here you can see all campaign-related information.')} />
         <main className="flex-grow">
             <div className="relative w-full h-64 md:h-80">
                 {campaign.image && (
@@ -195,6 +196,10 @@ export default function CampaignPage() {
                             <BookHeart className='mr-2 h-4 w-4'/>
                             {t('Grimoire')}
                         </TabsTrigger>
+                        <TabsTrigger value="bestiary">
+                            <Swords className='mr-2 h-4 w-4'/>
+                            {t('Bestiary')}
+                        </TabsTrigger>
                         <TabsTrigger value="dm-log">
                             <ScrollText className='mr-2 h-4 w-4'/>
                             {t("DM's Campaign Log")}
@@ -225,6 +230,9 @@ export default function CampaignPage() {
                             )}
                             </div>
                         )}
+                    </TabsContent>
+                    <TabsContent value="bestiary">
+                        <Bestiary campaign={campaign} setCampaign={setCampaign} />
                     </TabsContent>
                     <TabsContent value="dm-log">
                          {isCreator ? (

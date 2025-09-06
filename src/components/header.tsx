@@ -1,7 +1,7 @@
 'use client';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
-import { LogOut, User as UserIcon, Languages } from 'lucide-react';
+import { LogOut, User as UserIcon, Languages, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -13,9 +13,19 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 
-export function Header() {
+interface HeaderProps {
+    helpText?: string;
+}
+
+export function Header({ helpText }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { language, setLanguage, t } = useI18n();
@@ -36,12 +46,26 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+     <TooltipProvider>
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <Link href="/" className="mr-6 flex items-center space-x-3">
             <TankardIcon className="h-7 w-7 text-primary" data-ai-hint="tankard" />
             <span className="font-headline text-xl font-bold text-primary hidden sm:inline-block">{t('Tavern Keeper')}</span>
         </Link>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
+           {helpText && (
+               <Tooltip>
+                 <TooltipTrigger asChild>
+                   <Button variant="ghost" size="icon" className='h-9 w-9 text-muted-foreground'>
+                     <Info className="h-4 w-4" />
+                     <span className="sr-only">{t('Help')}</span>
+                   </Button>
+                 </TooltipTrigger>
+                 <TooltipContent side="bottom" align="end" className="max-w-xs">
+                   <p>{helpText}</p>
+                 </TooltipContent>
+               </Tooltip>
+           )}
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className='h-9 w-9'>
@@ -77,6 +101,7 @@ export function Header() {
           )}
         </div>
       </div>
+      </TooltipProvider>
     </header>
   );
 }

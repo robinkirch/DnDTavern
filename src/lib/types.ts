@@ -22,6 +22,18 @@ export interface Grimoire {
   recipes: Recipe[];
 }
 
+export interface Monster {
+    id: string;
+    name: string;
+    image: string | null;
+    behavior: 'aggressive' | 'neutral' | 'friendly';
+    hitPoints: number | null;
+    description: string;
+    resistances: string[];
+    damageTypes: string[];
+    creatorUsername: string;
+}
+
 export interface InventoryItem {
     id: string; // Unique ID for the inventory item instance
     recipeId: string | null; // Link to the recipe if it's from a grimoire
@@ -67,6 +79,7 @@ export interface Campaign {
   grimoireId: string | null; // This links to a Grimoire (data source)
   sessionNotes?: string | null;
   sessionNotesDate?: string | null;
+  bestiary: Monster[];
   
   // New properties for advanced settings
   inventorySettings: {

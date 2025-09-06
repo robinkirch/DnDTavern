@@ -9,7 +9,7 @@
 // replace the mock data and logic in this file with your actual
 // data access code.
 
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster } from './types';
 
 // --- MOCK DATA ---
 // This data simulates what would be returned from a database.
@@ -55,6 +55,19 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
         'volo': { 'cat-potion': 'partial' },
         'drizzt': {}
     },
+    bestiary: [
+        {
+            id: 'monster-1',
+            name: 'Cave Goblin',
+            image: 'https://picsum.photos/400/300?random=50',
+            behavior: 'aggressive',
+            hitPoints: 7,
+            description: 'A small, wiry goblin that seems to be clutching a crude, sharp rock. It hisses and squints in the light.',
+            resistances: ['Poison (sometimes)'],
+            damageTypes: ['Piercing'],
+            creatorUsername: 'volo'
+        }
+    ],
     userInventories: {
         'volo': {
             items: [
@@ -105,6 +118,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     inventorySettings: { type: 'limited', defaultSize: 25 },
     userPermissions: {},
     userInventories: {},
+    bestiary: [],
     calendarSettings: { daysPerMonth: 28, monthsPerYear: 14, yearName: 'Age of Worms' },
     weatherSettings: { predefinedConditions: [], regions: [] },
     tracking: {
@@ -128,6 +142,7 @@ const FAKE_DB_CAMPAIGNS: Campaign[] = [
     inventorySettings: { type: 'free' },
     userPermissions: {},
     userInventories: {},
+    bestiary: [],
     calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Present Day' },
     weatherSettings: { predefinedConditions: [], regions: [] },
     tracking: {
@@ -236,7 +251,7 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     return FAKE_DB_CAMPAIGNS.find(c => c.id === id) || null;
 }
 
-export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories' | 'calendarSettings' | 'weatherSettings' | 'tracking'>): Promise<Campaign> {
+export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories' | 'calendarSettings' | 'weatherSettings' | 'tracking' | 'bestiary'>): Promise<Campaign> {
     console.log(`Creating campaign "${campaignData.name}"...`);
     await new Promise(resolve => setTimeout(resolve, 500));
     const newCampaign: Campaign = {
@@ -246,6 +261,7 @@ export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'invent
         inventorySettings: { type: 'free' },
         userPermissions: {},
         userInventories: {},
+        bestiary: [],
         calendarSettings: { daysPerMonth: 30, monthsPerYear: 12, yearName: 'Year of Beginnings' },
         weatherSettings: { predefinedConditions: [], regions: [] },
         tracking: {
