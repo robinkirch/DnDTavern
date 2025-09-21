@@ -2,6 +2,10 @@
     "Tavern Keeper": "Tavern Keeper",
     "Change language": "Change language",
     "Logout": "Logout",
+    "Failed to log in or create account. Please try a different username or check your credentials.": "Failed to log in or create account. Please try a different username or check your credentials.",
+    "Username and password are required.": "Username and password are required.",
+    "Password":"Password",
+    "Secure Password":"Secure Password",
     "Your Dashboard": "Your Dashboard",
     "Welcome back, {{username}}. Manage your campaigns and grimoires.": "Welcome back, {{username}}. Manage your campaigns and grimoires.",
     "Create Campaign": "Create Campaign",
@@ -290,7 +294,17 @@
     "The document's details have been updated.": "The document's details have been updated.",
     "Note Removed": "Note Removed",
     "The document has been removed from your collection.": "The document has been removed from your collection.",
-    "Are you sure you want to delete this note? This cannot be undone.": "Are you sure you want to delete this note? This cannot be undone."
+    "Are you sure you want to delete this note? This cannot be undone.": "Are you sure you want to delete this note? This cannot be undone.",
+    "Error {{Error}}": "Error: {{Error}}",
+    "Username is required.": "Username is required.",
+    "Welcome Back": "Welcome Back",
+    "New Traveler": "New Traveler",
+    "What name do you go by in these parts?": "What name do you go by in these parts?",
+    "Please enter your password to log in.": "Please enter your password to log in.",
+    "A new journey awaits! Please fill in your details.": "A new journey awaits! Please fill in your details.",
+    "Continue": "Continue",
+    "Join the Journey": "Join the Journey",
+    "Back": "Back"
 }
 
     
