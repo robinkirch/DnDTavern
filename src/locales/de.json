@@ -304,7 +304,12 @@
     "A new journey awaits! Please fill in your details.": "Eine neue Reise wartet! Bitte gib deine Daten ein.",
     "Continue": "Weiter",
     "Join the Journey": "Reise beitreten",
-    "Back": "Zurück"
+    "Back": "Zurück",
+    "Campaign Created": "Kampagne erstellt",
+    "The new campaign has been successfully created.": "Die neue Kampagne wurde erfolgreich erstellt.",
+    "Failed to create the campaign.": "Erstellen der Kampagne fehlgeschlagen.",
+    "Failed to copy the campaign.": "Kopieren der Kampagne fehlgeschlagen.",
+    "Failed to fetch grimoire.": "Laden des Grimoires fehlgeschlagen."
 }
 
     

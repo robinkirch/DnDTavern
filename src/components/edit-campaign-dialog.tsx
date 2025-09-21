@@ -167,7 +167,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
 
   useEffect(() => {
     if (user && user.role === 'dm' && isOpen) {
-      getGrimoiresByUsername(user.username).then(setUserGrimoires);
+      getGrimoiresByUsername().then(setUserGrimoires);
     }
   }, [user, isOpen]); 
   

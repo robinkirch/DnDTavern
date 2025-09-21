@@ -61,12 +61,12 @@ interface CreateCampaignDialogProps {
         creatorUsername: string;
         sessionNotes: string | null;
      }) => void;
+    grimoires: Grimoire[];
 }
 
-export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateCampaignDialogProps) {
+export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate, grimoires }: CreateCampaignDialogProps) {
   const { user } = useAuth();
   const { t } = useI18n();
-  const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,9 +82,6 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
   });
 
   useEffect(() => {
-    if (user && user.role === 'dm' && isOpen) {
-      getGrimoiresByUsername(user.username).then(setUserGrimoires);
-    }
      if (!isOpen) {
       form.reset();
       setImagePreview(null);
@@ -214,7 +211,7 @@ export function CreateCampaignDialog({ isOpen, onOpenChange, onCreate }: CreateC
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="null">{t('None')}</SelectItem>
-                          {userGrimoires.map(g => (
+                          {grimoires.map(g => (
                             <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                           ))}
                         </SelectContent>

@@ -43,7 +43,7 @@ export function GrimoireGrid() {
 
   useEffect(() => {
     if (user) {
-      getGrimoiresByUsername(user.username).then(data => {
+      getGrimoiresByUsername().then(data => {
         setGrimoires(data);
         setIsLoading(false);
       });

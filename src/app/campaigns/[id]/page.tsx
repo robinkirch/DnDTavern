@@ -195,7 +195,7 @@ export default function CampaignPage() {
                     <TabsList className='mb-6'>
                         <TabsTrigger value="recipes">
                             <BookHeart className='mr-2 h-4 w-4'/>
-                            {t('Grimoire')}
+                            {t('Grimoires')}
                         </TabsTrigger>
                         <TabsTrigger value="bestiary">
                             <Swords className='mr-2 h-4 w-4'/>

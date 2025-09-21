@@ -1,3 +1,4 @@
+// src/components/CampaignsDashboard.tsx
 'use client';
 
 import Link from 'next/link';
@@ -5,8 +6,8 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/context/auth-context';
-import { createCampaign, getCampaignsForUser, getCampaignById } from '@/lib/data-service';
-import type { Campaign } from '@/lib/types';
+import { createCampaign, getCampaignsForUser, getCampaignById, getGrimoiresByUsername, copyCampaign } from '@/lib/data-service';
+import type { Campaign, Grimoire } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,67 +27,101 @@ export default function CampaignsDashboard() {
   const { t } = useI18n();
   const { toast } = useToast();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [grimoires, setGrimoires] = useState<Grimoire[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
+    const fetchAllData = async () => {
+        if (user) {
+            try {
+                const [campaignsData, grimoiresData] = await Promise.all([
+                    getCampaignsForUser(user),
+                    getGrimoiresByUsername()
+                ]);
+                setCampaigns(campaignsData);
+                setGrimoires(grimoiresData);
+            } catch (error) {
+                console.error('Failed to fetch initial data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
     if (user) {
-      getCampaignsForUser(user).then(data => {
-        setCampaigns(data);
-        setIsLoading(false);
-      });
+        setIsLoading(true);
+        fetchAllData();
     }
-  }, [user]);
+}, [user]);
 
-  const handleCreateCampaign = async (newCampaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories' | 'calendarSettings' | 'weatherSettings' | 'tracking'>) => {
+  const handleCreateCampaign = async (formData: { 
+    name: string; 
+    description: string; 
+    invitedUsernames: string[], 
+    grimoireId: string | null, 
+    image: string | null, 
+    creatorUsername: string; 
+    sessionNotes: string | null; 
+}) => {
     if (!user) return;
-    
-    const newCampaign = await createCampaign(newCampaignData);
-
-    setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
-    setCreateDialogOpen(false);
-  };
+    try {
+        const campaignDataToSend = {
+            ...formData,
+            bestiary: [],
+            notes: [],
+        };
+        
+        const newCampaign = await createCampaign(campaignDataToSend);
+        
+        setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
+        setCreateDialogOpen(false);
+        toast({ title: t('Campaign Created'), description: t('The new campaign has been successfully created.') });
+    } catch (error) {
+        console.error('Failed to create campaign:', error);
+        toast({ 
+            title: t('Error'), 
+            description: t('Failed to create the campaign.'), 
+            variant: 'destructive' 
+        });
+    }
+};
   
   const handleCopyCampaign = async (campaignId: string) => {
     if (!user) return;
     
-    const originalCampaign = await getCampaignById(campaignId);
-    if (!originalCampaign) return;
-
-    const newCampaignData = {
-        name: `${originalCampaign.name} (${t('Copy')})`,
-        description: originalCampaign.description,
-        creatorUsername: user.username,
-        grimoireId: originalCampaign.grimoireId,
-        image: originalCampaign.image,
-        invitedUsernames: [], // Players are not copied
-        sessionNotes: '',
-    };
-    
-    const newCampaign = await createCampaign(newCampaignData);
-
-    setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
-    toast({ title: t('Campaign Copied'), description: t('The campaign was successfully copied.') });
+    try {
+        const newCampaign = await copyCampaign(campaignId);
+        setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
+        toast({ title: t('Campaign Copied'), description: t('The campaign was successfully copied.') });
+    } catch (error) {
+        console.error('Failed to copy campaign:', error);
+        toast({ 
+            title: t('Error'),
+            description: t('Failed to copy the campaign.'),
+            variant: 'destructive'
+        });
+    }
   };
 
 
   if (isLoading || !user) {
     return (
-        <div className="container py-8">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <Skeleton className="h-10 w-72 mb-2" />
-                    <Skeleton className="h-6 w-96" />
-                </div>
-                <Skeleton className="h-10 w-36" />
-            </div>
-            <Skeleton className="h-10 w-[400px] mb-6" />
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <Skeleton className="h-80 w-full rounded-lg" />
-                <Skeleton className="h-80 w-full rounded-lg" />
-                <Skeleton className="h-80 w-full rounded-lg" />
-            </div>
+      <div className="container py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <Skeleton className="h-10 w-72 mb-2" />
+            <Skeleton className="h-6 w-96" />
+          </div>
+          <Skeleton className="h-10 w-36" />
         </div>
+        <Skeleton className="h-10 w-[400px] mb-6" />
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-80 w-full rounded-lg" />
+          <Skeleton className="h-80 w-full rounded-lg" />
+          <Skeleton className="h-80 w-full rounded-lg" />
+        </div>
+      </div>
     );
   }
 
@@ -96,6 +131,7 @@ export default function CampaignsDashboard() {
         isOpen={isCreateDialogOpen} 
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreateCampaign}
+        grimoires={grimoires}
       />
       <div className="container py-8">
         <div className="flex justify-between items-center mb-8">
@@ -103,7 +139,7 @@ export default function CampaignsDashboard() {
               <h1 className="font-headline text-4xl font-bold mb-2">{t('Your Dashboard')}</h1>
               <p className="text-muted-foreground">{t('Welcome back, {{username}}. Manage your campaigns and grimoires.', { username: user.username || '' })}</p>
           </div>
-           {user.role === 'dm' && (
+            {user.role === 'dm' && (
               <Button onClick={() => setCreateDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   {t('Create Campaign')}
@@ -196,7 +232,7 @@ export default function CampaignsDashboard() {
                                     </div>
 
                                     <CardFooter className="p-0 pt-6 mt-auto flex justify-between gap-2">
-                                        {user.role === 'dm' && (
+                                        {campaign.creatorUsername === user.username && (
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button variant="outline" size="icon" onClick={() => handleCopyCampaign(campaign.id)}>
@@ -235,7 +271,6 @@ export default function CampaignsDashboard() {
                                 <p className="text-lg text-muted-foreground">{t('No campaigns found.')}</p>
                                 <p className="text-sm text-muted-foreground">{t('Ask your Dungeon Master for an invitation!')}</p>
                             </>
-
                         )}
                     </div>
                     )}

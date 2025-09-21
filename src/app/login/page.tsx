@@ -121,13 +121,7 @@ export default function LoginPage() {
             }
             router.push('/');
         } catch (err: any) {
-            if (err.error && err.error.includes('Username already exists')) {
-                setError(t('Failed to create account. Username already exists.'));
-            } else if (err.error && err.error.includes('Invalid username or password')) {
-                setError(t('Incorrect password. Please try again.'));
-            } else {
-                setError(t('Authentication failed. Please check your credentials.'));
-            }
+            setError(t('Failed to log in or create account. Please try a different username or check your credentials.'));
         }
     };
 

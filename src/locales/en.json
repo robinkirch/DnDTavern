@@ -304,7 +304,12 @@
     "A new journey awaits! Please fill in your details.": "A new journey awaits! Please fill in your details.",
     "Continue": "Continue",
     "Join the Journey": "Join the Journey",
-    "Back": "Back"
+    "Back": "Back",
+    "Campaign Created": "Campaign Created",
+    "The new campaign has been successfully created.": "The new campaign has been successfully created.",
+    "Failed to create the campaign.": "Failed to create the campaign.",
+    "Failed to copy the campaign.": "Failed to copy the campaign.",
+    "Failed to fetch grimoire.": "Failed to fetch grimoire."
 }
 
     
