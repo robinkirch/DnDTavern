@@ -10,13 +10,11 @@ export interface User {
 // A Grimoire is now just a pointer to a data source.
 // The name and description will be fetched from that source.
 export interface Grimoire {
-  id: string; // Represents the data source identifier (e.g., connection string name, database ID)
+  id: string;
   creatorUsername: string;
-  // name and description are now part of the data source itself
-  // and would be fetched dynamically.
-  // For UI purposes, we can keep them here, but they are read-only from the source.
   name: string;
   description: string;
+  connection_string: string;
   categories: Category[];
   rarities: Rarity[];
   recipes: Recipe[];
