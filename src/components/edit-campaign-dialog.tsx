@@ -184,17 +184,17 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
       form.reset({
         name: campaign.name,
         description: campaign.description,
-        invitedUsernames: campaign.invitedUsernames.join(', '),
+        invitedUsernames: (campaign.invitedUsernames ?? []).join(', '),
         grimoireId: campaign.grimoireId,
         image: campaign.image,
-        inventoryType: campaign.inventorySettings.type,
-        defaultInventorySize: campaign.inventorySettings.defaultSize,
-        daysPerMonth: campaign.calendarSettings.daysPerMonth,
-        monthsPerYear: campaign.calendarSettings.monthsPerYear,
-        yearName: campaign.calendarSettings.yearName,
-        predefinedConditions: campaign.weatherSettings.predefinedConditions || [],
-        weatherRegions: campaign.weatherSettings.regions || [],
-        visibility: campaign.tracking.visibility || { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true },
+        inventoryType: campaign.inventorySettings?.type ?? 'free',
+        defaultInventorySize: campaign.inventorySettings?.defaultSize ?? 0,
+        daysPerMonth: campaign.calendarSettings?.daysPerMonth ?? 30,
+        monthsPerYear: campaign.calendarSettings?.monthsPerYear ?? 12,
+        yearName: campaign.calendarSettings?.yearName ?? '',
+        predefinedConditions: campaign.weatherSettings?.predefinedConditions || [],
+        weatherRegions: campaign.weatherSettings?.regions || [],
+        visibility: campaign.tracking?.visibility || { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true },
       });
       setImagePreview(campaign.image);
     } else if (!isOpen) {
@@ -285,6 +285,8 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
         invitedUsernames, 
         grimoireId: values.grimoireId === "null" ? null : values.grimoireId,
         image: values.image,
+        bestiary: campaign.bestiary || [], 
+        notes: campaign.notes || [],
         inventorySettings: {
             type: values.inventoryType,
             defaultSize: values.inventoryType === 'limited' ? values.defaultInventorySize : undefined,
@@ -519,7 +521,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 <AccordionItem value="time-weather">
                     <AccordionTrigger className="text-lg font-headline hover:no-underline">
                         <div className="flex items-center gap-2 text-base">
-                             <CalendarDays className='h-5 w-5 text-primary' /> {t('Time &amp; Weather')}
+                             <CalendarDays className='h-5 w-5 text-primary' /> {t('Time & Weather')}
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-6">

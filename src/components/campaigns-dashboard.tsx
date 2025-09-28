@@ -165,8 +165,11 @@ useEffect(() => {
                     {campaigns.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {campaigns.map((campaign) => {
-                          const { day, month, year } = campaign.tracking.currentDate;
-                          const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year}`;
+                            const day = campaign.tracking?.currentDate?.day ?? 1;
+                            const month = campaign.tracking?.currentDate?.month ?? 1;
+                            const year = campaign.tracking?.currentDate?.year ?? 1000;
+
+                            const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year}`;
                           return (
                             <Card key={campaign.id} className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                                 <CardHeader className="relative p-0 h-48 w-full">
@@ -215,8 +218,7 @@ useEffect(() => {
                                                     <p>{campaign.creatorUsername} ({t('DM')})</p>
                                                 </TooltipContent>
                                             </Tooltip>
-
-                                            {campaign.invitedUsernames.map(username => (
+                                            {(campaign.invitedUsernames ?? []).map(username => (
                                                 <Tooltip key={username}>
                                                     <TooltipTrigger>
                                                         <Avatar className="h-8 w-8 border-2 border-muted">
