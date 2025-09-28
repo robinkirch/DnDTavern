@@ -6,10 +6,10 @@ import { Badge } from './ui/badge';
 import { CookingPot, GlassWater, Cookie, TestTube, Pencil, Trash2, BookCopy, Coins, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
 } from "@/components/ui/accordion"
 import Image from 'next/image';
 
@@ -32,7 +32,10 @@ const categoryIcons: { [key: string]: JSX.Element } = {
 
 export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit, onDelete }: RecipeCardProps) {
     const { t } = useI18n();
-    const categories = grimoire?.categories.filter(c => recipe.categoryIds.includes(c.id)) || [];
+    
+    // Korrigierte Zeile: Prüft, ob recipe.categoryIds existiert, um den Fehler zu vermeiden.
+    const categories = grimoire?.categories.filter(c => recipe.categoryIds?.includes(c.id)) || [];
+
     const rarity = grimoire?.rarities.find(r => r.id === recipe.rarityId);
 
     const getIngredientName = (ingredientId: string) => {
@@ -43,7 +46,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit,
     
     return (
         <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50 overflow-hidden">
-             {recipe.image && (
+            {recipe.image && (
                 <div className="relative h-48 w-full">
                     <Image src={recipe.image} alt={recipe.name} fill className="object-cover" data-ai-hint="fantasy food"/>
                 </div>
@@ -57,7 +60,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit,
                                 <Pencil className="h-4 w-4" />
                                 <span className="sr-only">{t('Edit')}</span>
                             </Button>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(recipe.id)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(recipe.id)}>
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">{t('Delete')}</span>
                             </Button>
@@ -74,7 +77,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit,
                     ))}
                 </div>
                 {hasPartialAccess ? (
-                     <CardDescription className="pt-4 text-amber-600 italic flex items-center gap-2">
+                    <CardDescription className="pt-4 text-amber-600 italic flex items-center gap-2">
                         <EyeOff className='h-4 w-4' />
                         {t('Your knowledge of this recipe is incomplete.')}
                     </CardDescription>
@@ -85,7 +88,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit,
             <CardContent className="flex-grow flex flex-col">
                 {!hasPartialAccess && (
                     <Accordion type="single" collapsible className="w-full">
-                        {recipe.components.length > 0 && (
+                        {recipe.components && recipe.components.length > 0 && (
                             <AccordionItem value="ingredients">
                                 <AccordionTrigger className="font-headline">{t('Ingredients')}</AccordionTrigger>
                                 <AccordionContent>

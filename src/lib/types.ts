@@ -137,12 +137,14 @@ export interface Campaign {
 export interface Category {
   id: string;
   name: string;
+  order: number;
 }
 
 export interface Rarity {
     id: string;
     name: string;
     color: string; // hex color string
+    order: number;
 }
 
 export interface RecipeComponent {
@@ -161,6 +163,7 @@ export interface Recipe {
   components: RecipeComponent[];
   image?: string | null;
   value: string | null; // Optional value (e.g., gold pieces)
+  aliases: string | null; // optional searchvalues
 }
 
     

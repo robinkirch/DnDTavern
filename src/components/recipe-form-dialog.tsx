@@ -7,31 +7,11 @@ import { z } from 'zod';
 import type { Recipe, Grimoire } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import {Form,FormControl,FormField,FormItem,FormLabel,FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { Checkbox } from './ui/checkbox';
@@ -82,6 +62,7 @@ const formSchema = z.object({
   })).optional(),
   image: z.string().nullable(),
   value: z.string().nullable(),
+  aliases: z.string().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -222,7 +203,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                                         />
                                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                                             <Upload className="mr-2 h-4 w-4" />
-                                            {t('Upload (400x300)')}
+                                            {t('Upload (500x500)')}
                                         </Button>
                                     </div>
                                 </FormControl>
@@ -316,6 +297,22 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                         />
                     </div>
                 </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <FormField
+                  control={form.control}
+                  name="aliases"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Aliases (For searching)')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t('Plant, herb, dangerous, etc.')} {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
                 <FormField
                   control={form.control}

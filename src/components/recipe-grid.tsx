@@ -36,6 +36,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
 
   useEffect(() => {
     getGrimoireById(grimoireId).then(data => {
+      console.log(data);
       setGrimoire(data);
       setIsLoading(false);
     });

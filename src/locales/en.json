@@ -92,7 +92,7 @@
     "Recipe/Component Name": "Recipe/Component Name",
     "e.g., Owlbear Omelette or Glimmer-root": "e.g., Owlbear Omelette or Glimmer-root",
     "Image": "Image",
-    "Upload (400x300)": "Upload (400x300)",
+    "Upload (500x500)": "Upload (500x500)",
     "Category": "Category",
     "Select a category": "Select a category",
     "Rarity": "Rarity",
@@ -309,7 +309,19 @@
     "The new campaign has been successfully created.": "The new campaign has been successfully created.",
     "Failed to create the campaign.": "Failed to create the campaign.",
     "Failed to copy the campaign.": "Failed to copy the campaign.",
-    "Failed to fetch grimoire.": "Failed to fetch grimoire."
+    "Failed to fetch grimoire.": "Failed to fetch grimoire.",
+    "Remove Data Source": "Remove Data Source",
+    "Could not load grimoire data.": "Could not load grimoire data.",
+    "Error adding category": "Error adding category",
+    "Delete Category": "Delete Category",
+    "Delete All Categories": "Delete All Categories",
+    "Error adding rarity": "Error adding rarity",
+    "Delete Rarity": "Delete Rarity",
+    "Delete All Rarities": "Delete All Rarities",
+    "Confirm": "Confirm",
+    "Loading data...": "Loading data...",
+    "Aliases (For searching)": "Aliases (For searching)",
+    "Plant, herb, dangerous, etc.": "Plant, herb, dangerous, etc."
 }
 
     

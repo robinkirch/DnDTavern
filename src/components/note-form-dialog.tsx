@@ -163,7 +163,7 @@ export function NoteFormDialog({ isOpen, onOpenChange, onSave, note }: NoteFormD
                                         />
                                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                                             <Upload className="mr-2 h-4 w-4" />
-                                            {t('Upload (400x300)')}
+                                            {t('Upload (500x500)')}
                                         </Button>
                                     </div>
                                 </FormControl>

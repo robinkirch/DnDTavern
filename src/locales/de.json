@@ -92,7 +92,7 @@
     "Recipe/Component Name": "Rezept-/Komponentenname",
     "e.g., Owlbear Omelette or Glimmer-root": "z.B. Eulenbären-Omelett oder Glimmerwurzel",
     "Image": "Bild",
-    "Upload (400x300)": "Hochladen (400x300)",
+    "Upload (500x500)": "Hochladen (500x500)",
     "Category": "Kategorie",
     "Select a category": "Wähle eine Kategorie",
     "Rarity": "Seltenheit",
@@ -309,7 +309,19 @@
     "The new campaign has been successfully created.": "Die neue Kampagne wurde erfolgreich erstellt.",
     "Failed to create the campaign.": "Erstellen der Kampagne fehlgeschlagen.",
     "Failed to copy the campaign.": "Kopieren der Kampagne fehlgeschlagen.",
-    "Failed to fetch grimoire.": "Laden des Grimoires fehlgeschlagen."
+    "Failed to fetch grimoire.": "Laden des Grimoires fehlgeschlagen.",
+    "Remove Data Source": "Entferne Datenquelle",
+    "Could not load grimoire data.": "Grimoire-Daten konnte nicht geladen werden.",
+    "Error adding category": "Fehler beim Hinzufügen der Kategorie",
+    "Delete Category": "Lösche Kategorie",
+    "Delete All Categories": "Löschen aller Kategorien",
+    "Error adding rarity": "Fehler beim Hinzufügen der Seltenheit",
+    "Delete Rarity": "Lösche Seltenheit",
+    "Delete All Rarities": "Löschen aller Seltenheiten",
+    "Confirm": "Bestätigen",
+    "Loading data...": "Lade Daten...",
+    "Aliases (For searching)": "Aliases (Für Suchbegriffe)",
+    "Plant, herb, dangerous, etc.": "Pflanzen, Kraut, gefährlich, usw."
 }
 
     
