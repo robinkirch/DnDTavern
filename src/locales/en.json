@@ -93,6 +93,7 @@
     "e.g., Owlbear Omelette or Glimmer-root": "e.g., Owlbear Omelette or Glimmer-root",
     "Image": "Image",
     "Upload (500x500)": "Upload (500x500)",
+    "Upload (400x200)": "Upload (400x200)",
     "Category": "Category",
     "Select a category": "Select a category",
     "Rarity": "Rarity",
@@ -366,7 +367,8 @@
     "Link a grimoire to manage category permissions.": "Link a grimoire to manage category permissions.",
     "Failed to save the campaign settings.": "Failed to save the campaign settings.",
     "Grimoire Updated": "Grimoire Updated",
-    "Error updating grimoire": "Error updating grimoire"
+    "Error updating grimoire": "Error updating grimoire",
+    "Failed to delete the creature.": "Failed to delete the creature."
 }
 
     

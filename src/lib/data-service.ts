@@ -177,6 +177,25 @@ export async function clearRarities(grimoireId: string): Promise<void> {
 }
 
 
+// --- MONSTER SERVICE ---
+
+export async function saveMonster(grimoireId: string, campaignId: string, monster: Monster): Promise<Monster> {
+    try {
+        const response = await api.post(`/monsters/${grimoireId}/${campaignId}`, monster);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to save monster.');
+    }
+}
+
+export async function deleteMonster(grimoireId: string, monsterId: string): Promise<void> {
+    try {
+        await api.delete(`/monsters/${grimoireId}/${monsterId}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to delete monster.');
+    }
+}
+
 // --- INVENTORY SERVICE --- Still Mocked
 
 export async function saveInventory(campaignId: string, username: string, items: InventoryItem[]): Promise<void> {

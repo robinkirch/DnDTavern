@@ -93,6 +93,7 @@
     "e.g., Owlbear Omelette or Glimmer-root": "z.B. Eulenbären-Omelett oder Glimmerwurzel",
     "Image": "Bild",
     "Upload (500x500)": "Hochladen (500x500)",
+    "Upload (400x200)": "Hochladen (400x200)",
     "Category": "Kategorie",
     "Select a category": "Wähle eine Kategorie",
     "Rarity": "Seltenheit",
@@ -366,7 +367,8 @@
     "Link a grimoire to manage category permissions.": "Verlinke ein Grimoire, um Kategorie-Berechtigungen zu verwalten.",
     "Failed to save the campaign settings.": "Speichern der Kampagneneinstellungen fehlgeschlagen.",
     "Grimoire Updated": "Grimoire aktualisiert",
-    "Error updating grimoire": "Fehler beim aktualisieren des Grimoire"
+    "Error updating grimoire": "Fehler beim aktualisieren des Grimoire",
+    "Failed to delete the creature.": "Löschen der Kreatur fehlgeschlagen."
 }
 
     

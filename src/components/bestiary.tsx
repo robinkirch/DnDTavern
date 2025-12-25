@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { Campaign, Monster } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { useI18n } from '@/context/i18n-context';
-import { updateCampaign } from '@/lib/data-service';
+import { deleteMonster, saveMonster, updateCampaign } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { PlusCircle, Trash2, Pencil } from 'lucide-react';
@@ -30,40 +30,69 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
     };
 
     const handleSaveMonster = async (monsterData: Omit<Monster, 'id' | 'creatorUsername'>) => {
-        if (!user) return;
-        
-        let updatedBestiary: Monster[];
+        if (!user || !campaign.grimoireId) return;
 
-        if (editingMonster) {
-             // Update existing monster
-             const updatedMonster = { ...editingMonster, ...monsterData };
-             updatedBestiary = campaign.bestiary?.map(m => m.id === updatedMonster.id ? updatedMonster : m);
-             toast({ title: t('Monster Updated'), description: t('The creature\'s details have been updated.')});
-        } else {
-            // Add new monster
-            const newMonster: Monster = {
-                id: `monster-${Date.now()}`,
-                creatorUsername: user.username,
-                ...monsterData
-            };
-            updatedBestiary = [...campaign.bestiary, newMonster];
-            toast({ title: t('Monster Added'), description: t('A new creature has been added to the bestiary.') });
+        try {
+            const monsterToSave: Monster = editingMonster 
+                ? { ...editingMonster, ...monsterData }
+                : { 
+                    id: `monster-${Date.now()}`, 
+                    creatorUsername: user.username, 
+                    ...monsterData 
+                };
+
+            // 1. API Call nur für das Monster
+            await saveMonster(campaign.grimoireId, campaign.id, monsterToSave);
+
+            // 2. Lokalen State aktualisieren, damit das UI sofort reagiert
+            let updatedBestiary: Monster[];
+            if (editingMonster) {
+                updatedBestiary = (campaign.bestiary || []).map(m => 
+                    m.id === monsterToSave.id ? monsterToSave : m
+                );
+            } else {
+                updatedBestiary = [...(campaign.bestiary || []), monsterToSave];
+            }
+
+            setCampaign({ ...campaign, bestiary: updatedBestiary });
+            setFormOpen(false);
+            
+            toast({ title: editingMonster ? t('Monster Updated') : t('Monster Added'), description: editingMonster ? t('The creature\'s details have been updated.') : t('A new creature has been added to the bestiary.')});
+        } catch (error) {
+            toast({ title: t('Error'), variant: 'destructive' });
         }
-        
-        const updatedCampaign = { ...campaign, bestiary: updatedBestiary };
-        const savedCampaign = await updateCampaign(updatedCampaign);
-        setCampaign(savedCampaign);
-        setFormOpen(false);
     };
-    
+
     const handleDeleteMonster = async (monsterId: string) => {
+        if (!user || !campaign.grimoireId) return;
+        
+        // Sicherheitsabfrage
         if (!confirm(t('Are you sure you want to remove this creature from the bestiary?'))) return;
 
-        const updatedBestiary = campaign.bestiary?.filter(m => m.id !== monsterId);
-        const updatedCampaign = { ...campaign, bestiary: updatedBestiary };
-        const savedCampaign = await updateCampaign(updatedCampaign);
-        setCampaign(savedCampaign);
-        toast({ title: t('Monster Removed'), description: t('The creature has been removed from the bestiary.')});
+        try {
+            // 1. API Call zum Löschen in der Datenbank
+            await deleteMonster(campaign.grimoireId, monsterId);
+
+            // 2. Lokalen State aktualisieren (Filtert das gelöschte Monster raus)
+            const updatedBestiary = (campaign.bestiary || []).filter(m => m.id !== monsterId);
+            
+            setCampaign({ 
+                ...campaign, 
+                bestiary: updatedBestiary 
+            });
+
+            toast({ 
+                title: t('Monster Removed'), 
+                description: t('The creature has been removed from the bestiary.')
+            });
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast({ 
+                title: t('Error'), 
+                description: t('Failed to delete the creature.'),
+                variant: 'destructive' 
+            });
+        }
     };
 
     const getBehaviorVariant = (behavior: Monster['behavior']): 'destructive' | 'secondary' | 'default' => {
