@@ -68,7 +68,6 @@ export async function getGrimoiresByUsername(): Promise<Grimoire[]> {
         const response = await api.get(`/grimoires/user/all`);
         return response.data;
     } catch (error) {
-        console.log(error);
         throw (error as any).response?.data || new Error('Failed to fetch grimoire.');
     }
 };
@@ -78,7 +77,6 @@ export async function getGrimoireById(id: string): Promise<Grimoire | null> {
         const response = await api.get(`/grimoires/single/${id}`);
         return response.data;
     } catch (error) {
-        console.log(error);
         throw (error as any).response?.data || new Error(`Failed to fetch grimoire with id "${id}"`);
     }
 }
@@ -100,6 +98,14 @@ export async function deleteGrimoire(id: string): Promise<void> {
     }
 }
 
+export async function updateGrimoire(grimoireData: Grimoire): Promise<Grimoire> {
+    try {
+        const response = await api.put(`/grimoires/${grimoireData.id}`, grimoireData);
+        return response.data;
+    } catch (error) {
+         throw (error as any).response?.data || new Error('Failed to update grimoire.');
+    }
+}
 
 // --- GRIMOIRE / RECIPE SERVICE ---
 

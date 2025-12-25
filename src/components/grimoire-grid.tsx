@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Grimoire, Category, Rarity } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
-import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, getGrimoireById, saveCategory, deleteCategory, saveRarity, deleteRarity, clearCategories, clearRarities } from '@/lib/data-service';
+import { getGrimoiresByUsername, createGrimoire, deleteGrimoire, getGrimoireById, saveCategory, deleteCategory, saveRarity, deleteRarity, clearCategories, clearRarities, updateGrimoire } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +46,9 @@ export function GrimoireGrid() {
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
   const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
   const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
+
+  const nameRef = useRef<HTMLInputElement>(null);
+  const connectionRef = useRef<HTMLInputElement>(null);
 
   const showConfirmDialog = (title: string, description: string, action: () => void) => {
     setConfirmDialogTitle(title);
@@ -229,6 +232,28 @@ export function GrimoireGrid() {
     );
   };
 
+  const handleUpdateGrimoire = async () => {
+    const nameValue = nameRef.current?.value;
+    const connectionValue = connectionRef.current?.value;
+
+    if (!nameValue || !connectionValue || !managingGrimoire) return;
+    const updatedData = { 
+        ...managingGrimoire, 
+        name: nameValue, 
+        connection_string: connectionValue 
+    };
+    try {
+      const updated = await updateGrimoire(updatedData);
+
+      // 1. Die Liste aller Grimoires im Hintergrund aktualisieren
+      setGrimoires(prev => prev.map(g => g.id === updated.id ? updated : g));
+      
+      toast({ title: t("Grimoire Updated") });
+    } catch (error) {
+      toast({ title: t("Error updating grimoire"), variant: "destructive" });
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -282,10 +307,13 @@ export function GrimoireGrid() {
                 </div>
                 <div className='py-2'>
                   <Label htmlFor='grimoire-name'>{t('Grimoire Name')}</Label>
-                  <Input id="grimoire-name" value={managingGrimoire?.name} onChange={(e) => setNewCategoryName(e.target.value)} />
+                  <Input id="grimoire-name" ref={nameRef} defaultValue={managingGrimoire?.name}/>
 
                   <Label htmlFor='grimoire-connection'>{t('Data Source ID')}</Label>
-                  <Input id="grimoire-connection" value={managingGrimoire?.connection_string} onChange={(e) => setNewCategoryName(e.target.value)}/>
+                  <Input id="grimoire-connection" ref={connectionRef} defaultValue={managingGrimoire?.connection_string}/>
+                  <div className='py-2'>
+                    <Button onClick={handleUpdateGrimoire}>{t('Save Changes')}</Button>
+                  </div>
                 </div>
               </div>
               {/* Category Management */}

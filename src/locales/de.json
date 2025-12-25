@@ -364,7 +364,9 @@
     "Campaign default ({{0}})": "Kampagnenstandard ({{0}})",
     "Grimoire Category Permissions": "Grimoir Kategorie-Berechtigungen",
     "Link a grimoire to manage category permissions.": "Verlinke ein Grimoire, um Kategorie-Berechtigungen zu verwalten.",
-    "Failed to save the campaign settings.": "Speichern der Kampagneneinstellungen fehlgeschlagen."
+    "Failed to save the campaign settings.": "Speichern der Kampagneneinstellungen fehlgeschlagen.",
+    "Grimoire Updated": "Grimoire aktualisiert",
+    "Error updating grimoire": "Fehler beim aktualisieren des Grimoire"
 }
 
     

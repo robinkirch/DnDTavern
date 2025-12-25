@@ -364,7 +364,9 @@
     "Campaign default ({{0}})": "Campaign default ({{0}})",
     "Grimoire Category Permissions": "Grimoire Category Permissions",
     "Link a grimoire to manage category permissions.": "Link a grimoire to manage category permissions.",
-    "Failed to save the campaign settings.": "Failed to save the campaign settings."
+    "Failed to save the campaign settings.": "Failed to save the campaign settings.",
+    "Grimoire Updated": "Grimoire Updated",
+    "Error updating grimoire": "Error updating grimoire"
 }
 
     
