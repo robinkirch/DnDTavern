@@ -32,7 +32,8 @@ const categoryIcons: { [key: string]: JSX.Element } = {
 
 export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit, onDelete }: RecipeCardProps) {
     const { t } = useI18n();
-    
+
+    recipe.categoryIds?.map(i => console.log(i));
     // Korrigierte Zeile: Prüft, ob recipe.categoryIds existiert, um den Fehler zu vermeiden.
     const categories = grimoire?.categories.filter(c => recipe.categoryIds?.includes(c.id)) || [];
 
@@ -45,27 +46,32 @@ export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit,
     const hasPartialAccess = !canEdit && permissionLevel === 'partial';
     
     return (
-        <Card className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50 overflow-hidden">
-            {recipe.image && (
+        <Card id={recipe.id ?? "no_id"} className="flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:border-primary/50 overflow-hidden">
+            {(recipe.image || canEdit) && (
                 <div className="relative h-48 w-full">
-                    <Image src={recipe.image} alt={recipe.name} fill className="object-cover" data-ai-hint="fantasy food"/>
-                </div>
-            )}
-            <CardHeader className={recipe.image ? 'pt-4' : ''}>
-                <div className="flex justify-between items-start">
-                    <CardTitle className="font-headline text-2xl leading-tight mb-2 pr-4">{recipe.name}</CardTitle>
+                    {/* Bild, falls vorhanden */}
+                    {recipe.image && (
+                         <Image src={recipe.image} alt={recipe.name} fill className="object-cover" data-ai-hint="fantasy food"/>
+                    )}
+                    
+                    {/* Buttons als Overlay, oben links positioniert */}
                     {canEdit && (
-                        <div className="flex gap-1 -mr-2 -mt-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(recipe.id)}>
+                        <div className="absolute top-2 left-2 z-10 flex gap-1 rounded-md overflow-hidden bg-background/50 backdrop-blur-sm p-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20" onClick={() => onEdit(recipe.id)}>
                                 <Pencil className="h-4 w-4" />
                                 <span className="sr-only">{t('Edit')}</span>
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(recipe.id)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/20 hover:text-destructive" onClick={() => onDelete(recipe.id)}>
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">{t('Delete')}</span>
                             </Button>
                         </div>
                     )}
+                </div>
+            )}
+            <CardHeader className={recipe.image ? 'pt-4' : ''}>
+                <div className="flex justify-between items-start">
+                    <CardTitle className="font-headline text-2xl leading-tight mb-2 pr-4">{recipe.name}</CardTitle>
                 </div>
                 <div className="flex items-center gap-2 text-sm flex-wrap">
                     {rarity && <Badge style={{ backgroundColor: rarity.color }} className="text-white hover:opacity-90">{rarity.name}</Badge>}
@@ -97,7 +103,7 @@ export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit,
                                             <li key={i} className="flex items-center gap-2">
                                                 <BookCopy className="h-4 w-4 text-primary" />
                                                 <div>
-                                                    <span className="font-semibold text-foreground">{getIngredientName(comp.recipeId)}</span> - {comp.quantity}
+                                                    <span className="font-semibold text-foreground">{getIngredientName(comp.recipeId)}</span> : {comp.quantity}
                                                 </div>
                                             </li>
                                         ))}

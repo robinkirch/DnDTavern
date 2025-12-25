@@ -7,7 +7,7 @@ import { de } from 'date-fns/locale';
 
 
 import { useAuth } from '@/context/auth-context';
-import { getCampaignById, getGrimoireById, updateCampaign } from '@/lib/data-service';
+import { getCampaignById, getGrimoireById, updateCampaign, updateCampaignSettings } from '@/lib/data-service';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/context/i18n-context';
@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { EditCampaignDialog } from '@/components/edit-campaign-dialog';
+import { CampaignUpdateData, EditCampaignDialog } from '@/components/edit-campaign-dialog';
 import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords, BookMarked } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlayerInventory } from '@/components/player-inventory';
@@ -150,12 +150,26 @@ export default function CampaignPage() {
 
   const isCreator = campaign.creatorUsername === user.username;
 
+    const handleSaveCampaignSettings = async (campaignId: string, data: CampaignUpdateData) => {
+        // 1. Rufen Sie die API-Funktion auf, die Campaign zurückgibt
+        const updatedCampaign = await updateCampaignSettings(campaignId, data);
+        console.log(updatedCampaign);
+        
+        // 2. WICHTIG: Aktualisieren Sie den lokalen Zustand der Seite
+        // (Dies ist der Grund, warum updateCampaignSettings Campaign zurückgibt)
+        // Nehmen wir an, Sie haben eine Funktion, die den Campaign-Zustand aktualisiert:
+        setCampaign(updatedCampaign); 
+        
+        // 3. EXPLIZITE RÜCKGABE VON NICHTS: Die Funktion kehrt ohne Wert zurück (=> Promise<void>)
+        return;
+    };
+
   return (
     <>
       <EditCampaignDialog
           isOpen={isEditDialogOpen}
           onOpenChange={setEditDialogOpen}
-          onSave={handleUpdateCampaign}
+          onSave={handleSaveCampaignSettings}
           campaign={campaign}
       />
       <div className="min-h-screen flex flex-col">

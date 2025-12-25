@@ -1,5 +1,6 @@
 import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note } from './types';
 import api from './api';
+import { CampaignUpdateData } from '@/components/edit-campaign-dialog';
 
 // --- CAMPAIGN SERVICE (Backend Calls) ---
 
@@ -8,7 +9,7 @@ export async function getCampaignsForUser(user: User): Promise<Campaign[]> {
         const response = await api.get(`/campaigns/users/${user.username}`);
         return response.data;
     } catch (error) {
-        throw error.response?.data || new Error('Failed to fetch campaigns.');
+        throw (error as any).response?.data || new Error('Failed to fetch campaigns.');
     }
 }
 
@@ -17,10 +18,10 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
         const response = await api.get(`/campaigns/${id}`);
         return response.data;
     } catch (error) {
-        if (error.response?.status === 404) {
+        if ((error as any).response?.status === 404) {
             return null;
         }
-        throw error.response?.data || new Error('Failed to fetch campaign.');
+        throw (error as any).response?.data || new Error('Failed to fetch campaign.');
     }
 }
 
@@ -29,7 +30,16 @@ export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'invent
         const response = await api.post('/campaigns', campaignData);
         return response.data;
     } catch (error) {
-        throw error.response?.data || new Error('Failed to create campaign.');
+        throw (error as any).response?.data || new Error('Failed to create campaign.');
+    }
+}
+
+export async function updateCampaignSettings(campaignId: string, data: CampaignUpdateData): Promise<Campaign> {
+    try {
+        const response = await api.put(`/campaigns/${campaignId}/settings`, data);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to update campaign settings.');
     }
 }
 
@@ -38,7 +48,7 @@ export async function updateCampaign(campaignData: Campaign): Promise<Campaign> 
         const response = await api.put(`/campaigns/${campaignData.id}`, campaignData);
         return response.data;
     } catch (error) {
-        throw error.response?.data || new Error('Failed to update campaign.');
+        throw (error as any).response?.data || new Error('Failed to update campaign.');
     }
 }
 
@@ -47,7 +57,7 @@ export async function copyCampaign(campaignId: string): Promise<Campaign> {
         const response = await api.post(`/campaigns/copy/${campaignId}`);
         return response.data;
     } catch (error) {
-        throw error.response?.data || new Error('Failed to copy campaign.');
+        throw (error as any).response?.data || new Error('Failed to copy campaign.');
     }
 }
 
@@ -59,7 +69,7 @@ export async function getGrimoiresByUsername(): Promise<Grimoire[]> {
         return response.data;
     } catch (error) {
         console.log(error);
-        throw error.response?.data || new Error('Failed to fetch grimoire.');
+        throw (error as any).response?.data || new Error('Failed to fetch grimoire.');
     }
 };
 
@@ -69,7 +79,7 @@ export async function getGrimoireById(id: string): Promise<Grimoire | null> {
         return response.data;
     } catch (error) {
         console.log(error);
-        throw error.response?.data || new Error(`Failed to fetch grimoire with id "${id}"`);
+        throw (error as any).response?.data || new Error(`Failed to fetch grimoire with id "${id}"`);
     }
 }
 
@@ -78,7 +88,7 @@ export async function createGrimoire(id: string, name: string, creatorUsername: 
         const response = await api.post('/grimoires', { id, name, creatorUsername });
         return response.data;
     } catch (error) {
-        throw error.response?.data || new Error('Failed to create grimoire.');
+        throw (error as any).response?.data || new Error('Failed to create grimoire.');
     }
 }
 
@@ -86,7 +96,7 @@ export async function deleteGrimoire(id: string): Promise<void> {
     try {
         await api.delete(`/grimoires/${id}`);
     } catch (error) {
-        throw error.response?.data || new Error(`Failed to delete grimoire with id "${id}"`);
+        throw (error as any).response?.data || new Error(`Failed to delete grimoire with id "${id}"`);
     }
 }
 

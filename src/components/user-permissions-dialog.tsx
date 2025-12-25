@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import type { Campaign, Grimoire, PermissionLevel, UserPermissions } from '@/lib/types';
+import type { Campaign, Grimoire, PermissionLevel, UserPermissions, Category } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
 import {
@@ -34,12 +34,15 @@ import { Separator } from './ui/separator';
 
 
 interface UserPermissionsDialogProps {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  onSave: (username: string, permissions: UserPermissions, inventorySize?: number) => void;
-  username: string;
-  campaign: Campaign | null;
-  grimoire: Grimoire | null;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
+    username: string;
+    initialPermissions: UserPermissions;
+    initialInventorySize: number | undefined; 
+    inventoryType: 'free' | 'limited';
+    onSave: (username: string, permissions: UserPermissions, inventorySize?: number) => void;
+    campaign: Campaign; 
+    grimoire: Grimoire | null;
 }
 
 export function UserPermissionsDialog({ isOpen, onOpenChange, onSave, username, campaign, grimoire }: UserPermissionsDialogProps) {
@@ -49,8 +52,8 @@ export function UserPermissionsDialog({ isOpen, onOpenChange, onSave, username, 
   
   useEffect(() => {
     if (campaign && username && isOpen) {
-      setPermissions(campaign.userPermissions[username] || {});
-      setInventorySize(campaign.userInventories[username]?.maxSize);
+      setPermissions(campaign.userPermissions?.[username] || {});
+      setInventorySize(campaign.userInventories?.[username]?.maxSize);
     }
   }, [campaign, username, isOpen]);
 
@@ -91,7 +94,7 @@ export function UserPermissionsDialog({ isOpen, onOpenChange, onSave, username, 
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {grimoire.categories.map(category => (
+                            {grimoire.categories.map((category : Category) => (
                                 <TableRow key={category.id}>
                                     <TableCell className="font-medium">{category.name}</TableCell>
                                     <TableCell className="text-right">
@@ -128,12 +131,12 @@ export function UserPermissionsDialog({ isOpen, onOpenChange, onSave, username, 
                     <Input
                         id="inventory-size"
                         type="number"
-                        placeholder={t("Campaign default ({{size}})", { size: campaign.inventorySettings.defaultSize || t('Unlimited') })}
+                        placeholder={t("Campaign default ({{size}})", { size: campaign.inventorySettings?.defaultSize || t('Unlimited') })}
                         value={inventorySize ?? ''}
                         onChange={(e) => setInventorySize(e.target.value ? parseInt(e.target.value, 10) : undefined)}
-                        disabled={campaign.inventorySettings.type === 'free'}
+                        disabled={campaign.inventorySettings?.type === 'free'}
                     />
-                    {campaign.inventorySettings.type === 'free' && (
+                    {campaign.inventorySettings?.type === 'free' && (
                         <p className="text-xs text-muted-foreground">{t('Inventory size cannot be set when campaign rule is "Free".')}</p>
                     )}
                 </div>

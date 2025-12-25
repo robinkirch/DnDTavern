@@ -99,11 +99,7 @@ export interface Campaign {
     [username: string]: UserPermissions;
   };
    userInventories: {
-    // Key is username
-    [username: string]: {
-        items: InventoryItem[];
-        maxSize?: number; // Overrides campaign default if set
-    }
+     [username: string]: UserCampaignInventory;
   };
 
   // Time and Weather Tracking
@@ -166,4 +162,7 @@ export interface Recipe {
   aliases: string | null; // optional searchvalues
 }
 
-    
+export interface UserCampaignInventory {
+    items: InventoryItem[];
+    maxSize?: number; // Overrides campaign default if set
+}

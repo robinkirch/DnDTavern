@@ -37,7 +37,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
         if (editingMonster) {
              // Update existing monster
              const updatedMonster = { ...editingMonster, ...monsterData };
-             updatedBestiary = campaign.bestiary.map(m => m.id === updatedMonster.id ? updatedMonster : m);
+             updatedBestiary = campaign.bestiary?.map(m => m.id === updatedMonster.id ? updatedMonster : m);
              toast({ title: t('Monster Updated'), description: t('The creature\'s details have been updated.')});
         } else {
             // Add new monster
@@ -59,7 +59,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
     const handleDeleteMonster = async (monsterId: string) => {
         if (!confirm(t('Are you sure you want to remove this creature from the bestiary?'))) return;
 
-        const updatedBestiary = campaign.bestiary.filter(m => m.id !== monsterId);
+        const updatedBestiary = campaign.bestiary?.filter(m => m.id !== monsterId);
         const updatedCampaign = { ...campaign, bestiary: updatedBestiary };
         const savedCampaign = await updateCampaign(updatedCampaign);
         setCampaign(savedCampaign);
@@ -92,7 +92,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
                     </Button>
                 </div>
 
-                {campaign.bestiary.length > 0 ? (
+                {campaign.bestiary?.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {campaign.bestiary.map(monster => (
                             <Card key={monster.id} className="flex flex-col">

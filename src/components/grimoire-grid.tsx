@@ -275,6 +275,19 @@ export function GrimoireGrid() {
             </div>
           ) : (
             <div className="py-4 space-y-8 max-h-[60vh] overflow-y-auto pr-4">
+              {/* Basic Management */}
+              <div>
+                <div className="flex justify-between items-center">
+                  <h4 className='font-headline text-lg flex items-center gap-2'><Settings className='h-5 w-5 text-primary' /> {t('Grimoire Settings')}</h4>
+                </div>
+                <div className='py-2'>
+                  <Label htmlFor='grimoire-name'>{t('Grimoire Name')}</Label>
+                  <Input id="grimoire-name" value={managingGrimoire?.name} onChange={(e) => setNewCategoryName(e.target.value)} />
+
+                  <Label htmlFor='grimoire-connection'>{t('Data Source ID')}</Label>
+                  <Input id="grimoire-connection" value={managingGrimoire?.connection_string} onChange={(e) => setNewCategoryName(e.target.value)}/>
+                </div>
+              </div>
               {/* Category Management */}
               <div className='space-y-4'>
                 <div className="flex justify-between items-center">
