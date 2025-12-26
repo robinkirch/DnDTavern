@@ -3,10 +3,10 @@ import { useState, useMemo } from 'react';
 import type { Campaign, Note } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { useI18n } from '@/context/i18n-context';
-import { updateCampaign } from '@/lib/data-service';
+import { deleteNote, saveNote, updateCampaign } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
-import { PlusCircle, Trash2, Pencil, Search, MapPin, Tag } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil, Search, MapPin, Tag, ScanSearch } from 'lucide-react';
 import { NoteFormDialog } from './note-form-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import Image from 'next/image';
@@ -33,38 +33,42 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
     };
 
     const handleSaveNote = async (noteData: Omit<Note, 'id' | 'creatorUsername'>) => {
-        if (!user) return;
-        
-        let updatedNotes: Note[];
+        if (!user || !campaign.grimoireId) return;
+        console.log("call a");
+        try {
+            const noteToSave: Note = editingNote 
+                ? { ...editingNote, ...noteData }
+                : { 
+                    id: `note-${Date.now()}`, 
+                    creatorUsername: user.username, 
+                    ...noteData 
+                };
 
-        if (editingNote) {
-             const updatedNote = { ...editingNote, ...noteData };
-             updatedNotes = campaign.notes.map(n => n.id === updatedNote.id ? updatedNote : n);
-             toast({ title: t('Note Updated'), description: t('The document\'s details have been updated.')});
-        } else {
-            const newNote: Note = {
-                id: `note-${Date.now()}`,
-                creatorUsername: user.username,
-                ...noteData
-            };
-            updatedNotes = [...(campaign.notes || []), newNote];
-            toast({ title: t('Note Added'), description: t('A new document has been added to your collection.') });
+            await saveNote(campaign.grimoireId, campaign.id, noteToSave);
+
+            const updatedNotes = editingNote
+                ? (campaign.notes || []).map(n => n.id === noteToSave.id ? noteToSave : n)
+                : [...(campaign.notes || []), noteToSave];
+
+            setCampaign({ ...campaign, notes: updatedNotes });
+            setFormOpen(false);
+            toast({ title: t('Success') });
+        } catch (error) {
+            toast({ title: t('Error'), variant: 'destructive' });
         }
-        
-        const updatedCampaign = { ...campaign, notes: updatedNotes };
-        const savedCampaign = await updateCampaign(updatedCampaign);
-        setCampaign(savedCampaign);
-        setFormOpen(false);
     };
-    
-    const handleDeleteNote = async (noteId: string) => {
-        if (!confirm(t('Are you sure you want to delete this note? This cannot be undone.'))) return;
 
-        const updatedNotes = campaign.notes.filter(n => n.id !== noteId);
-        const updatedCampaign = { ...campaign, notes: updatedNotes };
-        const savedCampaign = await updateCampaign(updatedCampaign);
-        setCampaign(savedCampaign);
-        toast({ title: t('Note Removed'), description: t('The document has been removed from your collection.')});
+    const handleDeleteNote = async (noteId: string) => {
+        if (!user || !campaign.grimoireId || !confirm(t('Are you sure?'))) return;
+
+        try {
+            await deleteNote(campaign.grimoireId, noteId);
+            const updatedNotes = campaign.notes.filter(n => n.id !== noteId);
+            setCampaign({ ...campaign, notes: updatedNotes });
+            toast({ title: t('Note Removed') });
+        } catch (error) {
+            toast({ title: t('Error'), variant: 'destructive' });
+        }
     };
 
     const filteredNotes = useMemo(() => {
@@ -120,6 +124,7 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
                                                     className="object-cover transition-transform duration-300 group-hover:scale-105" 
                                                     data-ai-hint="old parchment paper" 
                                                 />
+                                                <ScanSearch className='h-7 w-7' style={{zIndex: "99", position: "absolute", marginLeft: "395px", marginTop: "65px", color: "#000"}}/>
                                             </button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl h-auto p-2">

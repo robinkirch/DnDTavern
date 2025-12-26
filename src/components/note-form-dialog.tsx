@@ -63,8 +63,8 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<s
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
-  content: z.string().min(1, 'Content is required.'),
-  location: z.string().min(1, 'Location found is required.'),
+  content: z.string().optional(),
+  location: z.string().optional(),
   tags: z.string().optional(),
   image: z.string().nullable(),
 });
@@ -109,17 +109,39 @@ export function NoteFormDialog({ isOpen, onOpenChange, onSave, note }: NoteFormD
     }
   }, [note, isOpen, form]);
 
+  // const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     try {
+  //       const resizedImage = await resizeImage(file, 1200, 300);
+  //       form.setValue('image', resizedImage, { shouldValidate: true });
+  //       setImagePreview(resizedImage);
+  //     } catch (error) {
+  //       console.error("Failed to resize image", error);
+  //     }
+  //   }
+  // };
+
   const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const resizedImage = await resizeImage(file, 400, 300);
-        form.setValue('image', resizedImage, { shouldValidate: true });
-        setImagePreview(resizedImage);
+        const base64Image = await fileToBase64(file);
+        form.setValue('image', base64Image, { shouldValidate: true });
+        setImagePreview(base64Image);
       } catch (error) {
-        console.error("Failed to resize image", error);
+        console.error("Failed to read image file", error);
       }
     }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   function onSubmit(values: FormData) {
@@ -163,7 +185,7 @@ export function NoteFormDialog({ isOpen, onOpenChange, onSave, note }: NoteFormD
                                         />
                                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                                             <Upload className="mr-2 h-4 w-4" />
-                                            {t('Upload (500x500)')}
+                                            {t('Upload')}
                                         </Button>
                                     </div>
                                 </FormControl>

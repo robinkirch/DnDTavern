@@ -196,6 +196,26 @@ export async function deleteMonster(grimoireId: string, monsterId: string): Prom
     }
 }
 
+// --- NOTE SERVICE ---
+
+export async function saveNote(grimoireId: string, campaignId: string, note: Note): Promise<Note> {
+    try {
+        console.log("called save");
+        const response = await api.post(`/notes/${grimoireId}/${campaignId}`, note);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to save note.');
+    }
+}
+
+export async function deleteNote(grimoireId: string, noteId: string): Promise<void> {
+    try {
+        await api.delete(`/notes/${grimoireId}/${noteId}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to delete note.');
+    }
+}
+
 // --- INVENTORY SERVICE --- Still Mocked
 
 export async function saveInventory(campaignId: string, username: string, items: InventoryItem[]): Promise<void> {

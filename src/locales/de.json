@@ -368,7 +368,9 @@
     "Failed to save the campaign settings.": "Speichern der Kampagneneinstellungen fehlgeschlagen.",
     "Grimoire Updated": "Grimoire aktualisiert",
     "Error updating grimoire": "Fehler beim aktualisieren des Grimoire",
-    "Failed to delete the creature.": "Löschen der Kreatur fehlgeschlagen."
+    "Failed to delete the creature.": "Löschen der Kreatur fehlgeschlagen.",
+    "Are you sure?": "Sind sie sich sicher?",
+    "Upload": "Hochladen"
 }
 
     

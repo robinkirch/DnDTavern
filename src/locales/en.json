@@ -368,7 +368,9 @@
     "Failed to save the campaign settings.": "Failed to save the campaign settings.",
     "Grimoire Updated": "Grimoire Updated",
     "Error updating grimoire": "Error updating grimoire",
-    "Failed to delete the creature.": "Failed to delete the creature."
+    "Failed to delete the creature.": "Failed to delete the creature.",
+    "Are you sure?": "Are you sure?",
+    "Upload": "Upload"
 }
 
     
