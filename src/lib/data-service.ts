@@ -1,4 +1,4 @@
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign } from './types';
 import api from './api';
 import { CampaignUpdateData } from '@/components/edit-campaign-dialog';
 
@@ -25,7 +25,7 @@ export async function getCampaignById(id: string): Promise<Campaign | null> {
     }
 }
 
-export async function createCampaign(campaignData: Omit<Campaign, 'id' | 'inventorySettings' | 'userPermissions' | 'userInventories' | 'calendarSettings' | 'weatherSettings' | 'tracking' | 'bestiary' | 'notes'>): Promise<Campaign> {
+export async function createCampaign(campaignData: Omit<CreateCampaign, 'id' | 'inventorySettings' | 'userPermissions' | 'calendarSettings' | 'weatherSettings' | 'tracking' | 'bestiary' | 'notes'>): Promise<Campaign> {
     try {
         const response = await api.post('/campaigns', campaignData);
         return response.data;

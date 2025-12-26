@@ -83,6 +83,56 @@ export interface Campaign {
   name: string;
   description: string;
   creatorUsername: string;
+  invitedUsernames: User[];
+  image: string | null;
+  grimoireId: string | null; // This links to a Grimoire (data source)
+  sessionNotes?: string | null;
+  sessionNotesDate?: string | null;
+  bestiary: Monster[];
+  notes: Note[];
+  
+  // New properties for advanced settings
+  inventorySettings: {
+    type: 'free' | 'limited';
+    defaultSize?: number;
+  };
+   userPermissions: {
+    [username: string]: UserPermissions;
+  };
+
+  // Time and Weather Tracking
+  calendarSettings: {
+    daysPerMonth: number;
+    monthsPerYear: number;
+    yearName: string;
+  };
+  weatherSettings: {
+    predefinedConditions: PredefinedWeatherCondition[];
+    regions: WeatherRegion[];
+  };
+  tracking: {
+    currentDate: {
+        day: number;
+        month: number;
+        year: number;
+    };
+    currentTimeOfDay: TimeOfDay;
+    currentRegionId: string | null;
+    currentWeather: string | null; // Name of the current weather condition
+    visibility: {
+        showDate: boolean;
+        showTimeOfDay: boolean;
+        showWeather: boolean;
+        showRegion: boolean;
+    }
+  };
+}
+
+export interface CreateCampaign {
+  id: string;
+  name: string;
+  description: string;
+  creatorUsername: string;
   invitedUsernames: string[];
   image: string | null;
   grimoireId: string | null; // This links to a Grimoire (data source)

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/context/auth-context';
 import { createCampaign, getCampaignsForUser, getCampaignById, getGrimoiresByUsername, copyCampaign } from '@/lib/data-service';
-import type { Campaign, Grimoire } from '@/lib/types';
+import type { Campaign, Grimoire, User } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -168,6 +168,7 @@ useEffect(() => {
                             const day = campaign.tracking?.currentDate?.day ?? 1;
                             const month = campaign.tracking?.currentDate?.month ?? 1;
                             const year = campaign.tracking?.currentDate?.year ?? 1000;
+                            console.log(campaign);
 
                             const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year}`;
                           return (
@@ -208,25 +209,16 @@ useEffect(() => {
                                             <span>{t('Players')}</span>
                                         </div>
                                         <div className='flex items-center gap-2'>
-                                            <Tooltip>
-                                                <TooltipTrigger>
-                                                    <Avatar className="h-8 w-8 border-2 border-primary">
-                                                        <AvatarFallback>{campaign.creatorUsername.charAt(0).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{campaign.creatorUsername} ({t('DM')})</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                            {(campaign.invitedUsernames ?? []).map(username => (
-                                                <Tooltip key={username}>
+                                            {(campaign.invitedUsernames ?? []).sort((a, b) => (a.role === 'dm' ? -1 : b.role === 'dm' ? 1 : 0)).map(username => (
+                                                <Tooltip key={username.username}>
                                                     <TooltipTrigger>
-                                                        <Avatar className="h-8 w-8 border-2 border-muted">
-                                                            <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                        <Avatar className={`h-14 w-14 border-2 ${username.role === 'dm' ? 'border-primary' : 'border-muted'}`}>
+                                                            {username.avatar && <AvatarImage src={username.avatar} alt={username.username} />}
+                                                            <AvatarFallback>{username.username.charAt(0).toUpperCase()}</AvatarFallback>
                                                         </Avatar>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        <p>{username}</p>
+                                                        <p>{username.username} {username.role === 'dm' ? `- ${t("DM")}` : ""}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             ))}
