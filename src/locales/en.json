@@ -258,7 +258,6 @@
     "Neutral": "Neutral",
     "Friendly": "Friendly",
     "Describe the creature's appearance, habits, and any notable features.": "Describe the creature's appearance, habits, and any notable features.",
-    "Resistances": "Resistances",
     "Fire, Bludgeoning, ... (comma-separated)": "Fire, Bludgeoning, ... (comma-separated)",
     "Damage Types": "Damage Types",
     "Slashing, Poison, ... (comma-separated)": "Slashing, Poison, ... (comma-separated)",
@@ -370,7 +369,25 @@
     "Error updating grimoire": "Error updating grimoire",
     "Failed to delete the creature.": "Failed to delete the creature.",
     "Are you sure?": "Are you sure?",
-    "Upload": "Upload"
+    "Upload": "Upload",
+    "Acid" : "Acid",
+    "Cold" : "Cold",
+    "Fire" : "Fire",
+    "Force" : "Force",
+    "Lightning" : "Lightning",
+    "Necrotic" : "Necrotic",
+    "Poison" : "Poison",
+    "Psychic" : "Psychic",
+    "Radiant" : "Radiant",
+    "Thunder" : "Thunder",
+    "Bludgeoning" : "Bludgeoning",
+    "Slashing" : "Slashing",
+    "Piercing" : "Piercing",
+    "magical": "magical",
+    "physical": "physical",
+    "Resistances": "Resistances",
+    "Immunities": "Immunities",
+    "Vulnerabilities": "Vulnerabilities" 
 }
 
     

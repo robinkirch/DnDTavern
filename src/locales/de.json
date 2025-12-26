@@ -258,7 +258,6 @@
     "Neutral": "Neutral",
     "Friendly": "Freundlich",
     "Describe the creature's appearance, habits, and any notable features.": "Beschreibe das Aussehen, die Gewohnheiten und besondere Merkmale der Kreatur.",
-    "Resistances": "Resistenzen",
     "Fire, Bludgeoning, ... (comma-separated)": "Feuer, Wuchtschaden, ... (kommagetrennt)",
     "Damage Types": "Schadensarten",
     "Slashing, Poison, ... (comma-separated)": "Hieb, Gift, ... (kommagetrennt)",
@@ -370,7 +369,25 @@
     "Error updating grimoire": "Fehler beim aktualisieren des Grimoire",
     "Failed to delete the creature.": "Löschen der Kreatur fehlgeschlagen.",
     "Are you sure?": "Sind sie sich sicher?",
-    "Upload": "Hochladen"
+    "Upload": "Hochladen",
+    "Acid" : "Säure",
+    "Cold" : "Kälte",
+    "Fire" : "Feuer",
+    "Force" : "Kraft",
+    "Lightning" : "Elektrisch",
+    "Necrotic" : "Nekrotik",
+    "Poison" : "Gift",
+    "Psychic" : "Physisch",
+    "Radiant" : "Strahlend",
+    "Thunder" : "Donner",
+    "Bludgeoning" : "Wuchtschaden",
+    "Slashing" : "Reißschaden",
+    "Piercing" : "Durchbohrend",
+    "magical": "magisch",
+    "physical": "physisch",
+    "Resistances": "Resistenzen",
+    "Immunities": "Immunitäten",
+    "Vulnerabilities": "Schwachstellen" 
 }
 
     

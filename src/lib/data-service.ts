@@ -1,4 +1,4 @@
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType } from './types';
 import api from './api';
 import { CampaignUpdateData } from '@/components/edit-campaign-dialog';
 
@@ -213,6 +213,16 @@ export async function deleteNote(grimoireId: string, noteId: string): Promise<vo
         await api.delete(`/notes/${grimoireId}/${noteId}`);
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to delete note.');
+    }
+}
+
+// --- DAMAGETYPES SERVICE ---
+export async function fetchDamageTypes(grimoireId: string): Promise<DamageType[]> {
+    try {
+        const response = await api.get(`/grimoires/${grimoireId}/all/damagetypes`);
+        return response.data;
+    } catch (err) {
+        throw err;
     }
 }
 

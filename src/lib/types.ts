@@ -27,8 +27,9 @@ export interface Monster {
     behavior: 'aggressive' | 'neutral' | 'friendly';
     hitPoints: number | null;
     description: string;
-    resistances: string[];
-    damageTypes: string[];
+    resistances: number[];
+    immunities: number[];
+    vulnerabilities: number[];
     creatorUsername: string;
 }
 
@@ -98,9 +99,6 @@ export interface Campaign {
    userPermissions: {
     [username: string]: UserPermissions;
   };
-   userInventories: {
-     [username: string]: UserCampaignInventory;
-  };
 
   // Time and Weather Tracking
   calendarSettings: {
@@ -165,4 +163,10 @@ export interface Recipe {
 export interface UserCampaignInventory {
     items: InventoryItem[];
     maxSize?: number; // Overrides campaign default if set
+}
+
+export interface DamageType {
+  id: number;
+  name: string;
+  category: string;
 }
