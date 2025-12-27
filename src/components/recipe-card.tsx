@@ -33,8 +33,6 @@ const categoryIcons: { [key: string]: JSX.Element } = {
 export function RecipeCard({ recipe, grimoire, canEdit, permissionLevel, onEdit, onDelete }: RecipeCardProps) {
     const { t } = useI18n();
 
-    recipe.categoryIds?.map(i => console.log(i));
-    // Korrigierte Zeile: Prüft, ob recipe.categoryIds existiert, um den Fehler zu vermeiden.
     const categories = grimoire?.categories.filter(c => recipe.categoryIds?.includes(c.id)) || [];
 
     const rarity = grimoire?.rarities.find(r => r.id === recipe.rarityId);

@@ -61,6 +61,15 @@ export async function copyCampaign(campaignId: string): Promise<Campaign> {
     }
 }
 
+export const updateCampaignTracking = async (campaignId: string, tracking: any) => {
+    try {
+        const response = await api.patch(`/campaigns/${campaignId}/tracking`, { tracking });
+        return response.data.tracking; 
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to patch tracking.');
+    }
+};
+
 // --- GRIMOIRE SERVICE (Backend Calls) ---
 
 export async function getGrimoiresByUsername(): Promise<Grimoire[]> {
@@ -75,6 +84,15 @@ export async function getGrimoiresByUsername(): Promise<Grimoire[]> {
 export async function getGrimoireById(id: string): Promise<Grimoire | null> {
     try {
         const response = await api.get(`/grimoires/single/${id}`);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error(`Failed to fetch grimoire with id "${id}"`);
+    }
+}
+
+export async function getGrimoireByIdAsPlayer(id: string, dm: string): Promise<Grimoire | null> {
+    try {
+        const response = await api.get(`/grimoires/single/${id}/${dm}`);
         return response.data;
     } catch (error) {
         throw (error as any).response?.data || new Error(`Failed to fetch grimoire with id "${id}"`);

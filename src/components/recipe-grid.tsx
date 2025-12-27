@@ -19,34 +19,41 @@ import {
 } from '@/components/ui/select';
 
 interface RecipeGridProps {
-  grimoireId: string;
+  grimoire: Grimoire | null;
+  grimoireId: string; //Fallback
   canEdit: boolean;
   userPermissions?: { [categoryId: string]: PermissionLevel };
 }
 
-export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: RecipeGridProps) {
+export function RecipeGrid({ canEdit, grimoire, grimoireId, userPermissions = {} }: RecipeGridProps) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [grim, setGrimoire] = useState<Grimoire | null>(grimoire);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
 
-  useEffect(() => {
-    getGrimoireById(grimoireId).then(data => {
-      setGrimoire(data);
-      setIsLoading(false);
-    });
+   useEffect(() => {
+    if(!grimoire)
+      getGrimoireById(grimoireId).then(data => {
+        setGrimoire(data);
+        setIsLoading(false);
+      });
+    else {
+      setGrimoire(grimoire);
+       setIsLoading(false);
+    }
   }, [grimoireId]);
 
   const getRecipeName = (recipeId: string) => {
-    return grimoire?.recipes.find(r => r.id === recipeId)?.name.toLowerCase() || '';
+    return grim?.recipes.find(r => r.id === recipeId)?.name.toLowerCase() || '';
   };
 
   const getCategoryName = (categoryId: string) => {
-    return grimoire?.categories.find(c => c.id === categoryId)?.name.toLowerCase() || '';
+    return grim?.categories.find(c => c.id === categoryId)?.name.toLowerCase() || '';
   }
 
   const getPermissionForRecipe = (recipe: Recipe): PermissionLevel => {
@@ -73,9 +80,9 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
   };
 
   const filteredRecipes = useMemo(() => {
-     if (!grimoire) return [];
+     if (!grim) return [];
 
-     return grimoire.recipes.filter(recipe => {
+     return grim.recipes.filter(recipe => {
         const term = searchTerm.toLowerCase();
         const permission = getPermissionForRecipe(recipe);
 
@@ -92,7 +99,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
         
         return categoryFilter && searchFilter;
       });
-  }, [grimoire, searchTerm, selectedCategory, canEdit, user, userPermissions]);
+  }, [grim, searchTerm, selectedCategory, canEdit, user, userPermissions]);
 
   
   const handleAddRecipe = () => {
@@ -101,7 +108,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
   };
 
   const handleEditRecipe = (id: string) => {
-    const recipeToEdit = grimoire?.recipes.find(r => r.id === id);
+    const recipeToEdit = grim?.recipes.find(r => r.id === id);
     if(recipeToEdit) {
         setEditingRecipe(recipeToEdit);
         setFormOpen(true);
@@ -110,25 +117,25 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
 
   const handleDeleteRecipe = async (id: string) => {
     if(confirm(t('Are you sure you want to delete this recipe? This cannot be undone.'))) {
-        await deleteRecipe(grimoireId, id);
-        if (grimoire) {
-          const updatedRecipes = grimoire.recipes.filter(r => r.id !== id);
-          setGrimoire({ ...grimoire, recipes: updatedRecipes });
+        await deleteRecipe(grim!.id, id);
+        if (grim) {
+          const updatedRecipes = grim.recipes.filter(r => r.id !== id);
+          setGrimoire({ ...grim, recipes: updatedRecipes });
         }
     }
   };
 
   const handleSaveRecipe = async (savedRecipe: Recipe) => {
-    await saveRecipe(grimoireId, savedRecipe);
-    if (grimoire) {
-      const existingIndex = grimoire.recipes.findIndex(r => r.id === savedRecipe.id);
+    await saveRecipe(grim!.id, savedRecipe);
+    if (grim) {
+      const existingIndex = grim.recipes.findIndex(r => r.id === savedRecipe.id);
       let updatedRecipes;
       if (existingIndex !== -1) {
-        updatedRecipes = grimoire.recipes.map(r => r.id === savedRecipe.id ? savedRecipe : r);
+        updatedRecipes = grim.recipes.map(r => r.id === savedRecipe.id ? savedRecipe : r);
       } else {
-        updatedRecipes = [...grimoire.recipes, savedRecipe];
+        updatedRecipes = [...grim.recipes, savedRecipe];
       }
-      setGrimoire({ ...grimoire, recipes: updatedRecipes });
+      setGrimoire({ ...grim, recipes: updatedRecipes });
     }
 
     setFormOpen(false);
@@ -145,7 +152,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
     )
   }
 
-  if (!grimoire) {
+  if (!grim) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg">
         <h3 className="font-headline text-2xl">{t('Grimoire Not Found')}</h3>
@@ -161,7 +168,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
         onOpenChange={setFormOpen}
         onSave={handleSaveRecipe}
         recipe={editingRecipe}
-        grimoire={grimoire}
+        grimoire={grim}
       />
       <div>
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
@@ -181,7 +188,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">{t('All Categories')}</SelectItem>
-                    {grimoire.categories.map((cat: Category) => (
+                    {grim.categories.map((cat: Category) => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
                 </SelectContent>
@@ -198,7 +205,7 @@ export function RecipeGrid({ canEdit, grimoireId, userPermissions = {} }: Recipe
         {filteredRecipes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} grimoire={grimoire} canEdit={canEdit} permissionLevel={getPermissionForRecipe(recipe)} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
+              <RecipeCard key={recipe.id} recipe={recipe} grimoire={grim} canEdit={canEdit} permissionLevel={getPermissionForRecipe(recipe)} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
             ))}
           </div>
         ) : (

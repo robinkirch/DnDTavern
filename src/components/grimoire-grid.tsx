@@ -444,6 +444,7 @@ export function GrimoireGrid() {
               </CardHeader>
               <CardContent className="flex-grow">
                 <RecipeGrid
+                  grimoire={null}
                   grimoireId={grimoire.id}
                   canEdit={true}
                 />

@@ -223,6 +223,8 @@
     "N/A": "N/V",
     "Day": "Tag",
     "Month": "Monat",
+    "Year": "Jahr",
+    "Current Date": "Aktuelles Datum",
     "Select a region...": "Wähle eine Region...",
     "Advance Time": "Zeit vorrücken",
     "Weather Error": "Wetterfehler",

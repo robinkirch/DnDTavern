@@ -27,9 +27,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
 
     useEffect(() => {
         if (campaign.grimoireId) {
-            fetchDamageTypes(campaign.grimoireId)
-                .then(setDamageTypes)
-                .catch(console.error);
+            fetchDamageTypes(campaign.grimoireId).then(setDamageTypes).catch(console.error);
         }
     }, [campaign.grimoireId]);
 
@@ -79,6 +77,12 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
     // Hilfsfunktion: Wandelt ID-Arrays in lokalisierte Strings um
     const formatDamageTypes = (ids: number[] = []) => {
         if (!ids || ids.length === 0) return null;
+
+        if (!Array.isArray(ids)) {
+            console.warn("Expected array for damage types, but got:", ids);
+            return "";
+        }
+
         return ids
             .map(id => {
                 const dt = damageTypes.find(d => d.id === id);
@@ -100,6 +104,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
         }
     }
 
+    console.log(campaign);
     return (
         <>
             <MonsterFormDialog 

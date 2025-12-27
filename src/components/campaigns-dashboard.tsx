@@ -31,29 +31,29 @@ export default function CampaignsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
 
-useEffect(() => {
-    const fetchAllData = async () => {
-        if (user) {
-            try {
-                const [campaignsData, grimoiresData] = await Promise.all([
-                    getCampaignsForUser(user),
-                    getGrimoiresByUsername()
-                ]);
-                setCampaigns(campaignsData);
-                setGrimoires(grimoiresData);
-            } catch (error) {
-                console.error('Failed to fetch initial data:', error);
-            } finally {
-                setIsLoading(false);
+    useEffect(() => {
+        const fetchAllData = async () => {
+            if (user) {
+                try {
+                    const [campaignsData, grimoiresData] = await Promise.all([
+                        getCampaignsForUser(user),
+                        getGrimoiresByUsername()
+                    ]);
+                    setCampaigns(campaignsData);
+                    setGrimoires(grimoiresData);
+                } catch (error) {
+                    console.error('Failed to fetch initial data:', error);
+                } finally {
+                    setIsLoading(false);
+                }
             }
-        }
-    };
+        };
 
-    if (user) {
-        setIsLoading(true);
-        fetchAllData();
-    }
-}, [user]);
+        if (user) {
+            setIsLoading(true);
+            fetchAllData();
+        }
+    }, [user]);
 
   const handleCreateCampaign = async (formData: { 
     name: string; 

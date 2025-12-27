@@ -7,7 +7,7 @@ import { de } from 'date-fns/locale';
 
 
 import { useAuth } from '@/context/auth-context';
-import { getCampaignById, getGrimoireById, updateCampaign, updateCampaignSettings } from '@/lib/data-service';
+import { getCampaignById, getGrimoireById, getGrimoireByIdAsPlayer, updateCampaign, updateCampaignSettings } from '@/lib/data-service';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/context/i18n-context';
@@ -52,23 +52,25 @@ export default function CampaignPage() {
     if (user && campaignId) {
       getCampaignById(campaignId).then(foundCampaign => {
         if (foundCampaign) {
-            // KORREKTUR: Sicherstellen, dass invitedUsernames ein Array ist, 
-            // bevor .includes() aufgerufen wird, um TypeError zu vermeiden.
             const invitedUsers = foundCampaign.invitedUsernames ?? [];
             
-            const isInvited = invitedUsers.includes(user.username);
+            const isInvited = invitedUsers.some(u => u.username == user.username);
             const isCreator = foundCampaign.creatorUsername === user.username;
             
             if (isCreator || isInvited) {
                 setCampaign(foundCampaign);
                 setSessionNotes(foundCampaign.sessionNotes || '');
                 if (foundCampaign.grimoireId) {
-                    getGrimoireById(foundCampaign.grimoireId).then(setGrimoire);
+                    if (isCreator) {
+                        getGrimoireById(foundCampaign.grimoireId).then(setGrimoire);
+                    } else if (isInvited) {
+                        getGrimoireByIdAsPlayer(foundCampaign.grimoireId, foundCampaign.creatorUsername).then(setGrimoire);
+                    }
                 } else {
-                    setGrimoire(null); // Explicitly set grimoire to null if not present
+                    setGrimoire(null);
                 }
             } else {
-                router.push('/'); // Not authorized for this campaign
+                router.push('/'); 
             }
         }
         setLoading(false);
@@ -90,29 +92,6 @@ export default function CampaignPage() {
     setCampaign(updatedCampaign); // Update local state
     setIsSavingNotes(false);
     toast({ title: t('Success'), description: t('Session notes have been saved.') });
-  };
-
-  const handleUpdateCampaign = (updatedData: Omit<Campaign, 'id' | 'creatorUsername' | 'sessionNotes' | 'sessionNotesDate'>) => {
-    if (!campaign) return;
-    
-    // Create a fully formed campaign object for updating
-    const updatedCampaign = {
-        ...campaign,
-        ...updatedData,
-    };
-
-    updateCampaign(updatedCampaign).then(savedCampaign => {
-        setCampaign(savedCampaign);
-        if (savedCampaign.grimoireId !== campaign.grimoireId) {
-            if (savedCampaign.grimoireId) {
-                getGrimoireById(savedCampaign.grimoireId).then(setGrimoire);
-            } else {
-                setGrimoire(null);
-            }
-        }
-        toast({ title: t("Campaign Updated"), description: t("Your campaign details have been saved.") });
-        setEditDialogOpen(false);
-     });
   };
 
   const formatDate = (dateString: string) => {
@@ -151,16 +130,8 @@ export default function CampaignPage() {
   const isCreator = campaign.creatorUsername === user.username;
 
     const handleSaveCampaignSettings = async (campaignId: string, data: CampaignUpdateData) => {
-        // 1. Rufen Sie die API-Funktion auf, die Campaign zurückgibt
         const updatedCampaign = await updateCampaignSettings(campaignId, data);
-        console.log(updatedCampaign);
-        
-        // 2. WICHTIG: Aktualisieren Sie den lokalen Zustand der Seite
-        // (Dies ist der Grund, warum updateCampaignSettings Campaign zurückgibt)
-        // Nehmen wir an, Sie haben eine Funktion, die den Campaign-Zustand aktualisiert:
         setCampaign(updatedCampaign); 
-        
-        // 3. EXPLIZITE RÜCKGABE VON NICHTS: Die Funktion kehrt ohne Wert zurück (=> Promise<void>)
         return;
     };
 
@@ -236,15 +207,24 @@ export default function CampaignPage() {
                     </TabsList>
                     
                     <TabsContent value="recipes">
-                        {campaign.grimoireId ? (
-                            <RecipeGrid 
-                                grimoireId={campaign.grimoireId} 
-                                canEdit={false}
-                                // userPermissions ist optional, daher hier absichern
-                                userPermissions={campaign.userPermissions?.[user.username]}
-                             />
-                        ) : (
-                            <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
+                        {campaign.grimoireId ? (
+                            grimoire ? (
+                                <RecipeGrid 
+                                    grimoire={grimoire} 
+                                    grimoireId={campaign.grimoireId} 
+                                    canEdit={false}
+                                    userPermissions={campaign.userPermissions?.[user.username]}
+                                />
+                            ) : (
+                                // Zeige einen Lade-Zustand für das Grimoire
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <Skeleton className="h-96 rounded-lg" />
+                                    <Skeleton className="h-96 rounded-lg" />
+                                    <Skeleton className="h-96 rounded-lg" />
+                                </div>
+                            )
+                        ) : (
+                           <div className="flex flex-col items-center justify-center text-center py-16 border-2 border-dashed rounded-lg h-full">
                             <h3 className="font-headline text-2xl">{t('No Grimoire Linked')}</h3>
                             <p className="text-muted-foreground">{t('The Dungeon Master has not linked a recipe book to this campaign yet.')}</p>
                             {isCreator && (
@@ -253,7 +233,7 @@ export default function CampaignPage() {
                                 </Button>
                             )}
                             </div>
-                        )}
+                        )}
                     </TabsContent>
                     <TabsContent value="bestiary">
                         <Bestiary campaign={campaign} setCampaign={setCampaign} />

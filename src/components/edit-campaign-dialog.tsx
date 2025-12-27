@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Campaign, Grimoire, UserPermissions, PredefinedWeatherCondition, RegionWeatherCondition, UserCampaignInventory } from '@/lib/types';
+import type { Campaign, Grimoire, UserPermissions, PredefinedWeatherCondition, RegionWeatherCondition, UserCampaignInventory, TimeOfDay } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { getGrimoiresByUsername, getGrimoireById } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
@@ -70,6 +70,16 @@ const formSchema = z.object({
     daysPerMonth: z.coerce.number().min(1),
     monthsPerYear: z.coerce.number().min(1),
     yearName: z.string(),
+    tracking: z.object({
+        currentDate:  z.object({
+            day: z.coerce.number().min(1),
+            month: z.coerce.number().min(1),
+            year: z.coerce.number().min(1),
+        }),
+        currentTimeOfDay: z.string().optional(),
+        currentRegionId: z.string().nullable().optional(),
+        currentWeather: z.string().nullable().optional(),
+    }),
     // Wetter-Einstellungen
     predefinedConditions: z.array(predefinedWeatherConditionSchema),
     weatherRegions: z.array(weatherRegionSchema),
@@ -171,6 +181,7 @@ const WeatherRegionFields = ({ control, watch, regionIndex, removeRegion, predef
 
 
 export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: EditCampaignDialogProps) {
+
     const { user } = useAuth();
     const { t } = useI18n();
     const [userGrimoires, setUserGrimoires] = useState<Grimoire[]>([]);
@@ -180,6 +191,12 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: '',
+            predefinedConditions: [],
+            weatherRegions: [],
+            visibility: { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true }
+        }
     });
     
     const { watch, setValue, control } = form;
@@ -221,25 +238,50 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
     useEffect(() => {
         if (campaign && isOpen) {
             form.reset({
-                name: campaign.name,
-                description: campaign.description,
-                invitedUsernames: (campaign.invitedUsernames ?? []).join(', '),
-                grimoireId: campaign.grimoireId,
-                image: campaign.image,
-                inventoryType: campaign.inventorySettings?.type ?? 'free',
-                defaultInventorySize: campaign.inventorySettings?.defaultSize ?? 0,
-                daysPerMonth: campaign.calendarSettings?.daysPerMonth ?? 30,
-                monthsPerYear: campaign.calendarSettings?.monthsPerYear ?? 12,
-                yearName: campaign.calendarSettings?.yearName ?? '',
+                name: campaign.name || "",
+                description: campaign.description || "",
+                grimoireId: campaign.grimoireId || null,
+                image: campaign.image || null,
+                // Sicherstellen, dass invitedUsernames ein Array ist
+                invitedUsernames: Array.isArray(campaign.invitedUsernames) 
+                    ? campaign.invitedUsernames.map(u => u.username).join(', ') 
+                    : "",
+
+                // Inventar - Sicherer Zugriff auf leere Objekte
+                inventoryType: campaign.inventorySettings?.type || 'free',
+                defaultInventorySize: campaign.inventorySettings?.defaultSize || 0,
+
+                // Kalender
+                daysPerMonth: campaign.calendarSettings?.daysPerMonth || 30,
+                monthsPerYear: campaign.calendarSettings?.monthsPerYear || 12,
+                yearName: campaign.calendarSettings?.yearName || '',
+
+                // Tracking - Hier war der Crash-Punkt!
+                tracking: {
+                    currentDate: {
+                        day: campaign.tracking?.currentDate?.day ?? 1,
+                        month: campaign.tracking?.currentDate?.month ?? 1,
+                        year: campaign.tracking?.currentDate?.year ?? 1,
+                    },
+                    currentTimeOfDay: campaign.tracking?.currentTimeOfDay || 'morning',
+                    currentRegionId: campaign.tracking?.currentRegionId || null,
+                    currentWeather: campaign.tracking?.currentWeather || null,
+                },
+
+                // Sichtbarkeit (Laut Interface innerhalb von tracking)
+                visibility: {
+                    showDate: campaign.tracking?.visibility?.showDate ?? true,
+                    showTimeOfDay: campaign.tracking?.visibility?.showTimeOfDay ?? true,
+                    showWeather: campaign.tracking?.visibility?.showWeather ?? true,
+                    showRegion: campaign.tracking?.visibility?.showRegion ?? true,
+                },
+
+                // Wetter
                 predefinedConditions: campaign.weatherSettings?.predefinedConditions || [],
                 weatherRegions: campaign.weatherSettings?.regions || [],
-                visibility: campaign.tracking?.visibility || { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true },
+
+                userPermissions: campaign.userPermissions || {},
             });
-            setImagePreview(campaign.image);
-        } else if (!isOpen) {
-            form.reset();
-            setImagePreview(null);
-            setCurrentGrimoire(null);
         }
     }, [campaign, isOpen, form]);
 
@@ -317,8 +359,16 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
               regions: values.weatherRegions,
           },
           tracking: {
-              ...campaign.tracking,
-              visibility: values.visibility
+            currentDate: {
+                day: values.tracking.currentDate.day,
+                month: values.tracking.currentDate.month,
+                year: values.tracking.currentDate.year,
+            },
+            currentTimeOfDay: (values.tracking.currentTimeOfDay || campaign.tracking?.currentTimeOfDay || 'morning') as TimeOfDay,
+            currentRegionId: values.tracking.currentRegionId || campaign.tracking?.currentRegionId || null,
+            currentWeather: values.tracking.currentWeather || campaign.tracking?.currentWeather || null,
+            
+            visibility: values.visibility
           }
       }
       try {
@@ -556,6 +606,42 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                                                 </FormItem>
                                             )}
                                         />
+                                    </div>
+                                    <h3 style={{marginTop: "30px"}}>{t("Current Date")}:</h3>
+                                    <div className="grid grid-cols-3 gap-2">
+                                    <FormField
+                                        control={control}
+                                        name="tracking.currentDate.day"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("Day")}</FormLabel>
+                                                <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={control}
+                                        name="tracking.currentDate.month"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("Month")}</FormLabel>
+                                                <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={control}
+                                        name="tracking.currentDate.year"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("Year")}</FormLabel>
+                                                <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
