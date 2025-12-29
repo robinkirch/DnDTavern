@@ -389,7 +389,12 @@
     "physical": "physical",
     "Resistances": "Resistances",
     "Immunities": "Immunities",
-    "Vulnerabilities": "Vulnerabilities" 
+    "Vulnerabilities": "Vulnerabilities",
+    "Remove Campaign": "Remove Campaign",
+    "Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.": "Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.",
+    "Campaign deleted": "Campaign deleted",
+    "The campaign was successfully deleted.": "The campaign was successfully deleted.",
+    "Failed to delete the campaign.": "Failed to delete the campaign."
 }
 
     

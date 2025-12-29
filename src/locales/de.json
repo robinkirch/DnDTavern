@@ -389,7 +389,12 @@
     "physical": "physisch",
     "Resistances": "Resistenzen",
     "Immunities": "Immunitäten",
-    "Vulnerabilities": "Schwachstellen" 
+    "Vulnerabilities": "Schwachstellen" ,
+    "Remove Campaign": "Kampagne löschen",
+    "Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.": "Sind Sie sicher, dass Sie diese Kampagne entfernen möchten? Dadurch werden zwar die Daten selbst gelöscht, aber das Grimoire wird nicht entfernt.",
+    "Campaign deleted": "Kampagne gelöscht",
+    "The campaign was successfully deleted.": "Die Kampagne wurde erfolgreich gelöscht.",
+    "Failed to delete the campaign.": "Fehler beim Löschen der Kampagne."
 }
 
     

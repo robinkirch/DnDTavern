@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/context/auth-context';
-import { createCampaign, getCampaignsForUser, getCampaignById, getGrimoiresByUsername, copyCampaign } from '@/lib/data-service';
+import { createCampaign, getCampaignsForUser, getCampaignById, getGrimoiresByUsername, copyCampaign, deleteCampaign } from '@/lib/data-service';
 import type { Campaign, Grimoire, User } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, PlusCircle, BookHeart, Shield, Users, Copy, CalendarIcon } from 'lucide-react';
+import { ArrowRight, PlusCircle, BookHeart, Shield, Users, Copy, CalendarIcon, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { CreateCampaignDialog } from './create-campaign-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,15 +21,29 @@ import { Skeleton } from './ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 
 export default function CampaignsDashboard() {
-  const { user } = useAuth();
-  const { t } = useI18n();
-  const { toast } = useToast();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [grimoires, setGrimoires] = useState<Grimoire[]>([]); 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const { user } = useAuth();
+    const { t } = useI18n();
+    const { toast } = useToast();
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [grimoires, setGrimoires] = useState<Grimoire[]>([]); 
+    const [isLoading, setIsLoading] = useState(true);
+    const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+
+    // State for the custom confirmation dialog
+    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+    const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
+    const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
+
+    const showConfirmDialog = (title: string, description: string, action: () => void) => {
+        setConfirmDialogTitle(title);
+        setConfirmDialogDescription(description);
+        setConfirmAction(() => action);
+        setIsConfirmDialogOpen(true);
+    };
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -55,37 +69,37 @@ export default function CampaignsDashboard() {
         }
     }, [user]);
 
-  const handleCreateCampaign = async (formData: { 
-    name: string; 
-    description: string; 
-    invitedUsernames: string[], 
-    grimoireId: string | null, 
-    image: string | null, 
-    creatorUsername: string; 
-    sessionNotes: string | null; 
-}) => {
-    if (!user) return;
-    try {
-        const campaignDataToSend = {
-            ...formData,
-            bestiary: [],
-            notes: [],
-        };
-        
-        const newCampaign = await createCampaign(campaignDataToSend);
-        
-        setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
-        setCreateDialogOpen(false);
-        toast({ title: t('Campaign Created'), description: t('The new campaign has been successfully created.') });
-    } catch (error) {
-        console.error('Failed to create campaign:', error);
-        toast({ 
-            title: t('Error'), 
-            description: t('Failed to create the campaign.'), 
-            variant: 'destructive' 
-        });
-    }
-};
+    const handleCreateCampaign = async (formData: { 
+        name: string; 
+        description: string; 
+        invitedUsernames: string[], 
+        grimoireId: string | null, 
+        image: string | null, 
+        creatorUsername: string; 
+        sessionNotes: string | null; 
+    }) => {
+        if (!user) return;
+        try {
+            const campaignDataToSend = {
+                ...formData,
+                bestiary: [],
+                notes: [],
+            };
+            
+            const newCampaign = await createCampaign(campaignDataToSend);
+            
+            setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
+            setCreateDialogOpen(false);
+            toast({ title: t('Campaign Created'), description: t('The new campaign has been successfully created.') });
+        } catch (error) {
+            console.error('Failed to create campaign:', error);
+            toast({ 
+                title: t('Error'), 
+                description: t('Failed to create the campaign.'), 
+                variant: 'destructive' 
+            });
+        }
+    };
   
   const handleCopyCampaign = async (campaignId: string) => {
     if (!user) return;
@@ -103,6 +117,29 @@ export default function CampaignsDashboard() {
         });
     }
   };
+
+    const handleDeleteCampaign = async (campaignId: string) => {
+        console.log("hallo");
+        if (!user) return;
+
+        console.log("hallo1");
+        showConfirmDialog(
+            t('Remove Campaign'),
+            t('Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.'),
+            async () => {
+                try {
+                    await deleteCampaign(campaignId);
+                    setCampaigns(prev => prev.filter(g => g.id !== campaignId));
+                    toast({ title: t('Campaign deleted'), description: t('The campaign was successfully deleted.') });
+                } catch (error) {
+                    console.error('Failed to delete campaign:', error);
+                    toast({ title: t('Error'), description: t('Failed to delete the campaign.'), variant: 'destructive'});
+                } finally {
+                    setIsConfirmDialogOpen(false);
+                }
+            }
+        );
+    };
 
 
   if (isLoading || !user) {
@@ -133,6 +170,20 @@ export default function CampaignsDashboard() {
         onCreate={handleCreateCampaign}
         grimoires={grimoires}
       />
+
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirmDialogTitle}</DialogTitle>
+            <DialogDescription>{confirmDialogDescription}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>{t('Cancel')}</Button>
+            <Button variant="destructive" onClick={() => confirmAction?.()}>{t('Confirm')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="container py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -168,12 +219,50 @@ export default function CampaignsDashboard() {
                             const day = campaign.tracking?.currentDate?.day ?? 1;
                             const month = campaign.tracking?.currentDate?.month ?? 1;
                             const year = campaign.tracking?.currentDate?.year ?? 1000;
-                            console.log(campaign);
 
                             const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year}`;
                           return (
                             <Card key={campaign.id} className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                                 <CardHeader className="relative p-0 h-48 w-full">
+                                    {campaign.creatorUsername === user.username && (
+                                        <>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" 
+                                                        size="icon" 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCopyCampaign(campaign.id);
+                                                        }}
+                                                        style={{position: "absolute", zIndex: "2", margin: "5px 5px"}}
+                                                        >
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{t('Copy Campaign')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" 
+                                                        size="icon" 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            handleDeleteCampaign(campaign.id);
+                                                        }}
+                                                        style={{position: "absolute", zIndex: "2", margin: "5px 52px"}}
+                                                        >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{t('Copy Campaign')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </>
+                                    )}
                                     {campaign.image ? (
                                         <Image
                                             src={campaign.image}
@@ -181,11 +270,12 @@ export default function CampaignsDashboard() {
                                             fill
                                             className="object-cover"
                                             data-ai-hint="fantasy landscape"
+                                            style={{marginTop: "0px"}}
                                         />
                                     ) : (
                                         <div className='w-full h-full bg-muted'/>
                                     )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                    
                                     {campaign.creatorUsername === user.username ? (
                                         <Badge variant="destructive" className="absolute top-4 right-4 bg-accent text-accent-foreground">{t('DM')}</Badge>
                                     ) : (
@@ -226,18 +316,6 @@ export default function CampaignsDashboard() {
                                     </div>
 
                                     <CardFooter className="p-0 pt-6 mt-auto flex justify-between gap-2">
-                                        {campaign.creatorUsername === user.username && (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button variant="outline" size="icon" onClick={() => handleCopyCampaign(campaign.id)}>
-                                                        <Copy className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{t('Copy Campaign')}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        )}
                                         <Button asChild className="w-full">
                                             <Link href={`/campaigns/${campaign.id}`}>
                                                 {t('Open Campaign')}

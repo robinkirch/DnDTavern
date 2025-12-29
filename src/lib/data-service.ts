@@ -61,6 +61,14 @@ export async function copyCampaign(campaignId: string): Promise<Campaign> {
     }
 }
 
+export async function deleteCampaign(id: string): Promise<void> {
+    try {
+        await api.delete(`/campaigns/${id}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error(`Failed to delete campaign with id "${id}"`);
+    }
+}
+
 export const updateCampaignTracking = async (campaignId: string, tracking: any) => {
     try {
         const response = await api.patch(`/campaigns/${campaignId}/tracking`, { tracking });

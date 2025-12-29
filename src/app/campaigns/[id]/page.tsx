@@ -134,7 +134,7 @@ export default function CampaignPage() {
         setCampaign(updatedCampaign); 
         return;
     };
-
+ console.log(user);
   return (
     <>
       <EditCampaignDialog
