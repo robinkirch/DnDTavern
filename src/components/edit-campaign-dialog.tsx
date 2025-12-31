@@ -55,6 +55,11 @@ const UserInventoryDetailsSchema = z.object({
     maxSize: z.coerce.number().int().min(0).optional().nullable(),
 }).optional();
 
+const additionalInventorySchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    size: z.coerce.number().min(1, 'Size must be at least 1'),
+});
+
 const formSchema = z.object({
     name: z.string().min(1, 'Campaign name is required.'),
     description: z.string().optional(),
@@ -66,6 +71,7 @@ const formSchema = z.object({
     // Inventar-Einstellungen
     inventoryType: z.enum(['free', 'limited']),
     defaultInventorySize: z.coerce.number().min(0).optional(),
+    additionalInventories: z.array(additionalInventorySchema).default([]),
     // Kalender-Einstellungen
     daysPerMonth: z.coerce.number().min(1),
     monthsPerYear: z.coerce.number().min(1),
@@ -198,14 +204,20 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
             visibility: { showDate: true, showTimeOfDay: true, showWeather: true, showRegion: true }
         }
     });
+
     
     const { watch, setValue, control } = form;
     const inventoryType = watch('inventoryType');
     const grimoireId = watch('grimoireId');
     const { fields: regionFields, append: appendRegion, remove: removeRegion } = useFieldArray({ control, name: 'weatherRegions' });
     const { fields: predefinedConditionFields, append: appendPredefinedCondition, remove: removePredefinedCondition } = useFieldArray({ control, name: 'predefinedConditions' });
-
+    
     const predefinedConditions = watch('predefinedConditions');
+    
+    const { fields: additionalInvFields, append: appendAdditionalInv, remove: removeAdditionalInv } = useFieldArray({ 
+        control, 
+        name: 'additionalInventories' 
+    });
 
     const visibilityKeys = [
       'Show Date',
@@ -250,6 +262,7 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                 // Inventar - Sicherer Zugriff auf leere Objekte
                 inventoryType: campaign.inventorySettings?.type || 'free',
                 defaultInventorySize: campaign.inventorySettings?.defaultSize || 0,
+                additionalInventories: campaign.inventorySettings?.additionalInventories || [],
 
                 // Kalender
                 daysPerMonth: campaign.calendarSettings?.daysPerMonth || 30,
@@ -346,8 +359,9 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
           
           // ... Rest der Konfigurationen
           inventorySettings: {
-              type: values.inventoryType,
-              defaultSize: values.inventoryType === 'limited' ? values.defaultInventorySize : undefined,
+            type: values.inventoryType,
+            defaultSize: values.inventoryType === 'limited' ? values.defaultInventorySize : undefined,
+            additionalInventories: values.additionalInventories,
           },
           calendarSettings: {
               daysPerMonth: values.daysPerMonth,
@@ -527,43 +541,102 @@ export function EditCampaignDialog({ isOpen, onOpenChange, onSave, campaign }: E
                             {/* === Inventory Settings === */}
                             <AccordionItem value="inventory">
                                 <AccordionTrigger><Settings className="h-5 w-5 mr-2" />{t("Inventory Settings")}</AccordionTrigger>
-                                <AccordionContent className="space-y-4">
-                                    <FormField
-                                        control={control}
-                                        name="inventoryType"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{t("Inventory Type")}</FormLabel>
-                                                <FormControl>
-                                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                                                        <FormItem className="flex items-center space-x-2 space-y-0">
-                                                            <FormControl><RadioGroupItem value="free" /></FormControl>
-                                                            <FormLabel className="font-normal">{t("Free (Unlimited Slots)")}</FormLabel>
-                                                        </FormItem>
-                                                        <FormItem className="flex items-center space-x-2 space-y-0">
-                                                            <FormControl><RadioGroupItem value="limited" /></FormControl>
-                                                            <FormLabel className="font-normal">{t("Limited (Fixed Slots)")}</FormLabel>
-                                                        </FormItem>
-                                                    </RadioGroup>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    {inventoryType === 'limited' && (
+                                <AccordionContent className="space-y-6">
+                                    {/* Haupt-Einstellungen */}
+                                    <div className="space-y-4 pb-4 border-b">
                                         <FormField
                                             control={control}
-                                            name="defaultInventorySize"
+                                            name="inventoryType"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{t("Default Inventory Slots")}</FormLabel>
-                                                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl>
-                                                    <FormDescription>{t("The default number of slots for new players.")}</FormDescription>
-                                                    <FormMessage />
+                                                    <FormLabel>{t("Inventory Type")}</FormLabel>
+                                                    <FormControl>
+                                                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl><RadioGroupItem value="free" /></FormControl>
+                                                                <FormLabel className="font-normal">{t("Free (Unlimited Slots)")}</FormLabel>
+                                                            </FormItem>
+                                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                                <FormControl><RadioGroupItem value="limited" /></FormControl>
+                                                                <FormLabel className="font-normal">{t("Limited (Fixed Slots)")}</FormLabel>
+                                                            </FormItem>
+                                                        </RadioGroup>
+                                                    </FormControl>
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
+
+                                        {inventoryType === 'limited' && (
+                                            <FormField
+                                                control={control}
+                                                name="defaultInventorySize"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{t("Default Player Inventory Slots")}</FormLabel>
+                                                        <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Zusätzliche Inventare (Party-Inventar etc.) */}
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <Label>{t("Additional Inventories (e.g. Party Stash)")}</Label>
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => appendAdditionalInv({ name: '', size: 10 })}
+                                            >
+                                                <PlusCircle className="h-4 w-4 mr-2" />
+                                                {t("Add Inventory")}
+                                            </Button>
+                                        </div>
+
+                                        {additionalInvFields.map((field, index) => (
+                                            <div key={field.id} className="flex gap-4 items-end p-3 border rounded-lg bg-muted/30">
+                                                <FormField
+                                                    control={control}
+                                                    name={`additionalInventories.${index}.name`}
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex-grow">
+                                                            <FormLabel className="text-xs">{t("Inventory Name")}</FormLabel>
+                                                            <FormControl><Input placeholder={t("e.g. Party Chest")} {...field} /></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={control}
+                                                    name={`additionalInventories.${index}.size`}
+                                                    render={({ field }) => (
+                                                        <FormItem className="w-24">
+                                                            <FormLabel className="text-xs">{t("Slots")}</FormLabel>
+                                                            <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}/></FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="text-destructive" 
+                                                    onClick={() => removeAdditionalInv(index)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        {additionalInvFields.length === 0 && (
+                                            <p className="text-sm text-muted-foreground text-center py-2 italic">
+                                                {t("No shared inventories defined.")}
+                                            </p>
+                                        )}
+                                    </div>
                                 </AccordionContent>
                             </AccordionItem>
 

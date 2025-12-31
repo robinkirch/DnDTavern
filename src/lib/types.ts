@@ -44,13 +44,17 @@ export interface Note {
 }
 
 export interface InventoryItem {
-    id: string; // Unique ID for the inventory item instance
-    recipeId: string | null; // Link to the recipe if it's from a grimoire
+    id: string;
+    recipeId: string | null;
     name: string;
     description: string | null;
     quantity: number;
     value: string | null;
-    isCustom: boolean; // True if it's a user-defined item
+    isCustom: boolean;
+    inventoryName: string | null;
+    slotNumber: number | null;
+    isLocked: boolean;
+    isTemporary: boolean;
 }
 
 export type PermissionLevel = 'full' | 'partial' | 'none';
@@ -95,6 +99,10 @@ export interface Campaign {
   inventorySettings: {
     type: 'free' | 'limited';
     defaultSize?: number;
+    additionalInventories: {
+      name: string;
+      size: number;
+    }[];
   };
    userPermissions: {
     [username: string]: UserPermissions;
@@ -201,13 +209,16 @@ export interface Recipe {
   id: string;
   name: string;
   description: string;
-  secretDescription: string | null; // For the DM
+  secretDescription: string | null;
   categoryIds: string[];
   rarityId: string;
   components: RecipeComponent[];
   image?: string | null;
-  value: string | null; // Optional value (e.g., gold pieces)
-  aliases: string | null; // optional searchvalues
+  value: string | null;
+  aliases: string | null;
+  isFood: boolean;
+  isBackpack: boolean;
+  metadata: Record<string, any> | null;
 }
 
 export interface UserCampaignInventory {

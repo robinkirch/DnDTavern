@@ -394,7 +394,17 @@
     "Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.": "Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.",
     "Campaign deleted": "Campaign deleted",
     "The campaign was successfully deleted.": "The campaign was successfully deleted.",
-    "Failed to delete the campaign.": "Failed to delete the campaign."
+    "Failed to delete the campaign.": "Failed to delete the campaign.",
+    "Is it Food ?": "s it Food ?",
+    "Is it a Backpack ?": "Is it a Backpack ?",
+    "Metadata (JSON)": "Metadata (JSON)",
+    "Default Player Inventory Slots": "Default Player Inventory Slots",
+    "Additional Inventories (e.g. Party Stash)": "Additional Inventories (e.g. Party Stash)",
+    "Add Inventory": "Add Inventory",
+    "Inventory Name": "Inventory Name",
+    "e.g. Party Chest": "e.g. Party Chest",
+    "Slots": "Slots",
+    "No shared inventories defined.": "No shared inventories defined."
 }
 
     

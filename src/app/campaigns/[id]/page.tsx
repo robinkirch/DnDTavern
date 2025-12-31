@@ -133,6 +133,9 @@ export default function CampaignPage() {
 		return;
 	};
 
+    console.log(campaign);
+    console.log(grimoire?.id.length);
+
 	return (
 		<>
 			<EditCampaignDialog
@@ -292,9 +295,14 @@ export default function CampaignPage() {
 								)}
 							</TabsContent>
 
-							{user.role === 'player' && (
+							{user.role === 'player' && grimoire != null && (
 								<TabsContent value="inventories" className="mt-6">
-									<PlayerDashboard />
+									<PlayerDashboard 
+                                        grimoire={grimoire} 
+                                        player={user} 
+                                        userInventory={null} //campaign.
+                                        inventorySlots={campaign.inventorySettings} 
+                                        otherInventories={campaign.inventorySettings.additionalInventories} />
 								</TabsContent>
 							)}
 						</Tabs>

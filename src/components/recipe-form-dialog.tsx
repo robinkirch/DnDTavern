@@ -63,6 +63,9 @@ const formSchema = z.object({
   image: z.string().nullable(),
   value: z.string().nullable(),
   aliases: z.string().nullable(),
+  isFood: z.boolean().default(false),
+  isBackpack: z.boolean().default(false),
+  metadata: z.string().nullable().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -97,6 +100,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
           secretDescription: recipe.secretDescription || '',
           image: recipe.image || null,
           value: recipe.value || null,
+          isFood: recipe.isFood ?? false,
+          isBackpack: recipe.isBackpack ?? false,
+          metadata: recipe.metadata ? JSON.stringify(recipe.metadata, null, 2) : '',
         });
         setImagePreview(recipe.image || null);
       } else {
@@ -109,6 +115,9 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
           components: [],
           image: null,
           value: null,
+          isFood: false,
+          isBackpack: false,
+          metadata: '',
         });
         setImagePreview(null);
       }
@@ -130,6 +139,14 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
   };
 
   function onSubmit(values: FormData) {
+    let parsedMetadata = null;
+    try {
+      parsedMetadata = values.metadata ? JSON.parse(values.metadata) : null;
+    } catch (e) {
+      form.setError('metadata', { message: 'Invalid JSON format' });
+      return;
+    }
+
     const newRecipe: Recipe = {
       ...values,
       secretDescription: values.secretDescription || null,
@@ -137,6 +154,7 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
       image: values.image || null,
       value: values.value || null,
       components: values.components || [],
+      metadata: parsedMetadata,
     };
     onSave(newRecipe);
     onOpenChange(false);
@@ -313,6 +331,52 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                   )}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-muted/20">
+                <FormField
+                  control={form.control}
+                  name="isFood"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>{t('Is it Food ?')}</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="isBackpack"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>{t('Is it a Backpack ?')}</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="metadata"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Metadata (JSON)')}</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder={'e.g. { "slots": 10, "weight": 2 }'} 
+                        className="font-mono text-xs"
+                        {...field} 
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
                 <FormField
                   control={form.control}
