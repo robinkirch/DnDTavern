@@ -27,83 +27,93 @@ import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-
-interface Inventory {
-  id: string;
-  name: string;
-  capacity: number;
-  items: any[];
-}
-
-interface InventoryProps {
-  name: string;
-  capacity: number;
-  items: any[];
-}
+import { addItemToInventory, getUserInventory } from '@/lib/data-service';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
+  campaignId: string;
   player: User;
-  userInventory: Inventory | null;
+  userInventory?: InventoryItem[];
   inventorySlots: any;
   otherInventories: any | null;
 }
 
 
-export function PlayerDashboard ({ grimoire, player, userInventory, inventorySlots, otherInventories }: PlayerDashboardProps) {
-  const [activeBackpack, setActiveBackpack] = useState(userInventory);
+export function PlayerDashboard ({ grimoire, campaignId, player, userInventory, inventorySlots, otherInventories }: PlayerDashboardProps) {
+  const [activeBackpack, setActiveBackpack] = useState("");
   const { user } = useAuth();
   const { t } = useI18n();
   const { toast } = useToast();
   const [isAddOpen, setAddOpen] = useState(false);
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
+  const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>(userInventory || []);
+  const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
 
   console.log(player);
-  console.log(userInventory);
   console.log(grimoire.recipes);
 
   useEffect(() => {
-    //missing calculating equiped backpack space
-      setinventoryCapacity(inventorySlots.type == "free" ? 9999 : inventorySlots.type == "limited" ? inventorySlots.defaultSize : 0);
-    }, [inventorySlots, user, player]);
+    const loadData = async () => {
+        try {
+            const data = await getUserInventory(grimoire.id, campaignId);
+            setPlayerInventory(data);
+        } catch (error) {
+            console.error("Fehler beim Laden des Inventars", error);
+        }
+    };
 
-  // Beispiel-Daten für Rucksäcke zum Auswählen
-  const backpackTemplates = [
-    { name: "Kein Beutel", capacity: 0, image: "/api/placeholder/40/40" },
-    { name: "Kleiner Beutel", capacity: 10, image: "/api/placeholder/40/40" },
-    { name: "Abenteurer Rucksack", capacity: 20, image: "/api/placeholder/40/40" },
-    { name: "Magischer Köcher", capacity: 5, image: "/api/placeholder/40/40" },
-  ];
+    loadData();
+
+    //missing calculating equiped backpack space
+    setinventoryCapacity(inventorySlots.type == "free" ? 9999 : inventorySlots.type == "limited" ? inventorySlots.defaultSize : 0);
+  }, [inventorySlots, user, player]);
+
+  useEffect(() => {
+    if(playerInventory.length != null){
+      setPlayerBackpack(playerInventory.filter(items => items.isBackpack));
+    }
+  }, [playerInventory, user, player]);
 
   const handleAddItem = async (newItem: InventoryItem) => {
-      // const updatedInventory = [...userInventory, newItem];
-      // const updatedCampaign = {
-      //     ...campaign,
-      //     userInventories: {
-      //         ...campaign.userInventories,
-      //         [user.username]: {
-      //             ...campaign.userInventories[user.username],
-      //             items: updatedInventory
-      //         }
-      //     }
-      // };
+    try {
+        await addItemToInventory(grimoire.id, campaignId, newItem);
+        setPlayerInventory((prev) => [...prev, newItem]);
+        toast({ 
+            title: t('Item Added'), 
+            description: t('The item has been added to your inventory.') 
+        });
+        
+        setAddOpen(false);
+    } catch (error) {
+        console.error("Fehler beim Speichern:", error);
+        toast({ 
+            title: t('Error'), 
+            description: t('Failed to add item.'),
+            variant: "destructive" 
+        });
+    }
+};
 
-      // const savedCampaign = await updateCampaign(updatedCampaign);
-      // setCampaign(savedCampaign);
-      toast({ title: t('Item Added'), description: t('The item has been added to your inventory.') });
-      setAddOpen(false);
-  };
+  const [selectedSlot, setSelectedSlot] = useState<{ 
+    inventoryName: string | null; 
+    slotNumber: number 
+  } | null>(null);
 
-
-  const usedSlots = activeBackpack?.items.length || 0;
-  const freeSlots = activeBackpack ? (activeBackpack.capacity - usedSlots) : 0;
+  const openAddDialog = (inventoryName: string | null, slotNumber: number) => {
+    setSelectedSlot({ inventoryName, slotNumber });
+    setAddOpen(true);
+};
 
   return (
     <>
     <AddInventoryItemDialog
         isOpen={isAddOpen}
         onOpenChange={setAddOpen}
-        onSave={handleAddItem}
+        onSave={(itemData) => handleAddItem({
+          ...itemData,
+          inventoryName: selectedSlot?.inventoryName || null,
+          slotNumber: selectedSlot?.slotNumber ?? 0
+        })}
         grimoire={grimoire}
     />
 
@@ -136,29 +146,33 @@ export function PlayerDashboard ({ grimoire, player, userInventory, inventorySlo
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-slate-800 border-slate-700 text-slate-100">
-                    {backpackTemplates.map((bp) => (
-                      <DropdownMenuItem 
-                        key={bp.name}
-                        className="flex justify-between gap-8 focus:bg-slate-700"
-                        onClick={() => console.log("Changed to", bp.name)}
-                      >
-                        <span>{bp.name}</span>
-                        <span className="text-xs text-slate-400">{bp.capacity} Plätze</span>
-                      </DropdownMenuItem>
-                    ))}
+                    {playerBackpack.map((bp) => {
+                      const meta = typeof bp.metadata === "string" ? JSON.parse(bp.metadata) : bp.metadata;
+                      const slots = meta?.slots || 0; 
+
+                      return (
+                        <DropdownMenuItem 
+                          key={bp.name}
+                          className="flex justify-between gap-8 focus:bg-slate-700"
+                          onClick={() => console.log("Changed to", bp.name)}>
+                          <span>{bp.name}</span>
+                          <span className="text-xs text-slate-400">{slots} Plätze</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
               <div>
-                <h3 className="font-bold text-lg">{activeBackpack?.name}</h3>
-                <p className="text-sm text-slate-400">Typ: Ausrüstungsgurt</p>
+                <h3 className="font-bold text-lg">{"Kein Beutel"}</h3>
+                <p className="text-sm text-slate-400">Extraplatz: 0</p>
               </div>
             </div>
 
             {/* Statistik Anzeige */}
             <div className="text-right">
               <div className="text-2xl font-mono font-bold text-amber-500">
-                {usedSlots} / {getInventoryCapacity}
+                {playerInventory.length} / {getInventoryCapacity}
               </div>
               <p className="text-xs uppercase tracking-wider text-slate-500">Slots belegt</p>
               <div className="text-2xl font-mono font-bold text-amber-500">
@@ -170,10 +184,11 @@ export function PlayerDashboard ({ grimoire, player, userInventory, inventorySlo
 
           {/* Inventar Gitter */}
           <InventoryGrid 
-              capacity={getInventoryCapacity} 
-              usedSlots={0} // TODO: Hier die Items filtern, die in diesem Inventar liegen
-              onAddClick={() => setAddOpen(true)} 
-            />
+            capacity={getInventoryCapacity} 
+            items={playerInventory.filter(i => i.inventoryName === null)} 
+            onAddClick={(slot) => openAddDialog(null, slot)}
+            onItemClick={(item) => console.log("Edit Item:", item)} 
+          />
 
           <hr className="my-8" />
 
@@ -211,8 +226,10 @@ export function PlayerDashboard ({ grimoire, player, userInventory, inventorySlo
             <TabsContent key={inv.name} value={inv.name}>
               <InventoryGrid 
                 capacity={inv.size} 
-                usedSlots={0}
-                onAddClick={() => setAddOpen(true)} 
+                items={[]}
+                //items={playerInventory.filter(i => i.inventoryName === inv.name)} 
+                onAddClick={(slot) => openAddDialog(inv.name, slot)} 
+                onItemClick={(item) => console.log("Edit Item:", item)} 
               />
             </TabsContent>
           ))}

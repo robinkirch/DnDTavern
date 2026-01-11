@@ -226,7 +226,6 @@ export async function deleteMonster(grimoireId: string, monsterId: string): Prom
 
 export async function saveNote(grimoireId: string, campaignId: string, note: Note): Promise<Note> {
     try {
-        console.log("called save");
         const response = await api.post(`/notes/${grimoireId}/${campaignId}`, note);
         return response.data;
     } catch (error) {
@@ -252,17 +251,23 @@ export async function fetchDamageTypes(grimoireId: string): Promise<DamageType[]
     }
 }
 
-// --- INVENTORY SERVICE --- Still Mocked
+// --- INVENTORY SERVICE
 
-export async function saveInventory(campaignId: string, username: string, items: InventoryItem[]): Promise<void> {
-    // console.log(`Saving inventory for ${username} in campaign ${campaignId}...`);
-    // await new Promise(resolve => setTimeout(resolve, 500));
-    // const campaign = FAKE_DB_CAMPAIGNS.find(c => c.id === campaignId);
-    // if (!campaign) throw new Error("Campaign not found");
-    
-    // if (!campaign.userInventories[username]) {
-    //     campaign.userInventories[username] = { items: [] };
-    // }
+export async function addItemToInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
+    try {
+        const response = await api.post(`/inventories/${grimoireId}/${campaignId}`, item);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to save item.');
+    }
+}
 
-    // campaign.userInventories[username].items = items;
+export async function getUserInventory(grimoireId: string, campaignId: string, inventoryName: string = "default"): Promise<InventoryItem[]> {
+    try {
+        const response = await api.get(`/inventories/${grimoireId}/${campaignId}/${inventoryName}`);
+        console.log(response.data);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to fetch inventory.');
+    }
 }

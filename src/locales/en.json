@@ -404,7 +404,8 @@
     "Inventory Name": "Inventory Name",
     "e.g. Party Chest": "e.g. Party Chest",
     "Slots": "Slots",
-    "No shared inventories defined.": "No shared inventories defined."
+    "No shared inventories defined.": "No shared inventories defined.",
+    "Failed to add item.": "Failed to add item."
 }
 
     

@@ -55,6 +55,10 @@ export interface InventoryItem {
     slotNumber: number | null;
     isLocked: boolean;
     isTemporary: boolean;
+    image: string | null;
+    isBackpack: boolean;
+    isFood: boolean;
+    metadata: string | null;
 }
 
 export type PermissionLevel = 'full' | 'partial' | 'none';
