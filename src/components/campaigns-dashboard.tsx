@@ -216,9 +216,21 @@ export default function CampaignsDashboard() {
                     {campaigns.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {campaigns.map((campaign) => {
-                            const day = campaign.tracking?.currentDate?.day ?? 1;
-                            const month = campaign.tracking?.currentDate?.month ?? 1;
-                            const year = campaign.tracking?.currentDate?.year ?? 1000;
+                            //kommt ungünstig vom backend
+                            const rawData: any = campaign.tracking; 
+                            let trackingData;
+
+                            if (rawData && typeof rawData.tracking === 'string') {
+                                trackingData = JSON.parse(rawData.tracking);
+                            } else if (typeof rawData === 'string') {
+                                trackingData = JSON.parse(rawData);
+                            } else {
+                                trackingData = rawData;
+                            }
+
+                            const day = trackingData?.currentDate?.day ?? 1;
+                            const month = trackingData?.currentDate?.month ?? 1;
+                            const year = trackingData?.currentDate?.year ?? 1000;
 
                             const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year}`;
                           return (

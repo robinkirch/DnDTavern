@@ -63,8 +63,14 @@ const formSchema = z.object({
   image: z.string().nullable(),
   value: z.string().nullable(),
   aliases: z.string().nullable(),
-  isFood: z.boolean().default(false),
-  isBackpack: z.boolean().default(false),
+  isFood: z.preprocess(
+    (val) => (typeof val === 'number' ? val === 1 : !!val), 
+    z.boolean().default(false)
+  ),
+  isBackpack: z.preprocess(
+    (val) => (typeof val === 'number' ? val === 1 : !!val), 
+    z.boolean().default(false)
+  ),
   metadata: z.string().nullable().optional(),
 });
 
@@ -339,9 +345,10 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox checked={!!field.value} onCheckedChange={(checked) => field.onChange(!!checked)} />
                       </FormControl>
                       <FormLabel>{t('Is it Food ?')}</FormLabel>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -351,9 +358,10 @@ export function RecipeFormDialog({ isOpen, onOpenChange, onSave, recipe, grimoir
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox checked={!!field.value} onCheckedChange={(checked) => field.onChange(!!checked)} />
                       </FormControl>
                       <FormLabel>{t('Is it a Backpack ?')}</FormLabel>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
