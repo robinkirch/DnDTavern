@@ -1,4 +1,4 @@
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign, UserDTO } from './types';
 import api from './api';
 import { CampaignUpdateData } from '@/components/edit-campaign-dialog';
 
@@ -269,5 +269,17 @@ export async function getUserInventory(grimoireId: string, campaignId: string, i
         return response.data;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to fetch inventory.');
+    }
+}
+
+
+// --- USER SERVICE
+
+export async function updateUser(userData: UserDTO): Promise<User> {
+    try {
+        const response = await api.put(`/users/${userData.oldUsername}`, userData);
+        return response.data;
+    } catch (error) {
+         throw (error as any).response?.data || new Error('Failed to update user.');
     }
 }

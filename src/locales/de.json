@@ -405,7 +405,17 @@
     "e.g. Party Chest": "bspw. Party Truhe",
     "Slots": "Plätze",
     "No shared inventories defined.": "Es wurden keine geteilten Inventare gespeichert.",
-    "Failed to add item.": "Hinzufügen eines Items ist fehlgeschlagen."
+    "Failed to add item.": "Hinzufügen eines Items ist fehlgeschlagen.",
+    "Edit Profile": "Edit Profile",
+    "New Password (Optional)": "New Password (Optional)",
+    "Verify your identity to save changes.": "Verify your identity to save changes.",
+    "Change Avatar": "Avatar ändern",
+    "Change Password": "Passwort ändern",
+    "Confirm New Password": "Neues Passwort bestätigen",
+    "Current Password": "Aktuelles Passwort",
+    "Required to save any changes": "Erforderlich, um Änderungen zu speichern",
+    "Updating...": "Aktualisieren...",
+    "Save Settings": "Einstellungen speichern",
+    "Profile updated": "Profil aktualisiert",
+    "Your changes have been saved and you have been re-authenticated.": "Ihre Änderungen wurden gespeichert und Sie wurden erneut authentifiziert."
 }
-
-    

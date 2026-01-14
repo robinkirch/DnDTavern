@@ -1,10 +1,17 @@
 'use client';
-// Based on the C# data model provided
 
 export interface User {
   username: string;
   role: 'player' | 'dm'; 
   avatar?: string | null;
+}
+
+export interface UserDTO {
+  oldUsername: string;
+  newUsername: string;
+  avatar?: string | null;
+  oldPassword: string; // for verification
+  newPassword?: string | null;
 }
 
 // A Grimoire is now just a pointer to a data source.

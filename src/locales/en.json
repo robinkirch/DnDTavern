@@ -405,7 +405,19 @@
     "e.g. Party Chest": "e.g. Party Chest",
     "Slots": "Slots",
     "No shared inventories defined.": "No shared inventories defined.",
-    "Failed to add item.": "Failed to add item."
+    "Failed to add item.": "Failed to add item.",
+    "Edit Profile": "Edit Profile",
+    "New Password (Optional)": "New Password (Optional)",
+    "Verify your identity to save changes.": "Verify your identity to save changes.",
+    "Change Avatar": "Change Avatar",
+    "Change Password": "Change Password",
+    "Confirm New Password": "Confirm New Password",
+    "Current Password": "Current Password",
+    "Required to save any changes": "Required to save any changes",
+    "Updating...": "Updating...",
+    "Save Settings": "Save Settings",
+    "Profile updated": "Profile updated",
+    "Your changes have been saved and you have been re-authenticated.": "Your changes have been saved and you have been re-authenticated."
 }
 
     

@@ -19,6 +19,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { UserProfileDialog } from './userprofile-modal';
+import { useState } from 'react';
+import { UserDTO } from '@/lib/types';
+import { updateUser } from '@/lib/data-service';
+import { toast } from '@/hooks/use-toast';
 
 
 interface HeaderProps {
@@ -26,9 +31,31 @@ interface HeaderProps {
 }
 
 export function Header({ helpText }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, login } = useAuth();
   const router = useRouter();
   const { language, setLanguage, t } = useI18n();
+
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const handleUpdateProfile = async (values: UserDTO) => {
+    try {
+      const updatedUser = await updateUser(values);
+      const loginPassword = values.newPassword && values.newPassword.trim() !== '' ? values.newPassword : values.oldPassword;
+
+      await login(values.newUsername, loginPassword);
+
+      toast({ title: t('Profile updated'), description: t('Your changes have been saved and you have been re-authenticated.') });
+
+    } catch (error: any) {
+      const message = error.message || 'Update failed';
+
+      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('taken')) {
+        throw error; 
+      } 
+      toast({ title: t('Error'), description: t(message), variant: 'destructive'});
+      throw error; 
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -80,9 +107,12 @@ export function Header({ helpText }: HeaderProps) {
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-          {user && (
+         {user && (
             <>
-              <div className="flex items-center gap-3">
+              <div 
+                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
+                onClick={() => setIsProfileOpen(true)}
+              >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.avatar ?? undefined} alt={user.username} />
                   <AvatarFallback>
@@ -93,10 +123,19 @@ export function Header({ helpText }: HeaderProps) {
                   {user.username}
                 </span>
               </div>
+
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="mr-1 h-4 w-4" />
                 <span className="hidden sm:inline">{t('Logout')}</span>
               </Button>
+
+              {/* Der neue Dialog */}
+              <UserProfileDialog 
+                user={user} 
+                isOpen={isProfileOpen} 
+                onOpenChange={setIsProfileOpen} 
+                onSave={handleUpdateProfile}
+              />
             </>
           )}
         </div>
