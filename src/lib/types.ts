@@ -34,6 +34,8 @@ export interface Monster {
     behavior: 'aggressive' | 'neutral' | 'friendly';
     hitPoints: number | null;
     description: string;
+    location: string | undefined;
+    isNPC: boolean;
     resistances: number[];
     immunities: number[];
     vulnerabilities: number[];

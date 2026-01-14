@@ -246,13 +246,13 @@
     "Help": "Help",
     "This is your main dashboard. From here, you can create new campaigns (DMs only), view your existing campaigns, or manage your grimoires (recipe books).": "This is your main dashboard. From here, you can create new campaigns (DMs only), view your existing campaigns, or manage your grimoires (recipe books).",
     "This is the main view for a single campaign. Here you can see all campaign-related information.": "This is the main view for a single campaign. Here you can see all campaign-related information.",
-    "Bestiary": "Bestiary",
-    "Add Creature": "Add Creature",
-    "The bestiary is empty. Add the first creature!": "The bestiary is empty. Add the first creature!",
-    "Edit Creature": "Edit Creature",
-    "Add New Creature": "Add New Creature",
-    "Detail a new creature for the bestiary.": "Detail a new creature for the bestiary.",
-    "Creature Name": "Creature Name",
+    "Bestiary": "Bestiary / NPC",
+    "Add Creature": "Add Creature/NPC",
+    "The bestiary is empty. Add the first creature!": "The bestiary is empty. Add the first creature or NPC!",
+    "Edit Creature": "Edit Creature/NPC",
+    "Add New Creature": "Add new Creature/NPC",
+    "Detail a new creature for the bestiary.": "Detail a new creature or NPC for the bestiary.",
+    "Monster/NPC Name": "Monster/NPC Name",
     "e.g., Grumpy Owlbear": "e.g., Grumpy Owlbear",
     "Hit Points (HP)": "Hit Points (HP)",
     "Behavior": "Behavior",
@@ -417,7 +417,16 @@
     "Updating...": "Updating...",
     "Save Settings": "Save Settings",
     "Profile updated": "Profile updated",
-    "Your changes have been saved and you have been re-authenticated.": "Your changes have been saved and you have been re-authenticated."
+    "Your changes have been saved and you have been re-authenticated.": "Your changes have been saved and you have been re-authenticated.",
+    "NPC": "NPC",
+    "Monster": "Monster",
+    "Location": "Location",
+    "Search by name, description or location...": "Search by name, description or location...",
+    "Filter by type": "Filter by type",
+    "All Entries": "All Entries",
+    "Monsters Only": "Monsters Only",
+    "NPCs Only": "NPCs Only",
+    "No creatures found matching your filters.": "No creatures/NPCs found matching your filters."
 }
 
     

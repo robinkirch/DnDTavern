@@ -36,6 +36,8 @@ import {
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -75,6 +77,8 @@ const formSchema = z.object({
   behavior: z.enum(['aggressive', 'neutral', 'friendly']),
   hitPoints: z.coerce.number().positive().nullable(),
   image: z.string().nullable(),
+  location: z.string().default(''),
+  isNPC: z.boolean().default(false),
   resistances: z.array(z.number()).default([]),
   immunities: z.array(z.number()).default([]),
   vulnerabilities: z.array(z.number()).default([]),
@@ -104,6 +108,8 @@ export function MonsterFormDialog({ isOpen, onOpenChange, onSave, monster, grimo
       behavior: 'neutral',
       hitPoints: null,
       image: null,
+      location: '',
+      isNPC: false,
       resistances: [],
       immunities: [],
       vulnerabilities: [],
@@ -127,6 +133,8 @@ export function MonsterFormDialog({ isOpen, onOpenChange, onSave, monster, grimo
           behavior: monster.behavior as 'aggressive' | 'neutral' | 'friendly',
           hitPoints: monster.hitPoints,
           image: monster.image,
+          location: monster.location || '',
+          isNPC: !!monster.isNPC,
           resistances: monster.resistances || [],
           immunities: monster.immunities || [],
           vulnerabilities: monster.vulnerabilities || [],
@@ -139,6 +147,8 @@ export function MonsterFormDialog({ isOpen, onOpenChange, onSave, monster, grimo
           behavior: 'neutral',
           hitPoints: null,
           image: null,
+          location: '',
+          isNPC: false,
           resistances: [],
           immunities: [],
           vulnerabilities: [],
@@ -218,40 +228,60 @@ export function MonsterFormDialog({ isOpen, onOpenChange, onSave, monster, grimo
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 overflow-y-auto pr-2">
             
             {/* Image Upload Section */}
-            <FormField
-              control={form.control}
-              name="image"
-              render={() => (
-                <FormItem>
-                  <FormLabel>{t('Image')}</FormLabel>
-                  <div className="flex items-center gap-4">
-                    <div className="relative w-32 h-24 border-2 border-dashed rounded-md bg-muted flex items-center justify-center overflow-hidden">
-                      {imagePreview ? (
-                        <Image src={imagePreview} alt="Preview" fill className="object-cover" />
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">-</span>
-                      )}
-                    </div>
-                    
-                    <FormControl>
-                      <div className="flex flex-col gap-2">
-                        <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
-                        <Button  type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                          <Upload className="mr-2 h-4 w-4" />
-                          {t('Upload Image')}
-                        </Button>
+            <div className="flex flex-row justify-between items-start gap-4">
+              <FormField
+                control={form.control}
+                name="image"
+                render={() => (
+                  <FormItem className="flex-1">
+                    <FormLabel>{t('Image')}</FormLabel>
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-32 h-24 border-2 border-dashed rounded-md bg-muted flex items-center justify-center overflow-hidden">
+                        {imagePreview ? (
+                          <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">-</span>
+                        )}
                       </div>
+                      <FormControl>
+                        <div className="flex flex-col gap-2">
+                          <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
+                          <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                            <Upload className="mr-2 h-4 w-4" />
+                            {t('Upload Image')}
+                          </Button>
+                        </div>
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* NPC Switch in der rechten Ecke */}
+              <FormField
+                control={form.control}
+                name="isNPC"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col items-center justify-center space-y-2 border rounded-lg p-3 bg-muted/30 min-w-[120px]">
+                    <Label htmlFor="npc-mode" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {field.value ? t('NPC') : t('Monster')}
+                    </Label>
+                    <FormControl>
+                      <Switch
+                        id="npc-mode"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>{t('Creature Name')}</FormLabel>
+                  <FormLabel>{t('Monster/NPC Name')}</FormLabel>
                   <FormControl><Input {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -263,6 +293,17 @@ export function MonsterFormDialog({ isOpen, onOpenChange, onSave, monster, grimo
                 </FormItem>
               )} />
             </div>
+
+            <FormField control={form.control} name="location" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Location')}</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} 
+            />
 
             <FormField control={form.control} name="behavior" render={({ field }) => (
               <FormItem>
