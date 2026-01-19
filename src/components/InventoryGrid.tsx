@@ -142,7 +142,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
             {campaignPlayers?.map((p: any) => (
               <InventoryDropZone 
                 key={p.id} 
-                id={`target-player-${p.id}`} 
+                id={`target-player-${p.username}`} 
                 label={`Give to ${p.username}`} 
                 icon={User} 
               />
@@ -157,6 +157,8 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
                 item={items.find((it: any) => it.slotNumber === i)} 
                 campaignPlayers={campaignPlayers} 
                 otherInventories={otherInventories} 
+                onSendToPlayer={onSendToPlayer} 
+                onSendToInventory={onSendToInventory}
                 onAddClick={onAddClick}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem} />
@@ -206,7 +208,7 @@ function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, 
               <ContextMenuSubTrigger className="focus:bg-slate-800">An Spieler senden</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {campaignPlayers?.map((p: any) => (
-                  <ContextMenuItem onClick={() => onSendToPlayer(item, p.username)}>{p.username}</ContextMenuItem>
+                  <ContextMenuItem key={p.id} onClick={() => onSendToPlayer(item, p.username)}>{p.username}</ContextMenuItem>
                 ))}
               </ContextMenuSubContent>
             </ContextMenuSub>
@@ -215,7 +217,7 @@ function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, 
               <ContextMenuSubTrigger className="focus:bg-slate-800">In Beutel verschieben</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {otherInventories?.map((p: any) => (
-                  <ContextMenuItem onClick={() => onSendToInventory(item, p.name)}>{p.name}</ContextMenuItem>
+                  <ContextMenuItem key={p.id} onClick={() => onSendToInventory(item, p.name)}>{p.name}</ContextMenuItem>
                 ))}
               </ContextMenuSubContent>
             </ContextMenuSub>
