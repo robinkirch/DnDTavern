@@ -27,20 +27,17 @@ import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, getUserInventory } from '@/lib/data-service';
+import { addItemToInventory, getInventory, updateItemSlot } from '@/lib/data-service';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
-  campaignId: string;
+  campaign: Campaign;
   player: User;
   userInventory?: InventoryItem[];
-  inventorySlots: any;
-  otherInventories: any | null;
 }
 
 
-export function PlayerDashboard ({ grimoire, campaignId, player, userInventory, inventorySlots, otherInventories }: PlayerDashboardProps) {
-  const [activeBackpack, setActiveBackpack] = useState("");
+export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: PlayerDashboardProps) {
   const { user } = useAuth();
   const { t } = useI18n();
   const { toast } = useToast();
@@ -48,51 +45,93 @@ export function PlayerDashboard ({ grimoire, campaignId, player, userInventory, 
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
   const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>(userInventory || []);
   const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
+  const [otherInventories, setAllOtherInventories] = useState(campaign.inventorySettings.additionalInventories);
+  const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != player.username); 
 
-  console.log(player);
-  console.log(grimoire.recipes);
+  // useEffect(() => {
+  //   const loadData = async () => {
+  //       try {
+  //           const data = await getInventory(grimoire.id, campaign.id);
+  //           setPlayerInventory(data);
+  //       } catch (error) {
+  //           console.error("Fehler beim Laden des Spieler Inventars", error);
+  //       }
+
+  //       console.log("data");
+  //       try {
+  //         const loadOtherInventoriesSequentially = async () => {
+  //           const newInventories = [];
+            
+  //           for (const inv of otherInventories) {
+  //             const data = await getInventory(grimoire.id, campaign.id, inv.name);
+  //             console.log(data);
+  //             newInventories.push({ ...inv, items: data });
+  //           }
+            
+  //           setAllOtherInventories(newInventories);
+  //         };
+  //         loadOtherInventoriesSequentially();
+  //       } catch (error) {
+  //           console.error("Fehler beim Laden der weiteren Inventare", error);
+  //       }
+  //   };
+
+  //   loadData();
+
+  //   //missing calculating equiped backpack space
+  //   setinventoryCapacity(campaign.inventorySettings.type == "free" ? 9999 : campaign.inventorySettings.type == "limited" ? campaign.inventorySettings.defaultSize || 0 : 0);
+
+  //    if(playerInventory.length != null){
+  //     setPlayerBackpack(playerInventory.filter(items => items.isBackpack));
+  //   }
+
+  // }, []);
 
   useEffect(() => {
-    const loadData = async () => {
-        try {
-            const data = await getUserInventory(grimoire.id, campaignId);
-            setPlayerInventory(data);
-        } catch (error) {
-            console.error("Fehler beim Laden des Inventars", error);
-        }
-    };
+    fetchInventoryData();
+    
+    // Kapazität setzen
+    setinventoryCapacity(
+      campaign.inventorySettings.type === "free" ? 9999 : 
+      campaign.inventorySettings.type === "limited" ? (campaign.inventorySettings.defaultSize || 0) : 0
+    );
+  }, []);
 
-    loadData();
+  const fetchInventoryData = async () => {
+    console.log("Refreshing inventory data...");
+    try {
+      const data = await getInventory(grimoire.id, campaign.id);
+      setPlayerInventory([...data]); 
+      setPlayerBackpack([...data.filter(item => item.isBackpack)]);
 
-    //missing calculating equiped backpack space
-    setinventoryCapacity(inventorySlots.type == "free" ? 9999 : inventorySlots.type == "limited" ? inventorySlots.defaultSize : 0);
-  }, [inventorySlots, user, player]);
-
-  useEffect(() => {
-    if(playerInventory.length != null){
-      setPlayerBackpack(playerInventory.filter(items => items.isBackpack));
+      const newOtherInventories = [];
+      for (const inv of campaign.inventorySettings.additionalInventories) { // Nutze Ursprungsdaten als Basis
+        const invData = await getInventory(grimoire.id, campaign.id, inv.name);
+        newOtherInventories.push({ ...inv, items: invData });
+      }
+      setAllOtherInventories(newOtherInventories);
+    } catch (error) {
+      console.error("Fehler beim Refreshen", error);
     }
-  }, [playerInventory, user, player]);
+  };
 
   const handleAddItem = async (newItem: InventoryItem) => {
     try {
-        await addItemToInventory(grimoire.id, campaignId, newItem);
-        setPlayerInventory((prev) => [...prev, newItem]);
-        toast({ 
-            title: t('Item Added'), 
-            description: t('The item has been added to your inventory.') 
-        });
-        
-        setAddOpen(false);
+      // 1. API Call abwarten
+      await addItemToInventory(grimoire.id, campaign.id, newItem);
+      
+      // 2. Dialog schließen
+      setAddOpen(false); 
+      
+      toast({ title: t('Item Added') });
+
+      // 3. Erst jetzt die Daten neu laden
+      await fetchInventoryData(); 
     } catch (error) {
-        console.error("Fehler beim Speichern:", error);
-        toast({ 
-            title: t('Error'), 
-            description: t('Failed to add item.'),
-            variant: "destructive" 
-        });
+      console.error("Fehler beim Hinzufügen:", error);
+      toast({ title: t('Error'), variant: "destructive" });
     }
-};
+  };
 
   const [selectedSlot, setSelectedSlot] = useState<{ 
     inventoryName: string | null; 
@@ -102,7 +141,31 @@ export function PlayerDashboard ({ grimoire, campaignId, player, userInventory, 
   const openAddDialog = (inventoryName: string | null, slotNumber: number) => {
     setSelectedSlot({ inventoryName, slotNumber });
     setAddOpen(true);
+  };
+
+  const handleMoveItem = async (item: InventoryItem, newSlot: number) => {
+  try {
+    await updateItemSlot(grimoire.id, campaign.id, item.id, newSlot, "default");
+    
+    toast({ title: "Item Moved" }); //TODO
+  } catch (error) {
+    toast({ title: "Fehler beim Verschieben", variant: "destructive" });
+  } finally {
+    await fetchInventoryData();
+  }
 };
+
+  //TODO
+  const handleSendToPlayer = async (item: InventoryItem, targetPlayerName: string) => {
+     //gleicher endpunkt wie handlemoveitem. item sollte in ui nicht mehr angezeigt werden
+    toast({ title: `${item.name} an Spieler gesendet!` });
+  };
+
+  //TODO
+  const handleMoveToOtherInv = async (item: InventoryItem, targetInvName: string) => {
+    //gleicher endpunkt wie handlemoveitem. item sollte in ui nicht mehr angezeigt werden
+    toast({ title: `${item.name} an Spieler gesendet!` });
+  };
 
   return (
     <>
@@ -182,12 +245,17 @@ export function PlayerDashboard ({ grimoire, campaignId, player, userInventory, 
             </div>
           </div>
 
-          {/* Inventar Gitter */}
+          {/* Inventar Gitter im PlayerDashboard */}
           <InventoryGrid 
             capacity={getInventoryCapacity} 
-            items={playerInventory.filter(i => i.inventoryName === null)} 
-            onAddClick={(slot) => openAddDialog(null, slot)}
-            onItemClick={(item) => console.log("Edit Item:", item)} 
+            items={playerInventory.filter(i => i.inventoryName === null || i.inventoryName == "default")} 
+            onAddClick={(slot: number) => openAddDialog(null, slot)}
+            onMoveItem={handleMoveItem} 
+            onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
+            onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
+            otherInventories={otherInventories} 
+            campaignPlayers={otherPlayers} 
+            grimoire={grimoire}
           />
 
           <hr className="my-8" />
@@ -226,10 +294,14 @@ export function PlayerDashboard ({ grimoire, campaignId, player, userInventory, 
             <TabsContent key={inv.name} value={inv.name}>
               <InventoryGrid 
                 capacity={inv.size} 
-                items={[]}
-                //items={playerInventory.filter(i => i.inventoryName === inv.name)} 
-                onAddClick={(slot) => openAddDialog(inv.name, slot)} 
-                onItemClick={(item) => console.log("Edit Item:", item)} 
+                items={inv.items ?? []} 
+                onAddClick={(slot: number) => openAddDialog(inv.name, slot)} 
+                onItemClick={(item: InventoryItem) => console.log("Edit Item:", item)} 
+                onMoveItem={handleMoveItem} 
+                onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
+                onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
+                otherInventories={otherInventories} 
+                campaignPlayers={otherPlayers} 
               />
             </TabsContent>
           ))}

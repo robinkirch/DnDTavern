@@ -256,21 +256,33 @@ export async function fetchDamageTypes(grimoireId: string): Promise<DamageType[]
 export async function addItemToInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
     try {
         const response = await api.post(`/inventories/${grimoireId}/${campaignId}`, item);
+        console.log("add")
+        console.log(response)
         return response.data;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to save item.');
     }
 }
 
-export async function getUserInventory(grimoireId: string, campaignId: string, inventoryName: string = "default"): Promise<InventoryItem[]> {
+export async function getInventory(grimoireId: string, campaignId: string, inventoryName: string = "default"): Promise<InventoryItem[]> {
     try {
         const response = await api.get(`/inventories/${grimoireId}/${campaignId}/${inventoryName}`);
-        console.log(response.data);
         return response.data;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to fetch inventory.');
     }
 }
+
+export const updateItemSlot = async (grimoireId: string, campaignId: string, itemId: string, newSlot: number, inventoryName: string = "none", playerName: string = "nobody") => {
+    try {
+        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${inventoryName}/${playerName}/move`, [itemId, newSlot]);
+        console.log("update")
+        console.log(response)
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to move item.');
+    }
+};
 
 
 // --- USER SERVICE

@@ -135,7 +135,6 @@ export default function CampaignPage() {
 
 	console.log("campaign");
     console.log(campaign);
-    console.log(grimoire?.id.length);
 
 	return (
 		<>
@@ -300,10 +299,8 @@ export default function CampaignPage() {
 								<TabsContent value="inventories" className="mt-6">
 									<PlayerDashboard 
                                         grimoire={grimoire} 
-										campaignId={campaign.id}
-                                        player={user}
-                                        inventorySlots={campaign.inventorySettings} 
-                                        otherInventories={campaign.inventorySettings.additionalInventories} />
+										campaign={campaign}
+                                        player={user}/>
 								</TabsContent>
 							)}
 						</Tabs>

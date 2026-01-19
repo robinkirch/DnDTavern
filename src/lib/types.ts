@@ -66,6 +66,7 @@ export interface InventoryItem {
     isTemporary: boolean;
     image: string | null;
     isBackpack: boolean;
+    isCurrentBackpack: boolean;
     isFood: boolean;
     metadata: string | null;
 }
@@ -115,6 +116,7 @@ export interface Campaign {
     additionalInventories: {
       name: string;
       size: number;
+      items?: InventoryItem[];
     }[];
   };
    userPermissions: {

@@ -60,7 +60,8 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
     defaultValues: { name: '', description: '', quantity: 1, value: '' },
   });
 
-  const handleGrimoireSubmit = (values: z.infer<typeof grimoireItemSchema>) => {
+  // Grimoire Submit
+  const handleGrimoireSubmit = async (values: z.infer<typeof grimoireItemSchema>) => {
     if (!grimoire) return;
     const selectedRecipe = grimoire.recipes.find(r => r.id === values.recipeId);
     if (!selectedRecipe) return;
@@ -73,12 +74,23 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
       quantity: values.quantity,
       value: selectedRecipe.value,
       isCustom: false,
+          
+      image: selectedRecipe.image || null,
+      isBackpack: selectedRecipe.isBackpack,
+      isFood: selectedRecipe.isFood,
+       //inventoryName:
+      metadata: selectedRecipe.metadata || null,
+      isCurrentBackpack: false,
+      isTemporary: false,
+      isLocked: false,
     };
-    onSave(newItem);
+
+    await onSave(newItem); // Warten bis Dashboard fertig ist
     grimoireForm.reset();
   };
 
-  const handleCustomSubmit = (values: z.infer<typeof customItemSchema>) => {
+  // Custom Submit
+  const handleCustomSubmit = async (values: z.infer<typeof customItemSchema>) => {
     const newItem: InventoryItem = {
       id: `inv-${Date.now()}`,
       recipeId: null,
@@ -87,8 +99,18 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
       quantity: values.quantity,
       value: values.value || null,
       isCustom: true,
+
+      image: null,
+      isBackpack: false,
+      //isFood:
+      //inventoryName:
+      metadata: null,
+      isCurrentBackpack: false,
+      isTemporary: false,
+      isLocked: false,
     };
-    onSave(newItem);
+
+    await onSave(newItem); // Warten bis Dashboard fertig ist
     customForm.reset();
   };
 

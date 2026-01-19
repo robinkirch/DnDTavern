@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { Recipe, Grimoire, Category, PermissionLevel } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { useAuth } from '@/context/auth-context';
-import { RecipeCard } from './recipe-card';
+import { CardSelection } from './recipe-card';
 import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { Button } from './ui/button';
@@ -205,7 +205,7 @@ export function RecipeGrid({ canEdit, grimoire, grimoireId, userPermissions = {}
         {filteredRecipes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} grimoire={grim} canEdit={canEdit} permissionLevel={getPermissionForRecipe(recipe)} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
+              <CardSelection key={recipe.id} recipe={recipe} grimoire={grim} canEdit={canEdit} permissionLevel={getPermissionForRecipe(recipe)} onEdit={handleEditRecipe} onDelete={handleDeleteRecipe} />
             ))}
           </div>
         ) : (
