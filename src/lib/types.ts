@@ -54,10 +54,11 @@ export interface Note {
 
 export interface InventoryItem {
     id: string;
-    recipeId: string | null;
+    originalRecipeId: string;
+    recipeIds: string[];
     name: string;
     description: string | null;
-    quantity: number;
+    quantity: string;
     value: string | null;
     isCustom: boolean;
     inventoryName: string | null;
@@ -217,6 +218,7 @@ export interface Rarity {
 export interface RecipeComponent {
   // Recipes are now the base components
   recipeId: string;
+  name: string | null;
   quantity: string; 
 }
 

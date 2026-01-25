@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Plus, 
   Package, 
@@ -7,7 +7,9 @@ import {
   Backpack, 
   Shield, 
   Hammer, 
-  CircleHelp
+  Check,
+  X,
+  Circle
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -25,9 +27,10 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useI18n } from '../context/i18n-context';
 import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { Campaign, InventoryItem, Grimoire, User } from '@/lib/types';
+import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
 import { addItemToInventory, getInventory, updateItemSlot } from '@/lib/data-service';
+import { Button } from './ui/button';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -62,7 +65,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   }, []);
 
   const fetchInventoryData = async () => {
-    console.log("Refreshing inventory data...");
     try {
       const data = await getInventory(grimoire.id, campaign.id);
       setPlayerInventory([...data]); 
@@ -111,8 +113,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
   const handleSendToPlayer = async (item: InventoryItem, targetPlayerName: string) => {
     try {
-      console.log("dasda");
-      console.log(targetPlayerName);
       await updateItemSlot(grimoire.id, campaign.id, item.id, null, undefined, targetPlayerName);
       
       toast({ title: `${item.name} an ${targetPlayerName} gesendet!` });//TODO
@@ -133,6 +133,28 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     } finally {
       await fetchInventoryData();
     }
+  };
+
+  //currently without bookmarks
+  const availableRecipes = useMemo(() => {
+    if (!grimoire?.recipes || !playerInventory) return [];
+    return grimoire.recipes.filter(recipe => {
+      if (!recipe.components || recipe.components.length === 0) return false;
+      return recipe.components.every(component => {
+        const hasMatchingItem = playerInventory.some(item => {
+          if (item.isCustom) return false;
+          return item.recipeIds.includes(recipe.id);
+        });
+        if(hasMatchingItem)
+        return hasMatchingItem;
+      });
+    });
+  }, [grimoire.recipes, playerInventory]);
+
+  const getComponentName = (recipeId: string): string => {
+    if (!grimoire?.recipes) return "";
+    const foundRecipe = grimoire.recipes.find(r => r.id === recipeId);
+    return foundRecipe?.name || "Unbekannt";
   };
 
   return (
@@ -165,7 +187,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          {/* Header & Backpack Selection */}
           <div className="flex items-center justify-between p-4 rounded-lg border">
             <div className="flex items-center gap-4">
               <div className="relative group">
@@ -199,8 +220,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                 <p className="text-sm text-slate-400">Extraplatz: 0</p>
               </div>
             </div>
-
-            {/* Statistik Anzeige */}
             <div className="text-right">
               <div className="text-2xl font-mono font-bold text-amber-500">
                 {playerInventory.length} / {getInventoryCapacity}
@@ -212,8 +231,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
               <p className="text-xs uppercase tracking-wider text-slate-500">Gold</p>
             </div>
           </div>
-
-          {/* Inventar Gitter im PlayerDashboard */}
           <InventoryGrid 
             capacity={getInventoryCapacity} 
             items={playerInventory.filter(i => i.inventoryName === null || i.inventoryName == "default")} 
@@ -228,7 +245,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
           <hr className="my-8" />
 
-          {/* Ausrüstungsbereich */}
           <div className="p-4 rounded-xl border">
             <h4 className="text-xs font-bold uppercase mb-4 flex items-center gap-2">
               <Shield size={14} /> Aktive Ausrüstung
@@ -256,8 +272,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             </div>
           </div>
         </TabsContent>
-
-        {/* Dynamischer Content für zusätzliche Inventare */}
           {otherInventories.map((inv: any) => (
             <TabsContent key={inv.name} value={inv.name}>
               <InventoryGrid 
@@ -275,8 +289,108 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
           ))}
 
         <TabsContent value="crafting">
-          <div className="p-8 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-lg">
-            Handwerks-Station: Kombiniere Gegenstände aus deinem Inventar.
+          <div className="p-8 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-lg mb-4">
+            Handwerks-Station: Kombiniere Gegenstände aus deinem Inventar. Bookmark sektion
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4">
+            {availableRecipes.length > 0 ? (
+              availableRecipes.map(recipe => {
+                const isCraftable = recipe.components.every((comp: RecipeComponent) => {
+                  const invItem = playerInventory.find(i => 
+                    !i.isCustom && comp.recipeId.includes(i.originalRecipeId)
+                  );
+
+                  const currentQtyStr = String(invItem?.quantity || "0");
+                  const requiredQtyStr = String(comp.quantity || "0");
+
+                  if (!currentQtyStr.includes('/') && !requiredQtyStr.includes('/')) {
+                    const currentNum = parseFloat(currentQtyStr);
+                    const requiredNum = parseFloat(requiredQtyStr);
+                    if (!isNaN(currentNum) && !isNaN(requiredNum)) {
+                      return currentNum >= requiredNum;
+                    }
+                  }
+                  return true; 
+                });
+
+                return (
+                  <div key={recipe.id} className="w-full bg-slate-900/80 border border-slate-700 rounded-xl overflow-hidden flex flex-col md:flex-row shadow-lg">
+                    <div className="w-full md:w-1/3 bg-slate-800/40 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-700">
+                      <div className="w-24 h-24 bg-amber-900/20 rounded-full flex items-center justify-center mb-4 border border-amber-500/30 shadow-inner">
+                        {recipe.image ? (
+                          <img src={recipe.image} alt={recipe.name} className="w-16 h-16 object-contain" style={{borderRadius: "100%"}}/>
+                        ) : (
+                          <Hammer className="text-amber-500/50" size={40} />
+                        )}
+                      </div>
+                      <h4 className="font-headline text-xl text-amber-400 text-center mb-4">{recipe.name}</h4>
+                      <Button 
+                        disabled={!isCraftable}
+                        className={`w-full font-bold transition-all transform active:scale-95 ${
+                          isCraftable 
+                            ? "bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-900/20" 
+                            : "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50"
+                        }`}
+                      >
+                        {isCraftable ? "Craft Item" : "Missing Materials"}
+                      </Button>
+                    </div>
+
+                    <div className="w-full md:w-2/3 p-6 bg-slate-900/40">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Required Materials</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {recipe.components.map((comp: RecipeComponent) => {
+                          const invItem = playerInventory.find(i => 
+                            !i.isCustom && comp.recipeId.includes(i.originalRecipeId)
+                          );
+
+                          const currentQtyStr = String(invItem?.quantity || "0");
+                          const requiredQtyStr = String(comp.quantity || "0");
+                          const currentNum = parseFloat(currentQtyStr);
+                          const requiredNum = parseFloat(requiredQtyStr);
+
+                          let status: 'success' | 'fail' | 'unknown' = 'unknown';
+                          if (!currentQtyStr.includes('/') && !requiredQtyStr.includes('/')) {
+                            if (!isNaN(currentNum) && !isNaN(requiredNum)) {
+                              status = currentNum >= requiredNum ? 'success' : 'fail';
+                            }
+                          }
+
+                          const config = {
+                            success: { border: 'border-emerald-500/20 bg-emerald-500/5', text: 'text-emerald-400', icon: <Check size={16} className="text-emerald-500" /> },
+                            fail: { border: 'border-red-500/20 bg-red-500/5', text: 'text-red-400', icon: <X size={16} className="text-red-500" /> },
+                            unknown: { border: 'border-slate-700/50 bg-slate-800/20', text: 'text-slate-400', icon: <Circle size={16} className="text-slate-500" /> }
+                          }[status];
+
+                          return (
+                            <div 
+                              key={recipe.id + "-" + comp.recipeId}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${config.border}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {config.icon}
+                                <span className={`text-sm ${status === 'fail' ? 'text-slate-500' : 'text-slate-200'}`}>
+                                  {getComponentName(comp.recipeId)}
+                                </span>
+                              </div>
+                              <span className={`text-xs font-mono font-bold ${config.text}`}>
+                                {invItem?.quantity || 0} / {comp.quantity}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-12 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
+                <Hammer className="mx-auto mb-4 opacity-20" size={48} />
+                <p>No items in your inventory match any known recipes.</p>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
