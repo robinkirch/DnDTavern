@@ -75,12 +75,14 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
         if (!campaign.notes) return [];
         const lowercasedTerm = searchTerm.toLowerCase();
         
-        return campaign.notes.filter(note => 
-            note.title.toLowerCase().includes(lowercasedTerm) ||
-            note.content.toLowerCase().includes(lowercasedTerm) ||
-            note.location.toLowerCase().includes(lowercasedTerm) ||
-            note.tags.some(tag => tag.toLowerCase().includes(lowercasedTerm))
-        );
+        return campaign.notes
+            .filter(note => 
+                note.title.toLowerCase().includes(lowercasedTerm) ||
+                note.content.toLowerCase().includes(lowercasedTerm) ||
+                note.location.toLowerCase().includes(lowercasedTerm) ||
+                note.tags.some(tag => tag.toLowerCase().includes(lowercasedTerm))
+            )
+            .reverse();
     }, [campaign.notes, searchTerm]);
 
 
