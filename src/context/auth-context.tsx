@@ -5,6 +5,7 @@ import type { User } from '@/lib/types';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 // Import the new service functions
 import { loginUser, registerUser } from '../lib/authService';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
     user: User | null;
@@ -19,6 +20,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const router = useRouter();
+    const pathname = usePathname();
+
+    useEffect(() => {
+        // Liste der Seiten, die man OHNE Login sehen darf
+        const publicPaths = ['/login']; 
+
+        if (!loading && !user && !publicPaths.includes(pathname)) {
+            router.push('/login');
+        }
+    }, [user, loading, pathname, router]);
 
     useEffect(() => {
         try {
@@ -49,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const registeredUser = await registerUser({ username, password, role: role === 'dm' ? 'DM' : 'Player', avatar });
             
-            // Log in the new user after successful registration to get the token
             const userData = await loginUser({ username, password });
             localStorage.setItem('tavern-user', JSON.stringify(userData));
             setUser(userData);
