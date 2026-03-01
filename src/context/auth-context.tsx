@@ -1,9 +1,7 @@
-// src/context/auth-context.tsx
 'use client';
 
 import type { User } from '@/lib/types';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-// Import the new service functions
 import { loginUser, registerUser } from '../lib/authService';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -25,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        // Liste der Seiten, die man OHNE Login sehen darf
         const publicPaths = ['/login']; 
 
         if (!loading && !user && !publicPaths.includes(pathname)) {
@@ -40,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(JSON.parse(storedUser));
             }
         } catch (error) {
-            console.error("Failed to parse user from localStorage", error);
             localStorage.removeItem('tavern-user');
         } finally {
             setLoading(false);

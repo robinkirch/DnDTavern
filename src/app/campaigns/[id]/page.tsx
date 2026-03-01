@@ -19,12 +19,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CampaignUpdateData, EditCampaignDialog } from '@/components/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords, BookMarked } from 'lucide-react';
+import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords, ClipboardCheck, BookMarked } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { Bestiary } from '@/components/bestiary';
 import { NotesSection } from '@/components/notes-section';
 import PlayerDashboard from '@/components/player-dashboard';
+import QuestBoard from '@/components/questboard';
 
 export default function CampaignPage() {
 	const params = useParams();
@@ -133,9 +134,6 @@ export default function CampaignPage() {
 		return;
 	};
 
-	console.log("campaign");
-    console.log(campaign);
-
 	return (
 		<>
 			<EditCampaignDialog
@@ -195,6 +193,10 @@ export default function CampaignPage() {
 									<BookMarked className="mr-2 h-4 w-4 shrink-0" />
 									<span className="truncate">{t('Books & Notes')}</span>
 								</TabsTrigger>
+								<TabsTrigger value="quest" className="flex-1">
+									<ClipboardCheck className="mr-2 h-4 w-4 shrink-0" />
+									<span className="truncate">{t('Questboards')}</span>
+								</TabsTrigger>
 								<TabsTrigger value="dm-log" className="flex-1">
 									<ScrollText className="mr-2 h-4 w-4 shrink-0" />
 									<span className="truncate">{t("DM's Campaign Log")}</span>
@@ -242,6 +244,10 @@ export default function CampaignPage() {
 
 							<TabsContent value="notes" className="mt-6">
 								<NotesSection campaign={campaign} setCampaign={setCampaign} />
+							</TabsContent>
+
+							<TabsContent value="quest" className="mt-6">
+								<QuestBoard />
 							</TabsContent>
 
 							<TabsContent value="dm-log" className="mt-6">

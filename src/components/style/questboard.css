@@ -1,0 +1,131 @@
+.board-4 {
+    background: linear-gradient(135deg, #1a1410 0%, #2c2418 50%, #1a1410 100%);
+    padding: 60px;
+    border: 8px solid #4a3a2a;
+    border-radius: 8px;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.6);
+    position: relative;
+}
+
+.board-4::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 2px solid #6a5a4a;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.quest-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    position: relative;
+}
+
+.quest {
+    width: 280px;
+    background: linear-gradient(135deg, #f4e8c1 0%, #e8d9b0 50%, #d4c5a0 100%);
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.1);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.quest img {
+    opacity: 80%;
+}
+
+.quest-torn {
+    clip-path: polygon(
+        0% 2%, 3% 0%, 6% 2%, 9% 1%, 12% 2%, 15% 0%, 18% 2%, 21% 1%, 
+        24% 2%, 27% 0%, 30% 2%, 33% 1%, 36% 2%, 39% 0%, 42% 2%, 45% 1%,
+        48% 2%, 51% 0%, 54% 2%, 57% 1%, 60% 2%, 63% 0%, 66% 2%, 69% 1%,
+        72% 2%, 75% 0%, 78% 2%, 81% 1%, 84% 2%, 87% 0%, 90% 2%, 93% 1%,
+        96% 2%, 100% 1%, 100% 100%, 0% 100%
+    );
+
+    background-image: url("../../images/pergament.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-blend-mode: multiply;
+    background-color: #f4e8c1; 
+    box-shadow: 
+        0 10px 30px rgba(0,0,0,0.5),
+        inset 0 0 40px rgba(0,0,0,0.2);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.pin {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle at 30% 30%, #c0c0c0, #808080 50%, #404040);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset -1px -1px 2px rgba(0,0,0,0.3);
+    z-index: 10;
+    transform: translateX(-50%);
+}
+
+.quest h3 {
+    font-size: 1.3em;
+    color: #2c1810;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.reward-style {
+    background: rgba(212, 175, 55, 0.2);
+    padding: 8px;
+    border-left: 3px solid #d4af37;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #6a5a4a;
+    font-size: 0.85em;
+}
+
+.board-headline {
+    position: absolute;
+    top: -22px;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 40px;
+    z-index: 20;
+}
+
+.middle-plate, .outer-plate, .outerouter-plate {
+    color: silver;
+    border: 5px solid #4a3a2a;
+    background-color: #4a3a2a;
+    padding: 3px 20px;
+    border-radius: 12px;
+    font-family: 'Cinzel', serif;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.outer-plate {
+    position: absolute;
+    right: 60px;
+    padding: 3px 10px !important;
+    font-size: 90%;
+}
+
+.outerouter-plate {
+    position: absolute;
+    right: 10px;
+    padding: 3px 3px !important;
+}
+
+.outerouter-plate svg {
+    pointer-events: auto;
+    width: 90%;
+    height: 90%;
+}
