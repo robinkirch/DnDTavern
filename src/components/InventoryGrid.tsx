@@ -70,11 +70,10 @@ function DraggableItem({ item }: { item: InventoryItem }) {
 }
 
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendToPlayer, onSendToInventory, otherInventories, campaignPlayers, grimoire}: any) {
+export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onSplitItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default"}: any) {
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-
   const handleDragStart = (event: DragStartEvent) => {
     setActiveItem(event.active.data.current as InventoryItem);
   };
@@ -93,7 +92,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
       const invName = overId.replace('target-inv-', '');
       onSendToInventory(item, invName === 'default' ? null : invName); //change
     } else {
-      onMoveItem(item, parseInt(overId));
+      onMoveItem(item, parseInt(overId), currentInventory);
     }
   };
 
@@ -159,6 +158,8 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
                 otherInventories={otherInventories} 
                 onSendToPlayer={onSendToPlayer} 
                 onSendToInventory={onSendToInventory}
+                onDeleteItem={onDeleteItem}
+                onSplitItem={onSplitItem}
                 onAddClick={onAddClick}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem} />
@@ -178,7 +179,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
   );
 }
 
-function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, campaignPlayers, otherInventories , onModalOpen, onDetailItem}: any) {
+function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, onDeleteItem, onSplitItem, campaignPlayers, otherInventories , onModalOpen, onDetailItem}: any) {
   const { setNodeRef, isOver } = useDroppable({ id: index.toString() });
 
   return (
@@ -204,6 +205,18 @@ function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, 
             </ContextMenuItem>
             <ContextMenuSeparator className="bg-slate-700" />
             
+            {item.quantity > 1 && (
+              <ContextMenuItem 
+                className="focus:bg-slate-800 focus:text-amber-400" 
+                onClick={onSplitItem}//TODO
+              >
+                <div className="flex items-center justify-between w-full">
+                  Stack teilen
+                  <span className="text-xs opacity-50">{item.quantity}x</span>
+                </div>
+              </ContextMenuItem>
+            )}
+
             <ContextMenuSub>
               <ContextMenuSubTrigger className="focus:bg-slate-800">An Spieler senden</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
@@ -223,7 +236,7 @@ function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, 
             </ContextMenuSub>
 
             <ContextMenuSeparator className="bg-slate-700" />
-            <ContextMenuItem className="text-red-400 focus:bg-red-950">Wegwerfen</ContextMenuItem>
+            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => onDeleteItem(item)}>Wegwerfen</ContextMenuItem>
           </ContextMenuContent>
         )}
       </ContextMenu>

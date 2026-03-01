@@ -29,7 +29,7 @@ import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, getInventory, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 
 interface PlayerDashboardProps {
@@ -99,9 +99,9 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     setAddOpen(true);
   };
 
-  const handleMoveItem = async (item: InventoryItem, newSlot: number) => {
+  const handleMoveItem = async (item: InventoryItem, newSlot: number, inventoryName: string) => {
     try {
-      await updateItemSlot(grimoire.id, campaign.id, item.id, newSlot, "default");
+      await updateItemSlot(grimoire.id, campaign.id, item.id, newSlot, inventoryName);
       
       toast({ title: "Item Moved" }); //TODO
     } catch (error) {
@@ -130,6 +130,45 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
       toast({ title: `${item.name} an ${targetInvName} gesendet!` });//TODO
     } catch (error) {
       toast({ title: "Fehler beim Verschieben", variant: "destructive" });//TODO
+    } finally {
+      await fetchInventoryData();
+    }
+  };
+
+  const handleSplitItem = async (item: InventoryItem, splitAmount: number, newSlot: number, inventoryName: string) => {
+    try {
+      // Wir nutzen playerName "nobody" oder den aktuellen Besitzer, 
+      // je nachdem ob es ein Gruppen- oder Spieler-Inventar ist.
+      const playerName = inventoryName === "default" ? "me" : "nobody"; 
+      
+      await splitInventoryItem(
+        grimoire.id, 
+        campaign.id, 
+        inventoryName, 
+        playerName, 
+        item.id, 
+        splitAmount, 
+        newSlot
+      );
+
+      toast({ title: "Stack geteilt", description: `${splitAmount}x ${item.name} wurde verschoben.` });//TODO
+    } catch (error) {
+      toast({ title: "Fehler beim Teilen", description: (error as any).message, variant: "destructive" });//TODO
+    } finally {
+      await fetchInventoryData();
+    }
+  };
+
+  const handleDeleteItem = async (item: InventoryItem) => {
+    // Optional: Hier ein Confirm-Dialog einbauen
+    if (!confirm(`Möchtest du ${item.name} wirklich permanent löschen?`)) return;//TODO
+
+    try {
+      await deleteInventoryItem(grimoire.id, campaign.id, item.id);
+      
+      toast({ title: "Item gelöscht", description: `${item.name} wurde entfernt.` });//TODO
+    } catch (error) {
+      toast({ title: "Fehler beim Löschen", variant: "destructive" });//TODO
     } finally {
       await fetchInventoryData();
     }
@@ -236,6 +275,8 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             items={playerInventory.filter(i => i.inventoryName === null || i.inventoryName == "default")} 
             onAddClick={(slot: number) => openAddDialog(null, slot)}
             onMoveItem={handleMoveItem} 
+            onDeleteItem={handleDeleteItem}
+            onSplitItem={handleSplitItem}
             onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
             onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
             otherInventories={otherInventories} 
@@ -280,10 +321,13 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                 onAddClick={(slot: number) => openAddDialog(inv.name, slot)} 
                 onItemClick={(item: InventoryItem) => console.log("Edit Item:", item)} 
                 onMoveItem={handleMoveItem} 
+                onDeleteItem={handleDeleteItem}
+                onSplitItem={handleSplitItem}
                 onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
                 onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
                 otherInventories={otherInventories} 
                 campaignPlayers={otherPlayers} 
+                currentInventory={inv.name}
               />
             </TabsContent>
           ))}

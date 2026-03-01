@@ -255,6 +255,7 @@ export async function fetchDamageTypes(grimoireId: string): Promise<DamageType[]
 
 export async function addItemToInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
     try {
+        item.image = null;
         const response = await api.post(`/inventories/${grimoireId}/${campaignId}`, item);
         return response.data;
     } catch (error) {
@@ -273,8 +274,6 @@ export async function getInventory(grimoireId: string, campaignId: string, inven
 
 export const updateItemSlot = async (grimoireId: string, campaignId: string, itemId: string, newSlot: number | null, inventoryName: string = "none", playerName: string = "nobody") => {
     try {
-        console.log("playerName");
-        console.log(playerName);
         const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${inventoryName}/${playerName}/move`, [itemId, newSlot]);
         return response.data;
     } catch (error) {
@@ -282,6 +281,27 @@ export const updateItemSlot = async (grimoireId: string, campaignId: string, ite
     }
 };
 
+
+export async function splitInventoryItem(grimoireId: string, campaignId: string, inventoryName: string, playerName: string, itemId: string, splitAmount: number, newSlot: number): Promise<{ message: string, newItemId: string }> {
+    try {
+        const response = await api.put(
+            `/inventories/${grimoireId}/${campaignId}/${inventoryName}/${playerName}/split`, 
+            { itemId, splitAmount, newSlot }
+        );
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to split item.');
+    }
+}
+
+
+export async function deleteInventoryItem(grimoireId: string, campaignId: string, itemId: string): Promise<void> {
+    try {
+        await api.delete(`/inventories/${grimoireId}/${campaignId}/${itemId}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to delete item.');
+    }
+}
 
 // --- USER SERVICE
 
