@@ -282,11 +282,11 @@ export const updateItemSlot = async (grimoireId: string, campaignId: string, ite
 };
 
 
-export async function splitInventoryItem(grimoireId: string, campaignId: string, inventoryName: string, playerName: string, itemId: string, splitAmount: number, newSlot: number): Promise<{ message: string, newItemId: string }> {
+export async function splitInventoryItem(grimoireId: string, campaignId: string, inventoryName: string, playerName: string, itemId: string, splitAmount: number): Promise<{ message: string, newItemId: string }> {
     try {
         const response = await api.put(
             `/inventories/${grimoireId}/${campaignId}/${inventoryName}/${playerName}/split`, 
-            { itemId, splitAmount, newSlot }
+            { itemId, splitAmount }
         );
         return response.data;
     } catch (error) {

@@ -427,7 +427,26 @@
     "All Entries": "All Entries",
     "Monsters Only": "Monsters Only",
     "NPCs Only": "NPCs Only",
-    "No creatures found matching your filters.": "No creatures/NPCs found matching your filters."
+    "No creatures found matching your filters.": "No creatures/NPCs found matching your filters.",
+    "Spaces": "Spaces",
+    "Extraspaces": "Extraspace",
+    "Slots occupied": "Slots occupied",
+    "Active Equipment": "Active Equipment",
+    "Required Materials": "Required Materials",
+    "No items in your inventory match any known recipes.": "No items in your inventory match any known recipes.",
+    "Crafting-station": "Crafting-station",
+    "Combine items from your inventory.": "Combine items from your inventory.",
+    "Bookmark section": "Bookmark section",
+    "splitting": "splitting",
+    "Current amount": "Current amount",
+    "Amount to split": "Amount to split",
+    "Split": "Split",
+    "Item Details": "Item Details",
+    "View Details": "View Details",
+    "Split stack": "Split stack",
+    "Send to Player": "Send to Player",
+    "Move to Inventory": "Move to Inventory",
+    "Crafting": "Crafting"
 }
 
     

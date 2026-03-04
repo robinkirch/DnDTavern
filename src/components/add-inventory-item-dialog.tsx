@@ -71,7 +71,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
       recipeId: selectedRecipe.id,
       name: selectedRecipe.name,
       description: selectedRecipe.description,
-      quantity: values.quantity,
+      quantity: values.quantity.toString(),
       value: selectedRecipe.value,
       isCustom: false,
           
@@ -96,7 +96,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
       recipeId: null,
       name: values.name,
       description: values.description || null,
-      quantity: values.quantity,
+      quantity: values.quantity.toString(),
       value: values.value || null,
       isCustom: true,
 

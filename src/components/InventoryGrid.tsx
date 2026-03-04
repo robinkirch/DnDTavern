@@ -21,6 +21,7 @@ import {
   DialogTitle, 
   DialogDescription 
 } from "./ui/dialog";
+import { useI18n } from '@/context/i18n-context';
 
 function InventoryDropZone({ id, label, icon: Icon }: { id: string, label: string, icon: any }) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -70,7 +71,8 @@ function DraggableItem({ item }: { item: InventoryItem }) {
 }
 
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onSplitItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default"}: any) {
+export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default"}: any) {
+  const { t } = useI18n();
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -80,19 +82,27 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    setActiveItem(null); // Zonen wieder ausblenden
+    setActiveItem(null); 
 
     if (!over) return;
 
     const item = active.data.current as InventoryItem;
     const overId = over.id.toString();
+
     if (overId.startsWith('target-player-')) {
       onSendToPlayer(item, overId.replace('target-player-', ''));
-    } else if (overId.startsWith('target-inv-')) {
+    } 
+
+    else if (overId.startsWith('target-inv-')) {
       const invName = overId.replace('target-inv-', '');
-      onSendToInventory(item, invName === 'default' ? null : invName); //change
-    } else {
-      onMoveItem(item, parseInt(overId), currentInventory);
+      onSendToInventory(item, invName === 'default' ? null : invName);
+    } 
+
+    else {
+      const targetSlot = parseInt(overId);
+      if (!isNaN(targetSlot)) {
+        onMoveItem(item, targetSlot, currentInventory);
+      }
     }
   };
 
@@ -109,7 +119,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
           }}>
           <div className="sr-only">
             <DialogTitle>{activeDetailItem?.name}</DialogTitle>
-            <DialogDescription>Item Details</DialogDescription>
+            <DialogDescription>{t('Item Details')}</DialogDescription>
           </div>
 
           {activeDetailItem && (
@@ -153,17 +163,40 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
               <GridCell 
                 key={i} 
                 index={i} 
-                item={items.find((it: any) => it.slotNumber === i)} 
+                item={items.find((it: any) => it.slotNumber === i && !it.isTemporary)} 
                 campaignPlayers={campaignPlayers} 
                 otherInventories={otherInventories} 
                 onSendToPlayer={onSendToPlayer} 
                 onSendToInventory={onSendToInventory}
                 onDeleteItem={onDeleteItem}
-                onSplitItem={onSplitItem}
+                onSplitClick={onSplitClick}
                 onAddClick={onAddClick}
                 onModalOpen={setIsItemModalOpen}
-                onDetailItem={setActiveDetailItem} />
+                onDetailItem={setActiveDetailItem}
+                currentInventory={currentInventory} />
             ))}
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            {items.filter((it: any) => it.isTemporary === 1 || it.isTemporary === true || it.slotNumber >= capacity).map((item: any) => (
+              <GridCell 
+                key={item.id} 
+                index={item.slotNumber} 
+                item={item}
+                campaignPlayers={campaignPlayers} 
+                otherInventories={otherInventories} 
+                onSendToPlayer={onSendToPlayer} 
+                onSendToInventory={onSendToInventory}
+                onDeleteItem={onDeleteItem}
+                onSplitClick={onSplitClick}
+                onAddClick={onAddClick}
+                onModalOpen={setIsItemModalOpen}
+                onDetailItem={setActiveDetailItem}
+                currentInventory={currentInventory}
+                isTemporary={true} />
+            ))
+          }
           </div>
         </div>
 
@@ -179,46 +212,64 @@ export function InventoryGrid({ capacity, items, onAddClick, onMoveItem, onSendT
   );
 }
 
-function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, onDeleteItem, onSplitItem, campaignPlayers, otherInventories , onModalOpen, onDetailItem}: any) {
-  const { setNodeRef, isOver } = useDroppable({ id: index.toString() });
+function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, currentInventory, isTemporary = false }: any) {
+  const { t } = useI18n();
+  const { setNodeRef, isOver } = useDroppable({ 
+    id: index.toString(),
+    disabled: isTemporary 
+  });
 
   return (
     <>
-      
       <ContextMenu>
         <ContextMenuTrigger disabled={!item}>
-          <div
-            ref={setNodeRef}
-            onClick={() => !item && onAddClick(index)}
-            className={`aspect-square rounded-md flex items-center justify-center border-2 border-dashed transition-all
-              ${item ? 'border-amber-900/40 bg-amber-900/5' : 'border-gray-500 hover:border-gray-300'}
-              ${isOver ? 'bg-amber-500/20 border-amber-500' : ''}`}
-          >
-            {item ? <DraggableItem item={item} /> : <Plus size={16} className="text-gray-500" />}
+          <div ref={setNodeRef} className={`aspect-square rounded-md flex items-center justify-center border-2 transition-all relative overflow-hidden
+            ${item ? 'border-amber-900/40 bg-amber-900/5' : 'border-gray-500 border-dashed'}
+            ${isOver && !isTemporary ? 'bg-amber-500/20 border-amber-500' : ''}
+            ${isTemporary ? 'border-gray-600 bg-slate-950/50' : ''}`}
+            onClick={() => (!item && !isTemporary) && onAddClick(index)}>
+
+            {item ? (
+              <div className="relative z-0 w-full h-full"> 
+                <DraggableItem item={item} />
+              </div> ) : 
+              ( !isTemporary && <Plus size={16} className="text-gray-500" />)}
+
+                {isTemporary && (
+                  <>
+                    <div 
+                      className="absolute inset-0 pointer-events-none z-[50] m-1 rounded-sm border-2 border-gray-500/40 border-dashed"
+                      style={{ 
+                        background: 'repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5) 5px, rgba(100, 100, 100, 0.65) 5px, rgba(100, 100, 100, 0.32) 10px)',
+                        mixBlendMode: 'multiply' 
+                      }} 
+                    />
+                  </>
+                )}
           </div>
         </ContextMenuTrigger>
 
         {item && (
           <ContextMenuContent className="w-56 bg-slate-900 text-slate-100 border-slate-700">
             <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {onDetailItem(item); onModalOpen(true);}}>
-              Details ansehen
+              {t('View Details')}
             </ContextMenuItem>
             <ContextMenuSeparator className="bg-slate-700" />
             
             {item.quantity > 1 && (
               <ContextMenuItem 
                 className="focus:bg-slate-800 focus:text-amber-400" 
-                onClick={onSplitItem}//TODO
+                onClick={() => {onSplitClick(item,currentInventory);}}
               >
                 <div className="flex items-center justify-between w-full">
-                  Stack teilen
+                  {t('Split stack')}
                   <span className="text-xs opacity-50">{item.quantity}x</span>
                 </div>
               </ContextMenuItem>
             )}
 
             <ContextMenuSub>
-              <ContextMenuSubTrigger className="focus:bg-slate-800">An Spieler senden</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger className="focus:bg-slate-800">{t('Send to Player')}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {campaignPlayers?.map((p: any) => (
                   <ContextMenuItem key={p.id} onClick={() => onSendToPlayer(item, p.username)}>{p.username}</ContextMenuItem>
@@ -227,7 +278,7 @@ function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, 
             </ContextMenuSub>
 
             <ContextMenuSub>
-              <ContextMenuSubTrigger className="focus:bg-slate-800">In Beutel verschieben</ContextMenuSubTrigger>
+              <ContextMenuSubTrigger className="focus:bg-slate-800">{t('Move to Inventory')}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {otherInventories?.map((p: any) => (
                   <ContextMenuItem key={p.id} onClick={() => onSendToInventory(item, p.name)}>{p.name}</ContextMenuItem>
@@ -236,7 +287,7 @@ function GridCell({ index, item, onAddClick, onSendToPlayer, onSendToInventory, 
             </ContextMenuSub>
 
             <ContextMenuSeparator className="bg-slate-700" />
-            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => onDeleteItem(item)}>Wegwerfen</ContextMenuItem>
+            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => onDeleteItem(item)}>{t('Delete')}</ContextMenuItem>
           </ContextMenuContent>
         )}
       </ContextMenu>

@@ -31,6 +31,7 @@ import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@
 import { InventoryGrid } from './InventoryGrid';
 import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
+import { SplitItemDialog } from './split-item-dialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -45,15 +46,14 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   const { t } = useI18n();
   const { toast } = useToast();
   const [isAddOpen, setAddOpen] = useState(false);
+  const [isSplitOpen, setSplitOpen] = useState(false);
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
   const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>(userInventory || []);
   const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
   const [otherInventories, setAllOtherInventories] = useState(campaign.inventorySettings.additionalInventories);
   const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != player.username); 
-  const [selectedSlot, setSelectedSlot] = useState<{ 
-    inventoryName: string | null; 
-    slotNumber: number 
-  } | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number } | null>(null);
+  const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
 
   useEffect(() => {
     fetchInventoryData();
@@ -99,6 +99,11 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     setAddOpen(true);
   };
 
+  const openSplitUI = (item: InventoryItem, inventoryName: string) => {
+    setItemToSplit({ item, inventoryName });
+    setSplitOpen(true);
+  };
+
   const handleMoveItem = async (item: InventoryItem, newSlot: number, inventoryName: string) => {
     try {
       await updateItemSlot(grimoire.id, campaign.id, item.id, newSlot, inventoryName);
@@ -135,11 +140,23 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     }
   };
 
-  const handleSplitItem = async (item: InventoryItem, splitAmount: number, newSlot: number, inventoryName: string) => {
+  const executeSplit = async (amount: number) => {
+  if (!itemToSplit) return;
+
+    await handleSplitItem(
+      itemToSplit.item, 
+      amount, 
+      itemToSplit.inventoryName
+    );
+  };
+
+  const handleSplitItem = async (item: InventoryItem, splitAmount: number, inventoryName: string | null) => {
     try {
+      if (!itemToSplit || !inventoryName) return;
+
       // Wir nutzen playerName "nobody" oder den aktuellen Besitzer, 
       // je nachdem ob es ein Gruppen- oder Spieler-Inventar ist.
-      const playerName = inventoryName === "default" ? "me" : "nobody"; 
+      const playerName = inventoryName === "default" ? player.username : "nobody"; 
       
       await splitInventoryItem(
         grimoire.id, 
@@ -147,8 +164,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         inventoryName, 
         playerName, 
         item.id, 
-        splitAmount, 
-        newSlot
+        splitAmount,
       );
 
       toast({ title: "Stack geteilt", description: `${splitAmount}x ${item.name} wurde verschoben.` });//TODO
@@ -209,6 +225,13 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         grimoire={grimoire}
     />
 
+    <SplitItemDialog 
+      isOpen={isSplitOpen} 
+      onOpenChange={setSplitOpen}
+      item={itemToSplit?.item || null}
+      onConfirm={executeSplit}
+    />
+
     <div className="w-full mx-auto p-4">
       
       <Tabs defaultValue="main" className="w-full">
@@ -218,11 +241,11 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
           gridTemplateColumns: `repeat(${otherInventories.length + 2}, minmax(0, 1fr))` 
         }}
         >
-          <TabsTrigger value="main"><Backpack className="w-4 h-4 mr-2" /> Inventar</TabsTrigger>
+          <TabsTrigger value="main"><Backpack className="w-4 h-4 mr-2" /> {t('Inventory')}</TabsTrigger>
           {otherInventories.map((inv: any) => (
             <TabsTrigger key={inv.name} value={inv.name} ><Package className="w-4 h-4 mr-2" />{inv.name}</TabsTrigger>
           ))}
-          <TabsTrigger value="crafting"><Hammer className="w-4 h-4 mr-2" /> Crafting</TabsTrigger>
+          <TabsTrigger value="crafting"><Hammer className="w-4 h-4 mr-2" /> {t('Crafting')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
@@ -247,7 +270,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                           className="flex justify-between gap-8 focus:bg-slate-700"
                           onClick={() => console.log("Changed to", bp.name)}>
                           <span>{bp.name}</span>
-                          <span className="text-xs text-slate-400">{slots} Plätze</span>
+                          <span className="text-xs text-slate-400">{slots} {t('Spaces')}</span>
                         </DropdownMenuItem>
                       );
                     })}
@@ -256,14 +279,14 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
               </div>
               <div>
                 <h3 className="font-bold text-lg">{"Kein Beutel"}</h3>
-                <p className="text-sm text-slate-400">Extraplatz: 0</p>
+                <p className="text-sm text-slate-400">{t('Extraspaces')}: 0</p>
               </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-mono font-bold text-amber-500">
                 {playerInventory.length} / {getInventoryCapacity}
               </div>
-              <p className="text-xs uppercase tracking-wider text-slate-500">Slots belegt</p>
+              <p className="text-xs uppercase tracking-wider text-slate-500">{t('Slots occupied')}</p>
               <div className="text-2xl font-mono font-bold text-amber-500">
                100
               </div>
@@ -274,9 +297,9 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             capacity={getInventoryCapacity} 
             items={playerInventory.filter(i => i.inventoryName === null || i.inventoryName == "default")} 
             onAddClick={(slot: number) => openAddDialog(null, slot)}
+            onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
             onMoveItem={handleMoveItem} 
             onDeleteItem={handleDeleteItem}
-            onSplitItem={handleSplitItem}
             onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
             onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
             otherInventories={otherInventories} 
@@ -288,7 +311,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
           <div className="p-4 rounded-xl border">
             <h4 className="text-xs font-bold uppercase mb-4 flex items-center gap-2">
-              <Shield size={14} /> Aktive Ausrüstung
+              <Shield size={14} /> {t('Active Equipment')}
             </h4>
             <div className="flex flex-wrap gap-4 justify-center">
               {['Ring L', 'Ring R', 'Helm', 'Brust', 'Waffe L', 'Waffe R', 'Spezial'].map((slot) => (
@@ -319,14 +342,14 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                 capacity={inv.size} 
                 items={inv.items ?? []} 
                 onAddClick={(slot: number) => openAddDialog(inv.name, slot)} 
+                onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                 onItemClick={(item: InventoryItem) => console.log("Edit Item:", item)} 
                 onMoveItem={handleMoveItem} 
                 onDeleteItem={handleDeleteItem}
-                onSplitItem={handleSplitItem}
                 onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
                 onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
                 otherInventories={otherInventories} 
-                campaignPlayers={otherPlayers} 
+                campaignPlayers={[player, ...otherPlayers]} 
                 currentInventory={inv.name}
               />
             </TabsContent>
@@ -334,7 +357,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
         <TabsContent value="crafting">
           <div className="p-8 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-lg mb-4">
-            Handwerks-Station: Kombiniere Gegenstände aus deinem Inventar. Bookmark sektion
+            {t('Crafting-station')}: {t('Combine items from your inventory.')} {t('Bookmark section')} 
           </div>
           
           <div className="grid grid-cols-1 gap-4">
@@ -382,7 +405,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                     </div>
 
                     <div className="w-full md:w-2/3 p-6 bg-slate-900/40">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Required Materials</p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">{t('Required Materials')} </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {recipe.components.map((comp: RecipeComponent) => {
                           const invItem = playerInventory.find(i => 
@@ -432,7 +455,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             ) : (
               <div className="p-12 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
                 <Hammer className="mx-auto mb-4 opacity-20" size={48} />
-                <p>No items in your inventory match any known recipes.</p>
+                <p>{t('No items in your inventory match any known recipes.')} </p>
               </div>
             )}
           </div>
