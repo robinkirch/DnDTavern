@@ -220,6 +220,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   };
 
   const handleDeleteItem = async (item: InventoryItem) => {
+    console.log(availableRecipes);
     showConfirmDialog(
         t('Delete Item'),
         t('Are you sure you want to throw this item away?'),
@@ -238,20 +239,24 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     );    
   };
 
-  //currently without bookmarks
   const availableRecipes = useMemo(() => {
     if (!grimoire?.recipes || !playerInventory) return [];
-    return grimoire.recipes.filter(recipe => {
-      if (!recipe.components || recipe.components.length === 0) return false;
-      return recipe.components.every(component => {
-        const hasMatchingItem = playerInventory.some(item => {
-          if (item.isCustom) return false;
-          return item.recipeIds.includes(recipe.id);
+
+    const recipeIdsInInventory = new Set<string>();
+
+    playerInventory.filter(pi => !pi.isCustom).forEach(item => {     
+      grimoire.recipes.filter(recipe => {
+        if (!recipe.components || recipe.components.length === 0) return false;
+        recipe.components.forEach(comp =>{
+          if(comp.recipeId == item.originalRecipeId) {
+            recipeIdsInInventory.add(recipe.id);
+          }
+
         });
-        if(hasMatchingItem)
-        return hasMatchingItem;
       });
     });
+    
+    return grimoire.recipes.filter(recipe => recipeIdsInInventory.has(recipe.id));
   }, [grimoire.recipes, playerInventory]);
 
   const getComponentName = (recipeId: string): string => {
@@ -366,7 +371,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             </div>
             <div className="text-right">
               <div className="text-2xl font-mono font-bold text-amber-500">
-                {playerInventory.length} / {getInventoryCapacity}
+                {playerInventory.length - (playerBackpack.find(bp => bp.isCurrentBackpack)?.id !== "0" && playerBackpack.find(bp => bp.isCurrentBackpack) ? 1 : 0)} / {getInventoryCapacity}
               </div>
               <p className="text-xs uppercase tracking-wider text-slate-500">{t('Slots occupied')}</p>
               <div className="text-2xl font-mono font-bold text-amber-500">
