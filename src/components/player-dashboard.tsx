@@ -9,7 +9,8 @@ import {
   Hammer, 
   Check,
   X,
-  Circle
+  Circle,
+  Send
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -220,7 +221,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   };
 
   const handleDeleteItem = async (item: InventoryItem) => {
-    console.log(availableRecipes);
     showConfirmDialog(
         t('Delete Item'),
         t('Are you sure you want to throw this item away?'),
@@ -255,7 +255,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         });
       });
     });
-    
+
     return grimoire.recipes.filter(recipe => recipeIdsInInventory.has(recipe.id));
   }, [grimoire.recipes, playerInventory]);
 
@@ -264,6 +264,12 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     const foundRecipe = grimoire.recipes.find(r => r.id === recipeId);
     return foundRecipe?.name || "Unbekannt";
   };
+
+  const COINS = [
+    { key: "gold",   label: "Gold",   short: "G", color: "#F5A623" },
+    { key: "silver", label: "Silber", short: "S", color: "#C0C0C0" },
+    { key: "copper", label: "Kupfer", short: "K", color: "#B87333" },
+  ];
 
   return (
     <>
@@ -315,69 +321,101 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-lg border">
-            <div className="flex items-center gap-4">
-              {playerBackpack && <>
-                <div className="relative group">
-                  {playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)?.image ? (
-                    <img 
-                      src={playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)!.image!} 
-                      alt={playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)!.name}
-                      className="w-16 h-16 rounded-md border-2 border-amber-500/50 bg-slate-800 object-contain"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-md border-2 border-amber-500/50 bg-slate-700 flex items-center justify-center">
-                      <Backpack size={32} className="text-amber-500/50" />
-                    </div>
-                  )}
+          <div className="grid grid-cols-4 items-center gap-4 p-4 rounded-lg  border">
+            <div className="flex items-center gap-4 border-r border-slate-700 pr-4">
+              {playerBackpack && (
+                <>
+                  <div className="relative group flex-shrink-0">
+                    {playerBackpack.find((bp: any) => bp.isCurrentBackpack)?.image ? (
+                      <img 
+                        src={playerBackpack.find((bp: any) => bp.isCurrentBackpack)!.image!} 
+                        alt="Backpack"
+                        className="w-14 h-14 rounded-md border-2 border-amber-500/50 bg-slate-800 object-contain"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-md border-2 border-amber-500/50 flex items-center justify-center">
+                        <Backpack size={28} className="text-amber-500/50" />
+                      </div>
+                    )}
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="absolute -bottom-2 -right-2 bg-amber-500 hover:bg-amber-600 p-1 rounded-full transition-colors shadow-lg">
-                        <ChevronDown size={14} className="text-slate-900" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    
-                    <DropdownMenuContent className="bg-slate-800 border-slate-700 text-slate-100">
-                      {playerBackpack
-                        .filter((bp: any) => bp.id !== playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)?.id).map((bp: any) => { 
-                          const slots = calculateBackpackSize(bp);
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="absolute -bottom-1 -right-1 bg-amber-500 hover:bg-amber-600 p-1 rounded-full shadow-lg">
+                          <ChevronDown size={12} className="text-slate-900" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-slate-800 border-slate-700 text-slate-100">
+                        {playerBackpack
+                          .filter((bp: any) => bp.id !== playerBackpack.find((b: any) => b.isCurrentBackpack)?.id)
+                          .map((bp: any) => (
+                            <DropdownMenuItem 
+                              key={bp.id || bp.name}
+                              className="flex justify-between gap-4 focus:bg-slate-700 cursor-pointer"
+                              onClick={() => handleBackPack(bp)}
+                            >
+                              <span>{bp.name}</span>
+                              {bp.id !== 0 && <span className="text-xs text-slate-400">{calculateBackpackSize(bp)} {t('Spaces')}</span>}
+                            </DropdownMenuItem>
+                          ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-                          return (
-                          <DropdownMenuItem 
-                            key={bp.id || bp.name}
-                            className="flex justify-between gap-8 focus:bg-slate-700 cursor-pointer"
-                            onClick={() => handleBackPack(bp)}
-                          >
-                            <span>{bp.name}</span>
-                            {bp.id !== 0 && (
-                              <span className="text-xs text-slate-400">{slots} {t('Spaces')}</span>
-                            )}
-                          </DropdownMenuItem>
-                        )})}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-lg text-slate-100">
-                    {playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack)?.name}
-                  </h3>
-                  <p className="text-sm text-slate-400">
-                    {t('Extraspaces')}: {calculateBackpackSize()}
-                  </p>
-                </div>
-              </>}
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-slate-100 truncate">
+                      {playerBackpack.find((bp: any) => bp.isCurrentBackpack)?.name}
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      +{calculateBackpackSize()} {t('Slots')}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-mono font-bold text-amber-500">
-                {playerInventory.length - (playerBackpack.find(bp => bp.isCurrentBackpack)?.id !== "0" && playerBackpack.find(bp => bp.isCurrentBackpack) ? 1 : 0)} / {getInventoryCapacity}
+
+            {/* 2. Bereich: Slots besetzt */}
+            <div className="text-center border-r border-slate-700">
+              <div className="text-xl font-mono font-bold text-amber-500">
+                {playerInventory.length - (playerBackpack.find(bp => bp.isCurrentBackpack)?.id !== "0" ? 1 : 0)} / {getInventoryCapacity}
               </div>
-              <p className="text-xs uppercase tracking-wider text-slate-500">{t('Slots occupied')}</p>
-              <div className="text-2xl font-mono font-bold text-amber-500">
-               100
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{t('Slots occupied')}</p>
+            </div>
+
+            {/* 3. Bereich: Gold */}
+            <div className="flex flex-col items-center justify-center border-r border-slate-700 px-2">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mt-1">Münzen</p>
+              <div className="flex items-center gap-1 mb-1">
+                {COINS.map(({ key, label, color }) => (
+                  <div key={key} className="flex flex-col items-center rounded border border-slate-700 overflow-hidden"style={{ borderColor: `${color}33` }}>
+                    <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => undefined}>+</button>
+                    
+                    <div className="flex items-center px-1.5 gap-0.5">
+                      <input type="number"
+                        className="w-7 bg-transparent text-right text-sm font-mono font-bold outline-none text-slate-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        style={{ color }}
+                        value={0}
+                        onChange={() => undefined}/>
+                      <span className="inline-block text-[10px] font-black pl-2" style={{ color }}> {label[0]} </span>
+                    </div>
+
+                    <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => undefined}>−</button>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs uppercase tracking-wider text-slate-500">Gold</p>
+
+              <button
+                className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded text-[10px] text-amber-500 transition-all uppercase tracking-tighter"
+                onClick={() => undefined}>
+                <Send size={10} /> Senden
+              </button>
+            </div>
+
+            {/* 4. Bereich: Versorgung */}
+            <div className="text-center">
+              <div className="text-xl font-mono font-bold text-amber-500">
+                6000 <span className="text-sm text-amber-500/70">(20)</span>
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">Nahrung (Lange Rasten)</p>
             </div>
           </div>
           <InventoryGrid 
