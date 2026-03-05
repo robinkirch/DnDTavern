@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { InventoryItem } from '@/lib/types';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
@@ -42,10 +42,10 @@ export function SplitItemDialog({ isOpen, onOpenChange, item, onConfirm }: Split
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 text-white">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>"{item.name}" {t('splitting')}</DialogTitle>
-          <p className="text-sm text-slate-400">{t('Current amount')}: {item.quantity}</p>
+          <p className="text-sm">{t('Current amount')}: {item.quantity}</p>
         </DialogHeader>
         
         <Form {...form}>

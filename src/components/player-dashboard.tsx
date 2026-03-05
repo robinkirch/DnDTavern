@@ -29,9 +29,10 @@ import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, deleteCampaign, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -55,20 +56,54 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
 
+   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+  const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
+  const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
+  const showConfirmDialog = (title: string, description: string, action: () => void) => {
+        setConfirmDialogTitle(title);
+        setConfirmDialogDescription(description);
+        setConfirmAction(() => action);
+        setIsConfirmDialogOpen(true);
+    };
+
   useEffect(() => {
     fetchInventoryData();
-    
+    ResetInventoryCapacity();
+  }, []);
+
+   useEffect(() => {   
+    ResetInventoryCapacity();
+  }, [playerBackpack]);
+
+  const ResetInventoryCapacity = () => {
     setinventoryCapacity(
       campaign.inventorySettings.type === "free" ? 9999 : 
-      campaign.inventorySettings.type === "limited" ? (campaign.inventorySettings.defaultSize || 0) : 0
+      (campaign.inventorySettings.type === "limited" ? (campaign.inventorySettings.defaultSize || 0) : 0) + calculateBackpackSize()
     );
-  }, []);
+  }
+
+  const calculateBackpackSize = (bp?: InventoryItem): number => {
+    const itemToProcess = bp || playerBackpack.find(it => it.isCurrentBackpack);
+
+    if (!itemToProcess || itemToProcess.id === "0") return 0;
+
+    try {
+      const meta = typeof itemToProcess.metadata === "string" ? JSON.parse(itemToProcess.metadata) : itemToProcess.metadata;
+        
+      return Number(meta?.slots) || 0;
+    } catch (error) {
+      console.error("Error parsing backpack metadata", error);
+      return 0;
+    }
+  };
 
   const fetchInventoryData = async () => {
     try {
       const data = await getInventory(grimoire.id, campaign.id);
+      const hasBackpack = data.some(item => item.isCurrentBackpack);
       setPlayerInventory([...data]); 
-      setPlayerBackpack([...data.filter(item => item.isBackpack)]);
+      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: "0", name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "",quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber:9999, isLocked:true,isTemporary:true, isFood: false }]);        
 
       const newOtherInventories = [];
       for (const inv of campaign.inventorySettings.additionalInventories) {
@@ -153,9 +188,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   const handleSplitItem = async (item: InventoryItem, splitAmount: number, inventoryName: string | null) => {
     try {
       if (!itemToSplit || !inventoryName) return;
-
-      // Wir nutzen playerName "nobody" oder den aktuellen Besitzer, 
-      // je nachdem ob es ein Gruppen- oder Spieler-Inventar ist.
       const playerName = inventoryName === "default" ? player.username : "nobody"; 
       
       await splitInventoryItem(
@@ -175,19 +207,35 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     }
   };
 
-  const handleDeleteItem = async (item: InventoryItem) => {
-    // Optional: Hier ein Confirm-Dialog einbauen
-    if (!confirm(`Möchtest du ${item.name} wirklich permanent löschen?`)) return;//TODO
-
+  const handleBackPack = async (item: InventoryItem) => {
     try {
-      await deleteInventoryItem(grimoire.id, campaign.id, item.id);
+      await updateBackPack(grimoire.id, campaign.id, item.id, player.username);
       
-      toast({ title: "Item gelöscht", description: `${item.name} wurde entfernt.` });//TODO
+      toast({ title: "Backpack aktualisiert", description: `${item.name} wurde angewendet.` });//TODO
     } catch (error) {
-      toast({ title: "Fehler beim Löschen", variant: "destructive" });//TODO
+      toast({ title: "Fehler beim aktualisieren", variant: "destructive" });//TODO
     } finally {
       await fetchInventoryData();
     }
+  };
+
+  const handleDeleteItem = async (item: InventoryItem) => {
+    showConfirmDialog(
+        t('Delete Item'),
+        t('Are you sure you want to throw this item away?'),
+        async () => {
+          try {
+            await deleteInventoryItem(grimoire.id, campaign.id, item.id);
+            
+            toast({ title: "Item gelöscht", description: `${item.name} wurde entfernt.` });//TODO
+          } catch (error) {
+            toast({ title: "Fehler beim Löschen", variant: "destructive" });//TODO
+          } finally {
+            await fetchInventoryData();
+            setIsConfirmDialogOpen(false);
+          }
+        }
+    );    
   };
 
   //currently without bookmarks
@@ -214,6 +262,19 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
   return (
     <>
+    <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirmDialogTitle}</DialogTitle>
+            <DialogDescription>{confirmDialogDescription}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>{t('Cancel')}</Button>
+            <Button variant="destructive" onClick={() => confirmAction?.()}>{t('Confirm')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
     <AddInventoryItemDialog
         isOpen={isAddOpen}
         onOpenChange={setAddOpen}
@@ -251,36 +312,57 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         <TabsContent value="main" className="space-y-6">
           <div className="flex items-center justify-between p-4 rounded-lg border">
             <div className="flex items-center gap-4">
-              <div className="relative group">
-                <Backpack size={10} style={{padding: "10px"}} className="w-16 h-16 rounded-md border-2 border-amber-500/50 bg-slate-700 object-cover"/>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="absolute -bottom-2 -right-2 bg-amber-500 hover:bg-amber-600 p-1 rounded-full transition-colors">
-                      <ChevronDown size={14} className="text-slate-900" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-slate-800 border-slate-700 text-slate-100">
-                    {playerBackpack.map((bp) => {
-                      const meta = typeof bp.metadata === "string" ? JSON.parse(bp.metadata) : bp.metadata;
-                      const slots = meta?.slots || 0; 
+              {playerBackpack && <>
+                <div className="relative group">
+                  {playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)?.image ? (
+                    <img 
+                      src={playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)!.image!} 
+                      alt={playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)!.name}
+                      className="w-16 h-16 rounded-md border-2 border-amber-500/50 bg-slate-800 object-contain"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-md border-2 border-amber-500/50 bg-slate-700 flex items-center justify-center">
+                      <Backpack size={32} className="text-amber-500/50" />
+                    </div>
+                  )}
 
-                      return (
-                        <DropdownMenuItem 
-                          key={bp.name}
-                          className="flex justify-between gap-8 focus:bg-slate-700"
-                          onClick={() => console.log("Changed to", bp.name)}>
-                          <span>{bp.name}</span>
-                          <span className="text-xs text-slate-400">{slots} {t('Spaces')}</span>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">{"Kein Beutel"}</h3>
-                <p className="text-sm text-slate-400">{t('Extraspaces')}: 0</p>
-              </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="absolute -bottom-2 -right-2 bg-amber-500 hover:bg-amber-600 p-1 rounded-full transition-colors shadow-lg">
+                        <ChevronDown size={14} className="text-slate-900" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    
+                    <DropdownMenuContent className="bg-slate-800 border-slate-700 text-slate-100">
+                      {playerBackpack
+                        .filter((bp: any) => bp.id !== playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack == true)?.id).map((bp: any) => { 
+                          const slots = calculateBackpackSize(bp);
+
+                          return (
+                          <DropdownMenuItem 
+                            key={bp.id || bp.name}
+                            className="flex justify-between gap-8 focus:bg-slate-700 cursor-pointer"
+                            onClick={() => handleBackPack(bp)}
+                          >
+                            <span>{bp.name}</span>
+                            {bp.id !== 0 && (
+                              <span className="text-xs text-slate-400">{slots} {t('Spaces')}</span>
+                            )}
+                          </DropdownMenuItem>
+                        )})}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-lg text-slate-100">
+                    {playerBackpack.find((bp: InventoryItem) => bp.isCurrentBackpack)?.name}
+                  </h3>
+                  <p className="text-sm text-slate-400">
+                    {t('Extraspaces')}: {calculateBackpackSize()}
+                  </p>
+                </div>
+              </>}
             </div>
             <div className="text-right">
               <div className="text-2xl font-mono font-bold text-amber-500">

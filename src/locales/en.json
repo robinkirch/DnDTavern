@@ -446,7 +446,9 @@
     "Split stack": "Split stack",
     "Send to Player": "Send to Player",
     "Move to Inventory": "Move to Inventory",
-    "Crafting": "Crafting"
+    "Crafting": "Crafting",
+    "Delete Item": "Delete Item",
+    "Are you sure you want to throw this item away?": "Are you sure you want to throw this item away?"
 }
 
     

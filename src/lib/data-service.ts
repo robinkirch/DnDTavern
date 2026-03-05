@@ -281,6 +281,15 @@ export const updateItemSlot = async (grimoireId: string, campaignId: string, ite
     }
 };
 
+export const updateBackPack = async (grimoireId: string, campaignId: string, itemId: string, playerName: string) => {
+    try {
+        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${playerName}/backpack`, [itemId]);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to update backpack.');
+    }
+};
+
 
 export async function splitInventoryItem(grimoireId: string, campaignId: string, inventoryName: string, playerName: string, itemId: string, splitAmount: number): Promise<{ message: string, newItemId: string }> {
     try {

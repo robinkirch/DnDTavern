@@ -119,10 +119,7 @@ export default function CampaignsDashboard() {
   };
 
     const handleDeleteCampaign = async (campaignId: string) => {
-        console.log("hallo");
         if (!user) return;
-
-        console.log("hallo1");
         showConfirmDialog(
             t('Remove Campaign'),
             t('Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.'),

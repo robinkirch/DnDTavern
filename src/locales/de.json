@@ -446,5 +446,7 @@
     "Split stack": "Stack teilen",
     "Send to Player": "An Spieler senden",
     "Move to Inventory": "In Beutel verschieben",
-    "Crafting": "Herstellen"
+    "Crafting": "Herstellen",
+    "Delete Item": "Item löschen",
+    "Are you sure you want to throw this item away?": "Bist du sicher das du das Item wegwerfen willst?"
 }
