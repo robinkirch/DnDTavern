@@ -256,6 +256,8 @@ export async function fetchDamageTypes(grimoireId: string): Promise<DamageType[]
 export async function addItemToInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
     try {
         item.image = null;
+        console.log("item");
+        console.log(item);
         const response = await api.post(`/inventories/${grimoireId}/${campaignId}`, item);
         return response.data;
     } catch (error) {
@@ -266,7 +268,41 @@ export async function addItemToInventory(grimoireId: string, campaignId: string,
 export async function getInventory(grimoireId: string, campaignId: string, inventoryName: string = "default"): Promise<InventoryItem[]> {
     try {
         const response = await api.get(`/inventories/${grimoireId}/${campaignId}/${inventoryName}`);
-        return response.data;
+        
+        const da = response.data.map((item: any) => {
+            // Hilfsfunktion zum sicheren Parsen
+            const safeParse = (val: any) => {
+                if (!val) return {};
+                if (typeof val === 'object') return val;
+                try { 
+                    return JSON.parse(val); 
+                } catch (e) { 
+                    return {}; 
+                }
+            };
+
+            // 1. Beide Quellen parsen
+            const baseMeta = safeParse(item.metadata);
+            const customMeta = safeParse(item.customMetadata);
+
+            // 2. Mergen mit dem Spread-Operator
+            // customMeta überschreibt baseMeta bei Namenskollisionen
+            const mergedMeta = { ...baseMeta, ...customMeta };
+
+            return {
+                ...item,
+                // Wir speichern das zusammengeführte Objekt (oder wieder als String, falls nötig)
+                // Die meisten Komponenten arbeiten leichter mit dem Objekt.
+                metadata: mergedMeta, 
+                
+                // Flags explizit nach außen legen für leichten Zugriff
+                isFood: Boolean(mergedMeta.isFood || item.isFood), 
+                foodValue: mergedMeta.food || mergedMeta.foodValue || null,
+                isQuestItem: Boolean(mergedMeta.isQuestItem)
+            };
+        });
+        console.log("Transformiertes Inventar:", da);
+        return da;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to fetch inventory.');
     }

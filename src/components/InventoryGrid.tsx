@@ -11,8 +11,8 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger
 } from "./ui/context-menu";
-import { InventoryItem } from '@/lib/types';
-import { Archive, CircleHelp, Plus, User } from 'lucide-react';
+import { InventoryItem, Recipe, Grimoire, User, Rarity } from '@/lib/types';
+import { Archive, CircleHelp, Plus, User as UserIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CardSelection } from './recipe-card';
 import { 
@@ -43,20 +43,25 @@ function InventoryDropZone({ id, label, icon: Icon }: { id: string, label: strin
 }
 
 // --- Draggable Item Komponente ---
-function DraggableItem({ item }: { item: InventoryItem }) {
+function DraggableItem({ item, recipe, rarities }: { item: InventoryItem, recipe: Recipe, rarities: Rarity[] }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item
   });
-
   const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 };
+
+  const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
+  const isQuestItem = Boolean(meta?.isQuestItem) || false;
+
+  const color = rarities?.find(r => r.id == recipe?.rarityId)?.color ?? "none";
+  const title = rarities?.find(r => r.id == recipe?.rarityId)?.name ?? "-";
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="w-full h-full p-1 relative group cursor-grab active:cursor-grabbing">
        {item.image ? (
-          <img src={item.image} alt={item.name} className="w-full h-full object-contain rounded" />
+          <img src={item.image} alt={item.name} className="w-full h-full object-contain rounded" style={{border: isQuestItem ? "1px solid gold": "none"}}/>
         ) : (
-          <div className="w-full h-full bg-amber-900/20 rounded flex items-center justify-center">
+          <div className="w-full h-full bg-amber-900/20 rounded flex items-center justify-center" style={{border: isQuestItem ? "1px solid gold": "none"}}>
             <CircleHelp size={20} className="text-amber-500/40" />
           </div>
         )}
@@ -66,12 +71,33 @@ function DraggableItem({ item }: { item: InventoryItem }) {
         <span className="absolute top-1.5 right-1.5 bg-background/80 px-1 rounded text-[10px] font-bold border">
           x{item.quantity}
         </span>
+        <span 
+          className="absolute top-1.5 left-1.5 w-2 h-2 rounded-full"
+          style={{ backgroundColor: color }}
+          title={title}
+        />
     </div>
   );
 }
 
+interface InventoryGridProps {
+  capacity: number;
+  items: InventoryItem[];
+  onAddClick: (slot: number) => void;
+  onSplitClick: (item: InventoryItem, inventoryName: string) => void;
+  onMoveItem: (item: InventoryItem, newSlot: number, inventoryName: string) => void;
+  onSendToPlayer: (item: InventoryItem, targetPlayerName: string) => void;
+  onSendToInventory: (item: InventoryItem, targetInvName: string | null) => void;
+  onDeleteItem: (item: InventoryItem) => void;
+  otherInventories: any;
+  campaignPlayers: User[];
+  grimoire: Grimoire;
+  currentInventory?: string;
+}
+
+
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default"}: any) {
+export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default"}: InventoryGridProps) {
   const { t } = useI18n();
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
@@ -153,7 +179,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 key={p.id} 
                 id={`target-player-${p.username}`} 
                 label={`Give to ${p.username}`} 
-                icon={User} 
+                icon={UserIcon} 
               />
             ))}
           </div>
@@ -173,7 +199,13 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onAddClick={onAddClick}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
-                currentInventory={currentInventory} />
+                currentInventory={currentInventory} 
+                recipe={
+                  grimoire.recipes.find((r: any) => 
+                    r.id === items.find((it: any) => it.slotNumber === i && !it.isTemporary)?.originalRecipeId
+                  )
+                }
+                rarities={grimoire.rarities} />
             ))}
           </div>
         </div>
@@ -194,6 +226,8 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory}
+                recipe={grimoire.recipes.find((g: any) => g.id === item.originalRecipeId)}
+                rarities={grimoire.rarities}
                 isTemporary={true} />
             ))
           }
@@ -212,7 +246,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
   );
 }
 
-function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, currentInventory, isTemporary = false }: any) {
+function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, currentInventory, recipe, rarities, isTemporary = false }: any) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ 
     id: index.toString(),
@@ -231,7 +265,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
 
             {item ? (
               <div className="relative z-0 w-full h-full"> 
-                <DraggableItem item={item} />
+                <DraggableItem item={item} recipe={recipe} rarities={rarities} />
               </div> ) : 
               ( !isTemporary && <Plus size={16} className="text-gray-500" />)}
 

@@ -426,7 +426,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             onMoveItem={handleMoveItem} 
             onDeleteItem={handleDeleteItem}
             onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
-            onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
+            onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
             otherInventories={otherInventories} 
             campaignPlayers={otherPlayers} 
             grimoire={grimoire}
@@ -468,14 +468,14 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                 items={inv.items ?? []} 
                 onAddClick={(slot: number) => openAddDialog(inv.name, slot)} 
                 onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
-                onItemClick={(item: InventoryItem) => console.log("Edit Item:", item)} 
                 onMoveItem={handleMoveItem} 
                 onDeleteItem={handleDeleteItem}
                 onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
-                onSendToInventory={(item: InventoryItem, targetInvName: string) => handleMoveToOtherInv(item, targetInvName)}
+                onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
                 otherInventories={otherInventories} 
                 campaignPlayers={[player, ...otherPlayers]} 
                 currentInventory={inv.name}
+                grimoire={grimoire}
               />
             </TabsContent>
           ))}
