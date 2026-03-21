@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-import type { Campaign, InventoryItem, Grimoire } from '@/lib/types';
+import type { Campaign, InventoryItem, Grimoire, UserCampaignInventory } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { useI18n } from '@/context/i18n-context';
 import { updateCampaign } from '@/lib/data-service';
@@ -36,8 +36,8 @@ export function PlayerInventory({ campaign, setCampaign, grimoire }: PlayerInven
 
     if (!user) return null;
 
-    const userInventoryData = campaign.userInventories[user.username];
-    const userInventory = userInventoryData?.items || [];
+    const userInventoryData: any = campaign.userInventories?.[user.username as any] ?? [];
+    const userInventory: InventoryItem[] = userInventoryData?.items || [];
     const inventorySize = userInventoryData?.maxSize ?? campaign.inventorySettings.defaultSize;
     const isLimited = campaign.inventorySettings.type === 'limited' && inventorySize !== undefined;
     const isInventoryFull = isLimited && userInventory.length >= inventorySize;
@@ -58,7 +58,7 @@ export function PlayerInventory({ campaign, setCampaign, grimoire }: PlayerInven
             userInventories: {
                 ...campaign.userInventories,
                 [user.username]: {
-                    ...campaign.userInventories[user.username],
+                    ...userInventoryData,
                     items: updatedInventory
                 }
             }
@@ -77,7 +77,7 @@ export function PlayerInventory({ campaign, setCampaign, grimoire }: PlayerInven
             userInventories: {
                 ...campaign.userInventories,
                 [user.username]: {
-                    ...campaign.userInventories[user.username],
+                    ...userInventoryData,
                     items: updatedInventory
                 }
             }

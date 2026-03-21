@@ -13,7 +13,7 @@ import {
 } from "./ui/context-menu";
 import { InventoryItem, Recipe, Grimoire, User, Rarity } from '@/lib/types';
 import { Archive, CircleHelp, Plus, User as UserIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CardSelection } from './recipe-card';
 import { 
   Dialog, 
@@ -43,15 +43,17 @@ function InventoryDropZone({ id, label, icon: Icon }: { id: string, label: strin
 }
 
 // --- Draggable Item Komponente ---
-function DraggableItem({ item, recipe, rarities }: { item: InventoryItem, recipe: Recipe, rarities: Rarity[] }) {
+function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: InventoryItem, recipe: Recipe, rarities: Rarity[], showFoodInfo: boolean }) {
+  const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item
   });
   const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 };
-
+  
   const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
   const isQuestItem = Boolean(meta?.isQuestItem) || false;
+  const foodLevel: string = (showFoodInfo || item.id == "-9999") ? meta.food ?? 0 : "";
 
   const color = rarities?.find(r => r.id == recipe?.rarityId)?.color ?? "none";
   const title = rarities?.find(r => r.id == recipe?.rarityId)?.name ?? "-";
@@ -69,8 +71,13 @@ function DraggableItem({ item, recipe, rarities }: { item: InventoryItem, recipe
           {item.name}
         </span>
         <span className="absolute top-1.5 right-1.5 bg-background/80 px-1 rounded text-[10px] font-bold border">
-          x{item.quantity}
+          {item.id == "-9999" ? (<>{foodLevel} {t("Food")}</>) : (<>x{item.quantity}</>)}
         </span>
+        {showFoodInfo &&
+          <span className="absolute right-1.5 bg-background/80 px-1 rounded text-[10px] font-bold border" style={{top: "25px"}}>
+            pro {foodLevel}
+          </span>
+        }
         <span 
           className="absolute top-1.5 left-1.5 w-2 h-2 rounded-full"
           style={{ backgroundColor: color }}
@@ -93,15 +100,25 @@ interface InventoryGridProps {
   campaignPlayers: User[];
   grimoire: Grimoire;
   currentInventory?: string;
+  inventoryType?: 'normal' | 'food' | 'currentEquipment'
 }
 
 
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default"}: InventoryGridProps) {
+export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
   const { t } = useI18n();
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+
+  const filledSlotsCount = items.filter(it => !it.isTemporary).length;
+  
+  const displaySize = useMemo(() => {
+    if (capacity < 50) 
+      return capacity;
+    return Math.min(Math.max(50, filledSlotsCount + 1), capacity);
+  }, [filledSlotsCount, capacity]);
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveItem(event.active.data.current as InventoryItem);
   };
@@ -131,6 +148,19 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
       }
     }
   };
+
+  const foodLevel = (item: InventoryItem) => {
+      const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
+      return (Number(meta.food) || 0);
+    };
+
+  if(inventoryType == 'food'){
+    var newSlotNumber = 0;
+    items.forEach(i => {
+      i.slotNumber = newSlotNumber;
+      newSlotNumber++;
+    });
+  }
 
   return (
     <>
@@ -185,7 +215,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
           </div>
 
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-            {Array.from({ length: capacity }).map((_, i) => (
+            {Array.from({ length: displaySize }).map((_, i) => (
               <GridCell 
                 key={i} 
                 index={i} 
@@ -205,7 +235,8 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                     r.id === items.find((it: any) => it.slotNumber === i && !it.isTemporary)?.originalRecipeId
                   )
                 }
-                rarities={grimoire.rarities} />
+                rarities={grimoire.rarities}
+                showFoodInfo={inventoryType == 'food'} />
             ))}
           </div>
         </div>
@@ -246,7 +277,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
   );
 }
 
-function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, currentInventory, recipe, rarities, isTemporary = false }: any) {
+function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, currentInventory, recipe, rarities, isTemporary = false, showFoodInfo=  false }: any) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ 
     id: index.toString(),
@@ -256,7 +287,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger disabled={!item}>
+        <ContextMenuTrigger disabled={!item || item.id < -100}>
           <div ref={setNodeRef} className={`aspect-square rounded-md flex items-center justify-center border-2 transition-all relative overflow-hidden
             ${item ? 'border-amber-900/40 bg-amber-900/5' : 'border-gray-500 border-dashed'}
             ${isOver && !isTemporary ? 'bg-amber-500/20 border-amber-500' : ''}
@@ -265,7 +296,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
 
             {item ? (
               <div className="relative z-0 w-full h-full"> 
-                <DraggableItem item={item} recipe={recipe} rarities={rarities} />
+                <DraggableItem item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} />
               </div> ) : 
               ( !isTemporary && <Plus size={16} className="text-gray-500" />)}
 

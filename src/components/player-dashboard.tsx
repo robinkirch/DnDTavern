@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger 
 } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
-
+import foodImage from '../images/food.jpg';
 import { useAuth } from '../context/auth-context';
 import { LogOut, User as UserIcon, Languages, Info } from 'lucide-react';
 import Link from 'next/link';
@@ -56,8 +56,8 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != player.username); 
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
-
-   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const FreeItemSpaces = 9999;
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
   const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
   const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
@@ -73,13 +73,23 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     ResetInventoryCapacity();
   }, []);
 
-   useEffect(() => {   
+  useEffect(() => {   
     ResetInventoryCapacity();
   }, [playerBackpack]);
 
+  const foodLevel = useMemo(() => {
+    return playerInventory
+      .filter(i => (i.inventoryName === null || i.inventoryName === "default") && i.isFood)
+      .reduce((sum, item) => {
+        const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
+        return sum + ((Number(item.quantity) || 1) * (Number(meta.food)) || 0);
+      }, 0);
+  }, [playerInventory]);
+
+
   const ResetInventoryCapacity = () => {
     setinventoryCapacity(
-      campaign.inventorySettings.type === "free" ? 9999 : 
+      campaign.inventorySettings.type === "free" ? FreeItemSpaces : 
       (campaign.inventorySettings.type === "limited" ? (campaign.inventorySettings.defaultSize || 0) : 0) + calculateBackpackSize()
     );
   }
@@ -103,8 +113,15 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     try {
       const data = await getInventory(grimoire.id, campaign.id);
       const hasBackpack = data.some(item => item.isCurrentBackpack);
-      setPlayerInventory([...data]); 
-      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: "0", name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "",quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber:9999, isLocked:true,isTemporary:true, isFood: false }]);        
+      var food = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood);
+      if(food.length >= 1){
+        const foodItem = {id: "-9999", name: "Food", isBackpack: false, isCurrentBackpack: false, image: foodImage ? (foodImage as any).src || foodImage : null, metadata: `{"isFood":false,"food":"${foodLevel}"}`, originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: "0", isCustom: true, inventoryName: "default", slotNumber:food[0].slotNumber, isLocked:true, isTemporary:false, isFood: false };
+        setPlayerInventory([...data, foodItem]); 
+      }
+      else{
+        setPlayerInventory([...data]); 
+      }
+      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: "-10000", name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber:-10000, isLocked:true,isTemporary:true, isFood: false }]);        
 
       const newOtherInventories = [];
       for (const inv of campaign.inventorySettings.additionalInventories) {
@@ -413,14 +430,14 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             {/* 4. Bereich: Versorgung */}
             <div className="text-center">
               <div className="text-xl font-mono font-bold text-amber-500">
-                6000 <span className="text-sm text-amber-500/70">(20)</span>
+                {foodLevel} <span className="text-sm text-amber-500/70">({Math.floor(foodLevel/30)})</span>
               </div>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Nahrung (Lange Rasten)</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{t("Food")} ({t("Long Rests")})</p>
             </div>
           </div>
           <InventoryGrid 
             capacity={getInventoryCapacity} 
-            items={playerInventory.filter(i => i.inventoryName === null || i.inventoryName == "default")} 
+            items={playerInventory.filter(i => (i.inventoryName === null || i.inventoryName == "default") && !i.isFood)} 
             onAddClick={(slot: number) => openAddDialog(null, slot)}
             onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
             onMoveItem={handleMoveItem} 
@@ -430,6 +447,24 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
             otherInventories={otherInventories} 
             campaignPlayers={otherPlayers} 
             grimoire={grimoire}
+            inventoryType='normal'
+          />
+
+          <hr className="my-8" />
+
+          <InventoryGrid 
+            capacity={9999} 
+            items={playerInventory.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood)} 
+            onAddClick={(slot: number) => openAddDialog(null, slot)}
+            onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
+            onMoveItem={handleMoveItem} 
+            onDeleteItem={handleDeleteItem}
+            onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
+            onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
+            otherInventories={otherInventories} 
+            campaignPlayers={otherPlayers} 
+            grimoire={grimoire}
+            inventoryType='food'
           />
 
           <hr className="my-8" />
