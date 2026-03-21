@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
-  Plus, 
   Package, 
   ChevronDown, 
   Backpack, 
@@ -10,7 +9,9 @@ import {
   Check,
   X,
   Circle,
-  Send
+  Send,
+  UtensilsCrossed,
+  KeySquare
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -21,19 +22,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import foodImage from '../images/food.jpg';
 import { useAuth } from '../context/auth-context';
-import { LogOut, User as UserIcon, Languages, Info } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useI18n } from '../context/i18n-context';
 import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, deleteCampaign, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -85,7 +83,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         return sum + ((Number(item.quantity) || 1) * (Number(meta.food)) || 0);
       }, 0);
   }, [playerInventory]);
-
 
   const ResetInventoryCapacity = () => {
     setinventoryCapacity(
@@ -288,6 +285,28 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     { key: "copper", label: "Kupfer", short: "K", color: "#B87333" },
   ];
 
+  const categorizedItems = useMemo(() => {
+    const food: InventoryItem[] = [];
+    const normal: InventoryItem[] = [];
+    const keys: InventoryItem[] = [];
+
+    playerInventory.forEach((item) => {
+      if (item.inventoryName !== null && item.inventoryName !== "default") return;
+
+      const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
+
+      if (item.isFood) {
+        food.push(item);
+      } else if (meta?.isKey) {
+        keys.push(item);
+      } else {
+        normal.push(item);
+      }
+    });
+
+    return { food, normal, keys };
+  }, [playerInventory]);
+
   return (
     <>
     <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
@@ -437,7 +456,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
           </div>
           <InventoryGrid 
             capacity={getInventoryCapacity} 
-            items={playerInventory.filter(i => (i.inventoryName === null || i.inventoryName == "default") && !i.isFood)} 
+            items={categorizedItems.normal}
             onAddClick={(slot: number) => openAddDialog(null, slot)}
             onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
             onMoveItem={handleMoveItem} 
@@ -451,24 +470,74 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
           />
 
           <hr className="my-8" />
+          
+          {categorizedItems.food.length > 0 &&
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="food-bag" className="border-b">
+                <AccordionTrigger className="hover:no-underline py-5">
+                  <div className="flex items-center gap-2">
+                    <UtensilsCrossed size={14} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider">
+                      {t("Food")} {t("Bag")}
+                    </h4>
+                  </div>
+                </AccordionTrigger>
+                
+                <AccordionContent>
+                  <div className="text-sm">
+                    <InventoryGrid 
+                      capacity={9999} 
+                      items={categorizedItems.food}
+                      onAddClick={(slot: number) => openAddDialog(null, slot)}
+                      onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
+                      onMoveItem={handleMoveItem} 
+                      onDeleteItem={handleDeleteItem}
+                      onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
+                      onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
+                      otherInventories={otherInventories} 
+                      campaignPlayers={otherPlayers} 
+                      grimoire={grimoire}
+                      inventoryType='food'
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          }
 
-          <InventoryGrid 
-            capacity={9999} 
-            items={playerInventory.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood)} 
-            onAddClick={(slot: number) => openAddDialog(null, slot)}
-            onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
-            onMoveItem={handleMoveItem} 
-            onDeleteItem={handleDeleteItem}
-            onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
-            onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
-            otherInventories={otherInventories} 
-            campaignPlayers={otherPlayers} 
-            grimoire={grimoire}
-            inventoryType='food'
-          />
-
-          <hr className="my-8" />
-
+          {categorizedItems.keys.length > 0 &&
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="key-bag" className="border-b">
+                <AccordionTrigger className="hover:no-underline py-5">
+                  <div className="flex items-center gap-2">
+                    <KeySquare size={14} />
+                    <h4 className="text-xs font-bold uppercase tracking-wider">
+                      {t("Key")} {t("Bag")}
+                    </h4>
+                  </div>
+                </AccordionTrigger>
+                
+                <AccordionContent>
+                  <div className="text-sm">
+                    <InventoryGrid 
+                      capacity={9999} 
+                      items={categorizedItems.keys}
+                      onAddClick={(slot: number) => openAddDialog(null, slot)}
+                      onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
+                      onMoveItem={handleMoveItem} 
+                      onDeleteItem={handleDeleteItem}
+                      onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
+                      onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
+                      otherInventories={otherInventories} 
+                      campaignPlayers={otherPlayers} 
+                      grimoire={grimoire}
+                      inventoryType='key'
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          }
           <div className="p-4 rounded-xl border">
             <h4 className="text-xs font-bold uppercase mb-4 flex items-center gap-2">
               <Shield size={14} /> {t('Active Equipment')}

@@ -100,7 +100,7 @@ interface InventoryGridProps {
   campaignPlayers: User[];
   grimoire: Grimoire;
   currentInventory?: string;
-  inventoryType?: 'normal' | 'food' | 'currentEquipment'
+  inventoryType?: 'normal' | 'food' | 'currentEquipment' | 'key'
 }
 
 
@@ -114,9 +114,9 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
   const filledSlotsCount = items.filter(it => !it.isTemporary).length;
   
   const displaySize = useMemo(() => {
-    if (capacity < 50) 
+    if (capacity < 15) 
       return capacity;
-    return Math.min(Math.max(50, filledSlotsCount + 1), capacity);
+    return Math.min(Math.max(15, filledSlotsCount + 1), capacity);
   }, [filledSlotsCount, capacity]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -149,12 +149,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
     }
   };
 
-  const foodLevel = (item: InventoryItem) => {
-      const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
-      return (Number(meta.food) || 0);
-    };
-
-  if(inventoryType == 'food'){
+  if(inventoryType == 'food' || inventoryType == 'key') {
     var newSlotNumber = 0;
     items.forEach(i => {
       i.slotNumber = newSlotNumber;
@@ -226,7 +221,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onSendToInventory={onSendToInventory}
                 onDeleteItem={onDeleteItem}
                 onSplitClick={onSplitClick}
-                onAddClick={onAddClick}
+                onAddClick={(inventoryType == 'food' || inventoryType == 'key') ? null : onAddClick}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory} 
@@ -238,6 +233,21 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 rarities={grimoire.rarities}
                 showFoodInfo={inventoryType == 'food'} />
             ))}
+             {(inventoryType == 'food' || inventoryType == 'key') &&
+              <GridCell 
+                key={`add-field-${inventoryType}`}
+                index={99999} 
+                item={null}
+                onSendToPlayer={null} 
+                onSendToInventory={null}
+                onDeleteItem={null}
+                onSplitClick={null}
+                onAddClick={onAddClick}
+                onModalOpen={setIsItemModalOpen}
+                onDetailItem={setActiveDetailItem}
+                currentInventory={currentInventory} 
+                rarities={grimoire.rarities} />
+            }
           </div>
         </div>
         <div className="space-y-4">
@@ -287,9 +297,9 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger disabled={!item || item.id < -100}>
+        <ContextMenuTrigger disabled={!item || item.id < -100 }>
           <div ref={setNodeRef} className={`aspect-square rounded-md flex items-center justify-center border-2 transition-all relative overflow-hidden
-            ${item ? 'border-amber-900/40 bg-amber-900/5' : 'border-gray-500 border-dashed'}
+            ${item ? 'border-amber-900/40 bg-amber-900/5' : onAddClick != null ? 'border-gray-500 border-dashed cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5' : 'border-gray-500 border-dashed hover:border-amber-500/50 hover:bg-amber-500/5'}
             ${isOver && !isTemporary ? 'bg-amber-500/20 border-amber-500' : ''}
             ${isTemporary ? 'border-gray-600 bg-slate-950/50' : ''}`}
             onClick={() => (!item && !isTemporary) && onAddClick(index)}>
@@ -298,7 +308,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
               <div className="relative z-0 w-full h-full"> 
                 <DraggableItem item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} />
               </div> ) : 
-              ( !isTemporary && <Plus size={16} className="text-gray-500" />)}
+              ( !isTemporary && onAddClick != null && <Plus size={16} className="text-gray-500" />)}
 
                 {isTemporary && (
                   <>

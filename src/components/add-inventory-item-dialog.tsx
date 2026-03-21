@@ -34,6 +34,7 @@ const customItemSchema = z.object({
   isFood: z.boolean().default(false),
   foodValue: z.string().optional(),
   isQuestItem: z.boolean().default(false),
+  isKey: z.boolean().default(false),
 });
 
 interface AddInventoryItemDialogProps {
@@ -59,6 +60,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
   });
   
   const isFoodChecked = customForm.watch('isFood');
+  const isKeyChecked = customForm.watch('isKey');
 
   // Grimoire Submit
   const handleGrimoireSubmit = async (values: z.infer<typeof grimoireItemSchema>) => {
@@ -93,7 +95,8 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
   const metadataObj = {
     isQuestItem: values.isQuestItem,
     isFood: values.isFood,
-    food: values.isFood ? values.foodValue : null
+    food: values.isFood ? values.foodValue : null,
+    isKey: values.isKey
   };
 
   const newItem: InventoryItem = {
@@ -122,7 +125,8 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
     value: '',
     isFood: false,
     foodValue: '1',
-    isQuestItem: false
+    isQuestItem: false,
+    isKey: false
   });
 };
 
@@ -192,15 +196,41 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
                         )} />
                         <div className="space-y-4">
                           <div className="flex flex-row gap-6 py-2">
+                            {t("ItemIs")}
                             <FormField
                               control={customForm.control}
                               name="isFood"
                               render={({ field }) => (
                                 <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                                   <FormControl>
-                                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={(checked) => {
+                                        field.onChange(checked);
+                                        if (checked) customForm.setValue('isKey', false);
+                                      }} 
+                                    />
                                   </FormControl>
-                                  <FormLabel className="cursor-pointer">Is Food</FormLabel>
+                                  <FormLabel className="cursor-pointer">{t("Food")}</FormLabel>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={customForm.control}
+                              name="isKey"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <Checkbox 
+                                      checked={field.value} 
+                                      onCheckedChange={(checked) => {
+                                        field.onChange(checked);
+                                        if (checked) customForm.setValue('isFood', false);
+                                      }} 
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="cursor-pointer">{t("Key")}</FormLabel>
                                 </FormItem>
                               )}
                             />
@@ -213,7 +243,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
                                   <FormControl>
                                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                   </FormControl>
-                                  <FormLabel className="cursor-pointer">Quest Item</FormLabel>
+                                  <FormLabel className="cursor-pointer">{t("QuestItem")}</FormLabel>
                                 </FormItem>
                               )}
                             />
@@ -225,12 +255,12 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
                               name="foodValue"
                               render={({ field }) => (
                                 <FormItem className="animate-in fade-in slide-in-from-top-1">
-                                  <FormLabel>Food Supply Value</FormLabel>
+                                  <FormLabel>{t("Food Supply Value")}</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="e.g., 1 or 2" />
+                                    <Input {...field} placeholder={t("e.g., 1 or 2")} />
                                   </FormControl>
                                   <FormDescription className="text-xs">
-                                    How many supply points does this item provide?
+                                    {t("How many supply points does this item provide?")}
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>

@@ -493,5 +493,12 @@
     "Quest updated": "Quest aktualisiert",
     "New Board": "Neues Bord",
     "Food": "Nahrung",
-    "Long Rests": "Lange Rasten"
+    "Long Rests": "Lange Rasten",
+    "Key": "Schlüssel",
+    "Bag": "Tasche",
+    "ItemIs": "Item ist:",
+    "QuestItem": "Quest-Item",
+    "Food Supply Value": "Nahrungswert",
+    "e.g., 1 or 2": "bspw. 1 oder 15",
+    "How many supply points does this item provide?": "Wieviele Versorgungspunkte stellt das Item bereit?"
 }
