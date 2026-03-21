@@ -66,6 +66,13 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
         setIsConfirmDialogOpen(true);
     };
 
+
+  const IDS = {
+    Money: "-9998",
+    Food: "-9999",
+    StandardBag: "-10000",
+  }
+
   useEffect(() => {
     fetchInventoryData();
     ResetInventoryCapacity();
@@ -112,13 +119,13 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
       const hasBackpack = data.some(item => item.isCurrentBackpack);
       var food = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood);
       if(food.length >= 1){
-        const foodItem = {id: "-9999", name: "Food", isBackpack: false, isCurrentBackpack: false, image: foodImage ? (foodImage as any).src || foodImage : null, metadata: `{"isFood":false,"food":"${foodLevel}"}`, originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: "0", isCustom: true, inventoryName: "default", slotNumber:food[0].slotNumber, isLocked:true, isTemporary:false, isFood: false };
+        const foodItem = {id: IDS.Food, name: "Food", isBackpack: false, isCurrentBackpack: false, image: foodImage ? (foodImage as any).src || foodImage : null, metadata: `{"isFood":false,"food":"${foodLevel}"}`, originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: "0", isCustom: true, inventoryName: "default", slotNumber:food[0].slotNumber, isLocked:true, isTemporary:false, isFood: false };
         setPlayerInventory([...data, foodItem]); 
       }
       else{
         setPlayerInventory([...data]); 
       }
-      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: "-10000", name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber:-10000, isLocked:true,isTemporary:true, isFood: false }]);        
+      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: IDS.StandardBag, name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber:-10000, isLocked:true,isTemporary:true, isFood: false }]);        
 
       const newOtherInventories = [];
       for (const inv of campaign.inventorySettings.additionalInventories) {
@@ -129,6 +136,19 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     } catch (error) {
       console.error("Fehler beim Refreshen", error);
     }
+  };
+
+  const handleChangedMoney = async (newItem: InventoryItem) => {
+    // try {
+    //   await addItemToInventory(grimoire.id, campaign.id, newItem);
+    //   setAddOpen(false); 
+      
+    //   toast({ title: t('Item Added') });
+
+    //   await fetchInventoryData(); 
+    // } catch (error) {
+    //   toast({ title: t('Error'), variant: "destructive" });
+    // }
   };
 
   const handleAddItem = async (newItem: InventoryItem) => {
@@ -285,6 +305,24 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     { key: "copper", label: "Kupfer", short: "K", color: "#B87333" },
   ];
 
+  const [localCoins, setLocalCoins] = useState({ Gold: 0, Silver: 0, Copper: 0 });
+  // 2. Debounce-Effekt
+  useEffect(() => {
+    // Starte einen Timer
+    const timer = setTimeout(() => {
+      // Erst hier rufen wir die teure Funktion auf (z.B. API oder Inventory-Update)
+      // handleSyncCoinsWithInventory(localCoins);
+      console.log(localCoins);
+    }, 800); // 800ms warten, nachdem der Nutzer aufgehört hat
+
+    // Cleanup: Wenn der Nutzer innerhalb der 800ms wieder klickt, löschen wir den alten Timer
+    return () => clearTimeout(timer);
+  }, [localCoins]);
+
+  // 3. UI Funktionen (blitzschnell, da nur lokaler State)
+  const adjustCoin = (key:any, amount:any) => {
+    setLocalCoins(prev => ({ ...prev, [key]: Math.max(0, prev[key] + amount) }));
+  };
   const categorizedItems = useMemo(() => {
     const food: InventoryItem[] = [];
     const normal: InventoryItem[] = [];
@@ -422,28 +460,24 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
               <p className="text-[10px] uppercase tracking-wider text-slate-500 mt-1">Münzen</p>
               <div className="flex items-center gap-1 mb-1">
                 {COINS.map(({ key, label, color }) => (
-                  <div key={key} className="flex flex-col items-center rounded border border-slate-700 overflow-hidden"style={{ borderColor: `${color}33` }}>
-                    <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => undefined}>+</button>
-                    
+                  <div key={key} className="flex flex-col items-center rounded border border-slate-700 overflow-hidden" style={{ borderColor: `${color}33` }}>
+                    <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => adjustCoin(key, 1)}> + </button>
                     <div className="flex items-center px-1.5 gap-0.5">
                       <input type="number"
                         className="w-7 bg-transparent text-right text-sm font-mono font-bold outline-none text-slate-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         style={{ color }}
-                        value={0}
-                        onChange={() => undefined}/>
-                      <span className="inline-block text-[10px] font-black pl-2" style={{ color }}> {label[0]} </span>
+                        value={localCoins[key as keyof typeof localCoins]} 
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10) || 0;
+                          setLocalCoins(prev => ({ ...prev, [key]: Math.max(0, val) }));
+                        }}
+                      />
+                      <span className="inline-block text-[10px] font-black opacity-70" style={{ color }}>{label[0]}</span>
                     </div>
-
-                    <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => undefined}>−</button>
+                    <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => adjustCoin(key, -1)}> − </button>
                   </div>
                 ))}
               </div>
-
-              <button
-                className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded text-[10px] text-amber-500 transition-all uppercase tracking-tighter"
-                onClick={() => undefined}>
-                <Send size={10} /> Senden
-              </button>
             </div>
 
             {/* 4. Bereich: Versorgung */}
