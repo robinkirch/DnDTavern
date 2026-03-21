@@ -1,12 +1,12 @@
 'use client';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 import { useAuth } from '@/context/auth-context';
-import { getCampaignById, getGrimoireById, getGrimoireByIdAsPlayer, updateCampaign, updateCampaignSettings } from '@/lib/data-service';
+import { getCampaignById, getCampaignsForUser, getGrimoireById, getGrimoireByIdAsPlayer, updateCampaign, updateCampaignSettings } from '@/lib/data-service';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/context/i18n-context';
@@ -41,11 +41,38 @@ export default function CampaignPage() {
 	const [isSavingNotes, setIsSavingNotes] = useState(false);
 	const [isEditDialogOpen, setEditDialogOpen] = useState(false);
 
-	useEffect(() => {
-		if (!authLoading && !user) {
-			router.push('/login');
+	const pathname = usePathname();
+
+  	useEffect(() => {
+		const isPublicPage = pathname === '/login' || pathname === '/register';
+		if (isPublicPage) return;
+
+		const checkAccess = async () => {
+			if (!user) return;
+
+			try {
+				const campaigns = await getCampaignsForUser(user);
+				if (campaigns === undefined) {
+					router.push('/login');
+				}
+			} catch (error) {
+				toast({ 
+					title: t('Error'), 
+					description: "Session expired. Please log in again.", 
+					variant: 'destructive' 
+				});
+				router.push('/login');
+			}
+		};
+
+		if (!loading) {
+			if (!user) {
+				router.push('/login');
+			} else {
+				checkAccess();
+			}
 		}
-	}, [user, authLoading, router]);
+	}, [user, loading, router, pathname]);
 
 	useEffect(() => {
 		const campaignId = params.id as string;
@@ -247,7 +274,7 @@ export default function CampaignPage() {
 							</TabsContent>
 
 							<TabsContent value="quest" className="mt-6">
-								<QuestBoard />
+								<QuestBoard campaignId={campaign.id} grimoireId={grimoire?.id}/>
 							</TabsContent>
 
 							<TabsContent value="dm-log" className="mt-6">

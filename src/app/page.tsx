@@ -1,23 +1,52 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import CampaignsDashboard from '@/components/campaigns-dashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
 import { useI18n } from '@/context/i18n-context';
+import { getCampaignsForUser } from '@/lib/data-service';
+import { toast } from '@/hooks/use-toast';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { t } = useI18n();
 
+  const pathname = usePathname();
+
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+      const isPublicPage = pathname === '/login' || pathname === '/register';
+      if (isPublicPage) return;
+
+      const checkAccess = async () => {
+          if (!user) return;
+
+          try {
+              const campaigns = await getCampaignsForUser(user);
+              if (campaigns === undefined) {
+                  router.push('/login');
+              }
+          } catch (error) {
+              toast({ 
+                  title: t('Error'), 
+                  description: "Session expired. Please log in again.", 
+                  variant: 'destructive' 
+              });
+              router.push('/login');
+          }
+      };
+
+    if (!loading) {
+        if (!user) {
+            router.push('/login');
+        } else {
+            checkAccess();
+        }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
 
   if (loading || !user) {
     return (

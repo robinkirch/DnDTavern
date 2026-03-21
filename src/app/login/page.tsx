@@ -14,6 +14,8 @@ import { useI18n } from '@/context/i18n-context';
 
 // Import the new API service functions
 import { checkUsernameExists } from '../../lib/authService';
+import { getCampaignsForUser } from '@/lib/data-service';
+import { toast } from '@/hooks/use-toast';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -63,6 +65,31 @@ export default function LoginPage() {
     useEffect(() => {
         if (!loading && user) {
             router.push('/');
+        }
+    }, [user, loading, router]);
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (!user) return;
+
+            try {
+                const campaigns = await getCampaignsForUser(user);
+                if (campaigns !== undefined) {
+                     router.push('/');
+                }
+            } catch (error) {
+                toast({ 
+                    title: t('Error'), 
+                    description: "Session expired. Please log in again.", 
+                    variant: 'destructive' 
+                });
+                router.push('/login');
+            }
+        };
+
+        // 2. Logik-Entscheidung
+        if (!loading) {
+            checkAccess();
         }
     }, [user, loading, router]);
 
