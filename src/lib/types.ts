@@ -109,6 +109,7 @@ export interface Campaign {
   sessionNotesDate?: string | null;
   bestiary: Monster[];
   notes: Note[];
+  userInventories: InventoryItem[] | undefined;
   
   // New properties for advanced settings
   inventorySettings: {
@@ -247,4 +248,21 @@ export interface DamageType {
   id: number;
   name: string;
   category: string;
+}
+
+export interface Questboard {
+    id: string;
+    campaignId: string;
+    cityName: string;
+    quests: Quest[];
+}
+
+export interface Quest {
+    id: string;
+    questBoardId: string;
+    name: string;
+    description: string | null;
+    type: 'guild' |'personal' | 'main' | 'other';
+    reward: string;
+    status: 'accepted' | 'done' | 'declined' | 'none';
 }

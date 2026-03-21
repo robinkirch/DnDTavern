@@ -22,9 +22,11 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { useRouter } from 'next/navigation';
 
 export default function CampaignsDashboard() {
     const { user } = useAuth();
+    const router = useRouter();
     const { t } = useI18n();
     const { toast } = useToast();
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -44,6 +46,29 @@ export default function CampaignsDashboard() {
         setConfirmAction(() => action);
         setIsConfirmDialogOpen(true);
     };
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            try{
+                const campaign = await getCampaignsForUser(user!);
+                if(campaign == undefined){
+                     router.push('/login');
+                }
+            } catch {
+                toast({ 
+                    title: t('Error'), 
+                    description: "Failed to verify. Please log out and in again", 
+                    variant: 'destructive' 
+                });
+            }
+        }
+        if (!isLoading && !user) {
+            router.push('/login');
+        }
+        else{
+            checkAccess();
+        }
+    }, [user, isLoading, router]);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -92,7 +117,6 @@ export default function CampaignsDashboard() {
             setCreateDialogOpen(false);
             toast({ title: t('Campaign Created'), description: t('The new campaign has been successfully created.') });
         } catch (error) {
-            console.error('Failed to create campaign:', error);
             toast({ 
                 title: t('Error'), 
                 description: t('Failed to create the campaign.'), 
@@ -109,7 +133,6 @@ export default function CampaignsDashboard() {
         setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
         toast({ title: t('Campaign Copied'), description: t('The campaign was successfully copied.') });
     } catch (error) {
-        console.error('Failed to copy campaign:', error);
         toast({ 
             title: t('Error'),
             description: t('Failed to copy the campaign.'),

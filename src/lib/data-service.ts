@@ -1,4 +1,4 @@
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign, UserDTO } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign, UserDTO, Questboard, Quest } from './types';
 import api from './api';
 import { CampaignUpdateData } from '@/components/edit-campaign-dialog';
 
@@ -13,13 +13,16 @@ export async function getCampaignsForUser(user: User): Promise<Campaign[]> {
     }
 }
 
-export async function getCampaignById(id: string): Promise<Campaign | null> {
+export async function getCampaignById(id: string): Promise<Campaign | null | undefined> {
     try {
         const response = await api.get(`/campaigns/${id}`);
         return response.data;
     } catch (error) {
         if ((error as any).response?.status === 404) {
             return null;
+        }
+        if ((error as any).response?.status === 403) {
+            return undefined;
         }
         throw (error as any).response?.data || new Error('Failed to fetch campaign.');
     }
@@ -251,13 +254,66 @@ export async function fetchDamageTypes(grimoireId: string): Promise<DamageType[]
     }
 }
 
+// --- QUEST SERVICE
+
+export async function getAllQuestBoards(grimoireId: string, campaignId: string): Promise<Questboard[]> {
+    try {
+        const response = await api.get(`/quests/${grimoireId}/${campaignId}`);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to get Questboards.');
+    }
+}
+
+export async function addQuestBoard(grimoireId: string, campaignId: string, board: Questboard): Promise<void> {
+    try {
+        const response = await api.post(`/quests/${grimoireId}/${campaignId}`, board);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to add Questboard.');
+    }
+}
+
+export async function deleteQuestboard(grimoireId: string,campaignId: string, boardId: string): Promise<void> {
+    try {
+        await api.delete(`/quests/${grimoireId}/${campaignId}/${boardId}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to delete questboard.');
+    }
+}
+
+export async function addQuest(grimoireId: string, boardId: string, quest: Quest): Promise<void> {
+    try {
+        const response = await api.post(`/quests/quest/${grimoireId}/${boardId}`, quest);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to add quest.');
+    }
+}
+
+export async function deleteQuest(grimoireId: string, boardId: string, questid: string): Promise<void> {
+    try {
+        await api.delete(`/quests/quest/${grimoireId}/${boardId}/${questid}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to delete quest.');
+    }
+}
+
+export async function updateQuest(grimoireId: string, boardId: string, quest: Quest): Promise<void> {
+    try {
+        console.log("b", boardId);
+        const response = await api.put(`/quests/quest/${grimoireId}/${boardId}`, quest);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to update quest.');
+    }
+}
+
 // --- INVENTORY SERVICE
 
 export async function addItemToInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
     try {
         item.image = null;
-        console.log("item");
-        console.log(item);
         const response = await api.post(`/inventories/${grimoireId}/${campaignId}`, item);
         return response.data;
     } catch (error) {
@@ -270,7 +326,6 @@ export async function getInventory(grimoireId: string, campaignId: string, inven
         const response = await api.get(`/inventories/${grimoireId}/${campaignId}/${inventoryName}`);
         
         const da = response.data.map((item: any) => {
-            // Hilfsfunktion zum sicheren Parsen
             const safeParse = (val: any) => {
                 if (!val) return {};
                 if (typeof val === 'object') return val;
@@ -281,27 +336,19 @@ export async function getInventory(grimoireId: string, campaignId: string, inven
                 }
             };
 
-            // 1. Beide Quellen parsen
             const baseMeta = safeParse(item.metadata);
             const customMeta = safeParse(item.customMetadata);
 
-            // 2. Mergen mit dem Spread-Operator
-            // customMeta überschreibt baseMeta bei Namenskollisionen
             const mergedMeta = { ...baseMeta, ...customMeta };
 
             return {
                 ...item,
-                // Wir speichern das zusammengeführte Objekt (oder wieder als String, falls nötig)
-                // Die meisten Komponenten arbeiten leichter mit dem Objekt.
                 metadata: mergedMeta, 
-                
-                // Flags explizit nach außen legen für leichten Zugriff
                 isFood: Boolean(mergedMeta.isFood || item.isFood), 
                 foodValue: mergedMeta.food || mergedMeta.foodValue || null,
                 isQuestItem: Boolean(mergedMeta.isQuestItem)
             };
         });
-        console.log("Transformiertes Inventar:", da);
         return da;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to fetch inventory.');
