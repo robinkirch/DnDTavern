@@ -500,5 +500,13 @@
     "QuestItem": "Quest-Item",
     "Food Supply Value": "Nahrungswert",
     "e.g., 1 or 2": "bspw. 1 oder 15",
-    "How many supply points does this item provide?": "Wieviele Versorgungspunkte stellt das Item bereit?"
+    "How many supply points does this item provide?": "Wieviele Versorgungspunkte stellt das Item bereit?",
+    "Money": "Münzen",
+    "Money Added": "Münzen hinzugefügt",
+    "GoldLabel": "Gold",
+    "SilverLabel": "Silber",
+    "CopperLabel": "Kupfer",
+    "GoldLabelShort": "G",
+    "SilverLabelShort": "S",
+    "CopperLabelShort": "K"
 }

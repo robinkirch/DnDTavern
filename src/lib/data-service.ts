@@ -321,6 +321,16 @@ export async function addItemToInventory(grimoireId: string, campaignId: string,
     }
 }
 
+export async function updateItemInInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
+    try {
+        item.image = null;
+        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/update`, item);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to update item.');
+    }
+}
+
 export async function getInventory(grimoireId: string, campaignId: string, inventoryName: string = "default"): Promise<InventoryItem[]> {
     try {
         const response = await api.get(`/inventories/${grimoireId}/${campaignId}/${inventoryName}`);

@@ -27,7 +27,7 @@ import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
@@ -115,8 +115,23 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
   const fetchInventoryData = async () => {
     try {
-      const data = await getInventory(grimoire.id, campaign.id);
+      let data = await getInventory(grimoire.id, campaign.id);
       const hasBackpack = data.some(item => item.isCurrentBackpack);
+      var money = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.id == IDS.Money);
+      if (money.length === 0) {
+        setLocalCoins({ gold: 0, silver: 0, copper: 0 });
+      } else {
+        const values = money[0].value!.split(',');
+        setLocalCoins({
+          gold: Number(values[0]) || 0,
+          silver: Number(values[1]) || 0,
+          copper: Number(values[2]) || 0
+        });
+        data = data.filter(d => d.id != IDS.Money);
+      }
+
+
+
       var food = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood);
       if(food.length >= 1){
         const foodItem = {id: IDS.Food, name: "Food", isBackpack: false, isCurrentBackpack: false, image: foodImage ? (foodImage as any).src || foodImage : null, metadata: `{"isFood":false,"food":"${foodLevel}"}`, originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: "0", isCustom: true, inventoryName: "default", slotNumber:food[0].slotNumber, isLocked:true, isTemporary:false, isFood: false };
@@ -125,7 +140,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
       else{
         setPlayerInventory([...data]); 
       }
-      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: IDS.StandardBag, name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber:-10000, isLocked:true,isTemporary:true, isFood: false }]);        
+      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: IDS.StandardBag, name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber: Number(IDS.StandardBag), isLocked:true,isTemporary:true, isFood: false }]);        
 
       const newOtherInventories = [];
       for (const inv of campaign.inventorySettings.additionalInventories) {
@@ -138,17 +153,16 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     }
   };
 
-  const handleChangedMoney = async (newItem: InventoryItem) => {
-    // try {
-    //   await addItemToInventory(grimoire.id, campaign.id, newItem);
-    //   setAddOpen(false); 
+  const handleChangedMoney = async () => {
+    try {
+      const moneyString = `${localCoins.gold},${localCoins.silver},${localCoins.copper}`;
+      const moneyItem = {id: IDS.Money, name: "Money", isBackpack: false, isCurrentBackpack: false, image: null, metadata: '', originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: moneyString, isCustom: true, inventoryName: "default", slotNumber: Number(IDS.Money), isLocked:true, isTemporary:false, isFood: false };
+      await updateItemInInventory(grimoire.id, campaign.id, moneyItem);
       
-    //   toast({ title: t('Item Added') });
-
-    //   await fetchInventoryData(); 
-    // } catch (error) {
-    //   toast({ title: t('Error'), variant: "destructive" });
-    // }
+      toast({ title: t('Money Added') });
+    } catch (error) {
+      toast({ title: t('Error'), variant: "destructive" });
+    }
   };
 
   const handleAddItem = async (newItem: InventoryItem) => {
@@ -300,29 +314,35 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   };
 
   const COINS = [
-    { key: "gold",   label: "Gold",   short: "G", color: "#F5A623" },
-    { key: "silver", label: "Silber", short: "S", color: "#C0C0C0" },
-    { key: "copper", label: "Kupfer", short: "K", color: "#B87333" },
+    { key: "gold",   label: t("GoldLabel"),   short: t("GoldLabelShort"), color: "#F5A623" },
+    { key: "silver", label: t("SilverLabel"), short: t("SilverLabelShort"), color: "#C0C0C0" },
+    { key: "copper", label: t("CopperLabel"), short: t("CopperLabelShort"), color: "#B87333" },
   ];
 
-  const [localCoins, setLocalCoins] = useState({ Gold: 0, Silver: 0, Copper: 0 });
-  // 2. Debounce-Effekt
+  const [localCoins, setLocalCoins] = useState({ gold: 0, silver: 0, copper: 0 });
+
   useEffect(() => {
-    // Starte einen Timer
+    const moneyItem = playerInventory.find(i => i.id === IDS.Money);
+    const remoteValues = moneyItem?.value?.split(',') || ["0", "0", "0"];
+    
+    const hasChanged = 
+      localCoins.gold !== Number(remoteValues[0]) ||
+      localCoins.silver !== Number(remoteValues[1]) ||
+      localCoins.copper !== Number(remoteValues[2]);
+
+    if (!hasChanged) return; // STRUDEL STOPPT HIER
+
     const timer = setTimeout(() => {
-      // Erst hier rufen wir die teure Funktion auf (z.B. API oder Inventory-Update)
-      // handleSyncCoinsWithInventory(localCoins);
-      console.log(localCoins);
-    }, 800); // 800ms warten, nachdem der Nutzer aufgehört hat
+      handleChangedMoney();
+    }, 1600);
 
-    // Cleanup: Wenn der Nutzer innerhalb der 800ms wieder klickt, löschen wir den alten Timer
     return () => clearTimeout(timer);
-  }, [localCoins]);
+  }, [localCoins.gold, localCoins.silver, localCoins.copper]);
 
-  // 3. UI Funktionen (blitzschnell, da nur lokaler State)
-  const adjustCoin = (key:any, amount:any) => {
+  const adjustCoin = (key:string, amount:Number) => {
     setLocalCoins(prev => ({ ...prev, [key]: Math.max(0, prev[key] + amount) }));
   };
+
   const categorizedItems = useMemo(() => {
     const food: InventoryItem[] = [];
     const normal: InventoryItem[] = [];
@@ -457,19 +477,31 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
             {/* 3. Bereich: Gold */}
             <div className="flex flex-col items-center justify-center border-r border-slate-700 px-2">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mt-1">Münzen</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mt-1">{t("Money")}</p>
               <div className="flex items-center gap-1 mb-1">
                 {COINS.map(({ key, label, color }) => (
                   <div key={key} className="flex flex-col items-center rounded border border-slate-700 overflow-hidden" style={{ borderColor: `${color}33` }}>
                     <button className="w-full text-[10px] text-slate-500 hover:text-white transition-colors"onClick={() => adjustCoin(key, 1)}> + </button>
                     <div className="flex items-center px-1.5 gap-0.5">
-                      <input type="number"
+                      <input 
+                        type="number"
                         className="w-7 bg-transparent text-right text-sm font-mono font-bold outline-none text-slate-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         style={{ color }}
-                        value={localCoins[key as keyof typeof localCoins]} 
+                        value={String(localCoins[key as keyof typeof localCoins] ?? "")}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value, 10) || 0;
-                          setLocalCoins(prev => ({ ...prev, [key]: Math.max(0, val) }));
+                          const rawValue = e.target.value;
+                          
+                          // 1. Erlaube leeres Feld zum Tippen
+                          if (rawValue === "") {
+                            setLocalCoins(prev => ({ ...prev, [key]: 0 }));
+                            return;
+                          }
+
+                          // 2. Parsen und Validieren
+                          const val = parseInt(rawValue, 10);
+                          if (!isNaN(val)) {
+                            setLocalCoins(prev => ({ ...prev, [key]: Math.max(0, val) }));
+                          }
                         }}
                       />
                       <span className="inline-block text-[10px] font-black opacity-70" style={{ color }}>{label[0]}</span>
