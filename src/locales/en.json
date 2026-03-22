@@ -509,7 +509,10 @@
     "CopperLabel": "Copper",
     "GoldLabelShort": "G",
     "SilverLabelShort": "S",
-    "CopperLabelShort": "C"
+    "CopperLabelShort": "C",
+    "Craft Item": "Craft Item",
+    "Missing Materials": "Missing Materials",
+    "Item Crafted": "Item Crafted"
 }
 
     

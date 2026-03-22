@@ -508,5 +508,8 @@
     "CopperLabel": "Kupfer",
     "GoldLabelShort": "G",
     "SilverLabelShort": "S",
-    "CopperLabelShort": "K"
+    "CopperLabelShort": "K",
+    "Craft Item": "Item herstellen",
+    "Missing Materials": "Fehlende Materialien",
+    "Item Crafted": "Item hergestellt"
 }

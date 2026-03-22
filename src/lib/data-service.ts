@@ -405,6 +405,16 @@ export async function deleteInventoryItem(grimoireId: string, campaignId: string
     }
 }
 
+
+export async function craftItem(grimoireId: string, campaignId: string, recipeid: string): Promise<void> {
+    try {
+        const response = await api.put(`/inventories/crafting/${grimoireId}/${campaignId}`, { recipeid });
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to craft item.');
+    }
+}
+
 // --- USER SERVICE
 
 export async function updateUser(userData: UserDTO): Promise<User> {

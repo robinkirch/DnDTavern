@@ -27,7 +27,7 @@ import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, craftItem, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
@@ -285,6 +285,18 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
           }
         }
     );    
+  };
+
+   const handleCraftItem = async (recipeid: string) => {
+    try {
+      await craftItem(grimoire.id, campaign.id, recipeid);
+     
+      toast({ title: t('Item Crafted') });
+
+      await fetchInventoryData(); 
+    } catch (error) {
+      toast({ title: t('Error'), variant: "destructive" });
+    }
   };
 
   const availableRecipes = useMemo(() => {
@@ -694,8 +706,9 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                             ? "bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-900/20" 
                             : "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50"
                         }`}
+                        onClick={() => handleCraftItem(recipe.id)}
                       >
-                        {isCraftable ? "Craft Item" : "Missing Materials"}
+                        {isCraftable ? t("Craft Item") : t("Missing Materials")}
                       </Button>
                     </div>
 
