@@ -1,40 +1,31 @@
 'use client';
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Grimoire, Recipe, InventoryItem } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import { Input } from '@/components/ui/input';
 import { Button } from './ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 
-const grimoireItemSchema = z.object({
-  recipeId: z.string().min(1, 'Please select an item.'),
-  quantity: z.number().min(1, 'Quantity must be at least 1.'),
-});
 
-const customItemSchema = z.object({
-  name: z.string().min(1, 'Item name is required.'),
-  description: z.string().optional(),
-  quantity: z.number().min(1, 'Quantity must be at least 1.'),
-  value: z.string().optional(),
-  isFood: z.boolean().default(false),
-  foodValue: z.string().optional(),
-  isQuestItem: z.boolean().default(false),
-  isKey: z.boolean().default(false),
+const itemSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  recipeId: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  quantity: z.number().min(1).default(1),
+  value: z.string().optional().nullable(),
+  // Preprocess wandelt 0/1 oder Strings in echte Booleans um
+  isFood: z.preprocess((val) => Boolean(val), z.boolean().default(false)),
+  isKey: z.preprocess((val) => Boolean(val), z.boolean().default(false)),
+  isQuestItem: z.preprocess((val) => Boolean(val), z.boolean().default(false)),
+  foodValue: z.string().default('1'),
 });
 
 interface AddInventoryItemDialogProps {
@@ -47,246 +38,241 @@ interface AddInventoryItemDialogProps {
 
 export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire }: AddInventoryItemDialogProps) {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState('grimoire');
-  
-  const grimoireForm = useForm({
-    resolver: zodResolver(grimoireItemSchema),
-    defaultValues: { recipeId: '', quantity: 1 },
-  });
-  
-  const customForm = useForm({
-    resolver: zodResolver(customItemSchema),
-    defaultValues: { name: '', description: '', quantity: 1, value: '', isFood: false, foodValue: '0', isQuestItem: false},
-  });
-  
-  const isFoodChecked = customForm.watch('isFood');
-  const isKeyChecked = customForm.watch('isKey');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Grimoire Submit
-  const handleGrimoireSubmit = async (values: z.infer<typeof grimoireItemSchema>) => {
-    if (!grimoire) return;
-    const selectedRecipe = grimoire.recipes.find(r => r.id === values.recipeId);
-    if (!selectedRecipe) return;
+  const form = useForm({
+    resolver: zodResolver(itemSchema),
+    defaultValues: { 
+      name: '', recipeId: '', description: '', quantity: 1, 
+      value: '', isFood: false, foodValue: '1', isQuestItem: false, isKey: false 
+    },
+  });
+
+  const watchRecipeId = form.watch('recipeId');
+  const isFoodChecked = form.watch('isFood');
+  const isCustom = !watchRecipeId;
+
+  const suggestions = grimoire?.recipes.filter(r => 
+    r.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 5) || [];
+
+  const selectRecipe = (recipe: Recipe) => {
+    form.setValue('recipeId', recipe.id);
+    form.setValue('name', recipe.name);
+    form.setValue('description', recipe.description || '');
+    form.setValue('value', recipe.value || '');
+    form.setValue('isFood', recipe.isFood);
+    setSearchTerm(recipe.name);
+  };
+
+  const onSubmit = async (values: z.infer<typeof itemSchema>) => {
+    console.log("hi", values);
+    const isCustom = !values.recipeId;
+    const selectedRecipe = grimoire?.recipes.find(r => r.id === values.recipeId);
+
+    const metadataObj = {
+      isQuestItem: values.isQuestItem,
+      isFood: values.isFood,
+      food: values.isFood ? values.foodValue : null,
+      isKey: values.isKey
+    };
 
     const newItem: InventoryItem = {
       id: `inv-${Date.now()}`,
-      recipeId: selectedRecipe.id,
-      name: selectedRecipe.name,
-      description: selectedRecipe.description,
+      recipeId: values.recipeId || null,
+      name: values.name,
+      description: values.description || null,
       quantity: values.quantity.toString(),
-      value: selectedRecipe.value,
-      isCustom: false,
-          
-      image: selectedRecipe.image || null,
-      isBackpack: selectedRecipe.isBackpack,
-      isFood: selectedRecipe.isFood,
-       //inventoryName:
-      metadata: selectedRecipe.metadata || null,
+      value: values.value || null,
+      isCustom: isCustom,
+      image: selectedRecipe?.image || null,
+      isBackpack: selectedRecipe?.isBackpack || false,
+      isFood: values.isFood,
+      metadata: JSON.stringify(metadataObj),
       isCurrentBackpack: false,
       isTemporary: false,
       isLocked: false,
     };
 
     await onSave(newItem);
-    grimoireForm.reset();
+    
+    form.reset();
+    setSearchTerm('');
+    onOpenChange(false);
   };
-
-  const handleCustomSubmit = async (values: z.infer<typeof customItemSchema>) => {
-  const metadataObj = {
-    isQuestItem: values.isQuestItem,
-    isFood: values.isFood,
-    food: values.isFood ? values.foodValue : null,
-    isKey: values.isKey
-  };
-
-  const newItem: InventoryItem = {
-    id: `inv-${Date.now()}`,
-    recipeId: null,
-    name: values.name,
-    description: values.description || null,
-    quantity: values.quantity.toString(),
-    value: values.value || null,
-    isCustom: true,
-    image: null,
-    isBackpack: false,
-    isFood: values.isFood, 
-    metadata: JSON.stringify(metadataObj),
-    isCurrentBackpack: false,
-    isTemporary: false,
-    isLocked: false,
-  };
-
-  await onSave(newItem);
-
-  customForm.reset({
-    name: '',
-    description: '',
-    quantity: 1,
-    value: '',
-    isFood: false,
-    foodValue: '1',
-    isQuestItem: false,
-    isKey: false
-  });
-};
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md border-slate-800">
         <DialogHeader>
-          <DialogTitle className="font-headline">{t('Add Item to Inventory')}</DialogTitle>
-          <DialogDescription>{t('Add an item from the grimoire or create a custom one.')}</DialogDescription>
+          <DialogTitle className="text-xl font-headline">{t('Add Item')}</DialogTitle>
         </DialogHeader>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="grimoire" disabled={!grimoire}>{t('Grimoire Item')}</TabsTrigger>
-                <TabsTrigger value="custom">{t('Custom Item')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="grimoire">
-                 <Form {...grimoireForm}>
-                    <form onSubmit={grimoireForm.handleSubmit(handleGrimoireSubmit)} className="space-y-4 py-4">
-                        <FormField
-                            control={grimoireForm.control}
-                            name="recipeId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('Item')}</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger><SelectValue placeholder={t('Select an item...')} /></SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {grimoire?.recipes.map((recipe: Recipe) => (
-                                                <SelectItem key={recipe.id} value={recipe.id}>{recipe.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => console.log("Validation Errors:", errors))} className="space-y-4">
+           <div className="relative">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-400 text-xs uppercase tracking-wider">{t('Item Name')}</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        className="border-slate-700 focus:border-blue-500"
+                        autoComplete="off"
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => {
+                          setTimeout(() => setIsFocused(false), 200);
+                        }}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setSearchTerm(e.target.value);
+                          if (watchRecipeId) form.setValue('recipeId', ''); 
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {isFocused && searchTerm.length > 1 && suggestions.length > 0 && isCustom && (
+                <div className="absolute z-50 w-full border border-slate-700 rounded-md mt-1 shadow-2xl overflow-hidden bg-[#3d3d3d]">
+                  {suggestions.map(recipe => (
+                    <button
+                      key={recipe.id}
+                      type="button"
+                      className="w-full text-left px-4 py-3 hover:bg-blue-600/20 flex justify-between items-center group transition-all border-b border-slate-700 last:border-0"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        selectRecipe(recipe);
+                        setIsFocused(false);
+                      }}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-100">{recipe.name}</span>
+                        <span className="text-[10px] text-slate-500 group-hover:text-blue-300 line-clamp-1">
+                          {recipe.description}
+                        </span>
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded border border-slate-700 text-slate-400">
+                        {t("Grimoire")}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-400 text-xs uppercase tracking-wider">{t('Description')}</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      readOnly={!isCustom}
+                      className={`h-20 resize-none border-slate-700 ${!isCustom ? 'opacity-60 cursor-not-allowed' : ''}`} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {isCustom &&
+              <>
+              <div className="flex flex-wrap gap-4 p-3 rounded-lg border border-slate-800/50">
+                <FormField control={form.control} name="isFood" render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <Checkbox 
+                      checked={field.value} 
+                      onCheckedChange={(val) => { 
+                        field.onChange(val); 
+                        if(val) form.setValue('isKey', false); 
+                      }} 
+                      disabled={!isCustom} 
+                    />
+                    <FormLabel className="text-xs text-slate-300 cursor-pointer">{t('Food')}</FormLabel>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="isKey" render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <Checkbox 
+                      checked={field.value} 
+                      onCheckedChange={(val) => { 
+                        field.onChange(val); 
+                        if(val) form.setValue('isFood', false); 
+                      }} 
+                      disabled={!isCustom} 
+                    />
+                    <FormLabel className="text-xs text-slate-300 cursor-pointer">{t('Key')}</FormLabel>
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="isQuestItem" render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isCustom} />
+                    <FormLabel className="text-xs text-slate-300 cursor-pointer">{t('QuestItem')}</FormLabel>
+                  </FormItem>
+                )} />
+              </div>
+
+              {isFoodChecked && (
+                <FormField
+                  control={form.control}
+                  name="foodValue"
+                  render={({ field }) => (
+                    <FormItem className="animate-in fade-in slide-in-from-top-1">
+                      <FormLabel className="text-slate-400 text-[10px] uppercase">{t("Food Supply Value")}</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number"
+                          readOnly={!isCustom}
+                          className={`border-slate-700 h-8 ${!isCustom ? 'opacity-50' : ''}`}
+                          placeholder={t("e.g., 1 or 2")} 
+                          min={1}
                         />
-                        <FormField
-                            control={grimoireForm.control}
-                            name="quantity"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t('Quantity')}</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <DialogFooter>
-                            <Button type="submit">{t('Add to Inventory')}</Button>
-                        </DialogFooter>
-                    </form>
-                 </Form>
-            </TabsContent>
-            <TabsContent value="custom">
-                <Form {...customForm}>
-                    <form onSubmit={customForm.handleSubmit(handleCustomSubmit)} className="space-y-4 py-4">
-                        <FormField control={customForm.control} name="name" render={({ field }) => (
-                            <FormItem><FormLabel>{t('Item Name')}</FormLabel><FormControl><Input {...field} placeholder={t('e.g., A mysterious amulet')} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={customForm.control} name="description" render={({ field }) => (
-                            <FormItem><FormLabel>{t('Description')}</FormLabel><FormControl><Textarea {...field} placeholder={t('A short description of the item.')} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <div className="space-y-4">
-                          <div className="flex flex-row gap-6 py-2">
-                            {t("ItemIs")}
-                            <FormField
-                              control={customForm.control}
-                              name="isFood"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox 
-                                      checked={field.value} 
-                                      onCheckedChange={(checked) => {
-                                        field.onChange(checked);
-                                        if (checked) customForm.setValue('isKey', false);
-                                      }} 
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="cursor-pointer">{t("Food")}</FormLabel>
-                                </FormItem>
-                              )}
-                            />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        {t("How many supply points does this item provide?")}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              </>
+            }
 
-                            <FormField
-                              control={customForm.control}
-                              name="isKey"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox 
-                                      checked={field.value} 
-                                      onCheckedChange={(checked) => {
-                                        field.onChange(checked);
-                                        if (checked) customForm.setValue('isFood', false);
-                                      }} 
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="cursor-pointer">{t("Key")}</FormLabel>
-                                </FormItem>
-                              )}
-                            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="quantity" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-400 text-xs uppercase tracking-wider">{t('Quantity')}</FormLabel>
+                  <Input type="number" {...field} className="border-slate-700" onChange={e => field.onChange(parseInt(e.target.value) || 1)} />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="value" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-400 text-xs uppercase tracking-wider">{t('Value (Optional)')}</FormLabel>
+                  <Input {...field} readOnly={!isCustom} className={`border-slate-700 ${!isCustom ? 'opacity-60 cursor-not-allowed' : ''}`} placeholder={t('e.g., 50gp')} />
+                </FormItem>
+              )} />
+            </div>
 
-                            <FormField
-                              control={customForm.control}
-                              name="isQuestItem"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                                  </FormControl>
-                                  <FormLabel className="cursor-pointer">{t("QuestItem")}</FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          {isFoodChecked && (
-                            <FormField
-                              control={customForm.control}
-                              name="foodValue"
-                              render={({ field }) => (
-                                <FormItem className="animate-in fade-in slide-in-from-top-1">
-                                  <FormLabel>{t("Food Supply Value")}</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder={t("e.g., 1 or 2")} />
-                                  </FormControl>
-                                  <FormDescription className="text-xs">
-                                    {t("How many supply points does this item provide?")}
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </div>
-                         <div className="grid grid-cols-2 gap-4">
-                             <FormField control={customForm.control} name="quantity" render={({ field }) => (
-                                <FormItem><FormLabel>{t('Quantity')}</FormLabel><FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                             <FormField control={customForm.control} name="value" render={({ field }) => (
-                                <FormItem><FormLabel>{t('Value (Optional)')}</FormLabel><FormControl><Input {...field} placeholder={t('e.g., 50gp')} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit">{t('Add to Inventory')}</Button>
-                        </DialogFooter>
-                    </form>
-                 </Form>
-            </TabsContent>
-        </Tabs>
-
+            <DialogFooter className="pt-2">
+              <Button type="submit" className={`w-full ${isCustom ? 'bg-blue-600 hover:bg-blue-500' : 'bg-amber-600 hover:bg-amber-500'}`}>
+                {t('Add to Inventory')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
