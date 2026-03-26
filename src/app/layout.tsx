@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { I18nProvider } from '@/context/i18n-context';
 import { Toaster } from "@/components/ui/toaster"
+import BackToTopButton from '@/components/BackToTopButton';
 
 export const metadata: Metadata = {
   title: 'D&D Tavern Keeper',
@@ -25,6 +26,7 @@ export default function RootLayout({
           <I18nProvider>
             {children}
             <Toaster />
+            <BackToTopButton />
           </I18nProvider>
         </AuthProvider>
       </body>
