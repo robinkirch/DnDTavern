@@ -14,6 +14,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import monsterplaceholder from '../images/monster_placeholder.png'
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 interface BestiaryProps {
     campaign: Campaign;
@@ -69,16 +70,32 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
         }
     };
 
-    const handleDeleteMonster = async (monsterId: string) => {
-        if (!user || !campaign.grimoireId || !confirm(t('Are you sure?'))) return;
-        try {
-            await deleteMonster(campaign.grimoireId, monsterId);
-            setCampaign({ ...campaign, bestiary: (campaign.bestiary || []).filter(m => m.id !== monsterId) });
-            toast({ title: t('Monster Removed') });
-        } catch (error) {
-            toast({ title: t('Error'), variant: 'destructive' });
-        }
+    const [confirmData, setConfirmData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmData(prev => ({ ...prev, isOpen: false }))});
+    const showConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+        setConfirmData(prev => ({
+            ...prev,
+            isOpen: true,
+            title,
+            description,
+            successTitle,
+            onConfirm: action,
+            errorDescription: errorDescription ?? null,
+            successDescription: successDescription ?? null,
+        }));
     };
+
+    const handleDeleteMonster = async (monsterId: string) => {
+        if (!user || !campaign.grimoireId) return;
+        showConfirm(
+            t('Delete Monster'),
+            t('Are you sure you want to remove this creature from the bestiary?'),
+            t('Monster Removed'),
+            async () => {
+                await deleteMonster(campaign.grimoireId!, monsterId);
+                setCampaign({ ...campaign, bestiary: (campaign.bestiary || []).filter(m => m.id !== monsterId) });
+            }
+        );
+    }
 
     const formatDamageTypes = (ids: number[] = []) => {
         if (!ids || ids.length === 0) return null;
@@ -133,6 +150,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
 
     return (
         <>
+            <ActionConfirmDialog  data={confirmData} />
             <MonsterFormDialog 
                 isOpen={isFormOpen}
                 onOpenChange={setFormOpen}

@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 interface NotesSectionProps {
     campaign: Campaign;
@@ -58,17 +59,32 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
         }
     };
 
-    const handleDeleteNote = async (noteId: string) => {
-        if (!user || !campaign.grimoireId || !confirm(t('Are you sure?'))) return;
+    const [confirmData, setConfirmData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmData(prev => ({ ...prev, isOpen: false }))});
+    const showConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+        setConfirmData(prev => ({
+            ...prev,
+            isOpen: true,
+            title,
+            description,
+            successTitle,
+            onConfirm: action,
+            errorDescription: errorDescription ?? null,
+            successDescription: successDescription ?? null,
+        }));
+    };
 
-        try {
-            await deleteNote(campaign.grimoireId, noteId);
-            const updatedNotes = campaign.notes.filter(n => n.id !== noteId);
-            setCampaign({ ...campaign, notes: updatedNotes });
-            toast({ title: t('Note Removed') });
-        } catch (error) {
-            toast({ title: t('Error'), variant: 'destructive' });
-        }
+    const handleDeleteNote = async (noteId: string) => {
+        if (!user || !campaign.grimoireId) return;
+        showConfirm(
+            t('Delete Note'),
+            t('Are you sure you want to delete this note? This cannot be undone.'),
+            t('Note Removed'),
+            async () => {
+                await deleteNote(campaign.grimoireId!, noteId);
+                const updatedNotes = campaign.notes.filter(n => n.id !== noteId);
+                setCampaign({ ...campaign, notes: updatedNotes });
+            }
+        ); 
     };
 
     const filteredNotes = useMemo(() => {
@@ -88,6 +104,7 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
 
     return (
         <>
+            <ActionConfirmDialog  data={confirmData} />
             <NoteFormDialog 
                 isOpen={isFormOpen}
                 onOpenChange={setFormOpen}

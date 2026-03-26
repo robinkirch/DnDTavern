@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 
 export function GrimoireGrid() {
@@ -41,21 +42,8 @@ export function GrimoireGrid() {
   const [newRarityName, setNewRarityName] = useState('');
   const [newRarityColor, setNewRarityColor] = useState('#ffffff');
 
-  // State for the custom confirmation dialog
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
-  const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
-  const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
-
   const nameRef = useRef<HTMLInputElement>(null);
   const connectionRef = useRef<HTMLInputElement>(null);
-
-  const showConfirmDialog = (title: string, description: string, action: () => void) => {
-    setConfirmDialogTitle(title);
-    setConfirmDialogDescription(description);
-    setConfirmAction(() => action);
-    setIsConfirmDialogOpen(true);
-  };
 
   const fetchGrimoires = useCallback(() => {
     if (user) {
@@ -70,14 +58,28 @@ export function GrimoireGrid() {
     fetchGrimoires();
   }, [fetchGrimoires]);
 
+  const [confirmGrimData, setConfirmGrimData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmGrimData(prev => ({ ...prev, isOpen: false }))});
+  const showGrimConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+      setConfirmGrimData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+      }));
+  };
+
   const handleDeleteGrimoire = (id: string) => {
-    showConfirmDialog(
+    showGrimConfirm(
       t('Remove Data Source'),
       t('Are you sure you want to remove this data source? This does not delete the data itself.'),
+      t('Success'),
       async () => {
         await deleteGrimoire(id);
         setGrimoires(grimoires.filter(g => g.id !== id));
-        setIsConfirmDialogOpen(false);
       }
     );
   };
@@ -133,11 +135,26 @@ export function GrimoireGrid() {
     }
   };
 
+  const [confirmDelCatData, setConfirmDelCatData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmDelCatData(prev => ({ ...prev, isOpen: false }))});
+  const showDelCatConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+      setConfirmDelCatData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+      }));
+  };
+
   const handleDeleteCategory = (categoryId: string) => {
     if (!managingGrimoire) return;
-    showConfirmDialog(
+    showDelCatConfirm(
       t('Delete Category'),
       t('Are you sure you want to delete this category?'),
+      t('Category Deleted'),
       async () => {
         await deleteCategory(managingGrimoire.id, categoryId);
 
@@ -146,24 +163,35 @@ export function GrimoireGrid() {
 
         setManagingGrimoire(updatedGrimoire);
         setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-        toast({ title: t('Category Deleted') });
-        setIsConfirmDialogOpen(false);
       }
     );
   };
 
+  const [confirmClearCatData, setConfirmClearCatData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmClearCatData(prev => ({ ...prev, isOpen: false }))});
+  const showClearCatConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+      setConfirmClearCatData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+      }));
+  };
+
   const handleClearCategories = () => {
     if (!managingGrimoire) return;
-    showConfirmDialog(
+    showClearCatConfirm(
       t('Delete All Categories'),
       t('Are you sure you want to delete all categories?'),
+      t('All Categories Deleted'),
       async () => {
         await clearCategories(managingGrimoire.id);
         const updatedGrimoire = { ...managingGrimoire, categories: [] };
         setManagingGrimoire(updatedGrimoire);
         setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-        toast({ title: t('All Categories Deleted') });
-        setIsConfirmDialogOpen(false);
       }
     );
   };
@@ -197,11 +225,26 @@ export function GrimoireGrid() {
     }
   };
 
+  const [confirmDelRarityData, setConfirmDelRarityData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmDelRarityData(prev => ({ ...prev, isOpen: false }))});
+  const showDelRarityConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+      setConfirmDelRarityData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+      }));
+  };
+
   const handleDeleteRarity = (rarityId: string) => {
     if (!managingGrimoire) return;
-    showConfirmDialog(
+    showDelRarityConfirm(
       t('Delete Rarity'),
       t('Are you sure you want to delete this rarity?'),
+      t('Rarity Deleted'),
       async () => {
         await deleteRarity(managingGrimoire.id, rarityId);
 
@@ -210,24 +253,35 @@ export function GrimoireGrid() {
 
         setManagingGrimoire(updatedGrimoire);
         setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-        toast({ title: t('Rarity Deleted') });
-        setIsConfirmDialogOpen(false);
       }
     );
   };
 
+  const [confirmClearRarityData, setConfirmClearRarityData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmClearRarityData(prev => ({ ...prev, isOpen: false }))});
+  const showClearRarityConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+      setConfirmClearRarityData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+      }));
+  };
+
   const handleClearRarities = () => {
     if (!managingGrimoire) return;
-    showConfirmDialog(
+    showClearRarityConfirm(
       t('Delete All Rarities'),
       t('Are you sure you want to delete all rarities?'),
+      t('All Rarities Deleted'),
       async () => {
         await clearRarities(managingGrimoire.id);
         const updatedGrimoire = { ...managingGrimoire, rarities: [] };
         setManagingGrimoire(updatedGrimoire);
         setGrimoires(grimoires.map(g => g.id === updatedGrimoire.id ? updatedGrimoire : g));
-        toast({ title: t('All Rarities Deleted') });
-        setIsConfirmDialogOpen(false);
       }
     );
   };
@@ -272,18 +326,11 @@ export function GrimoireGrid() {
         onSave={handleSaveGrimoire}
       />
 
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{confirmDialogTitle}</DialogTitle>
-            <DialogDescription>{confirmDialogDescription}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>{t('Cancel')}</Button>
-            <Button variant="destructive" onClick={() => confirmAction?.()}>{t('Confirm')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ActionConfirmDialog  data={confirmGrimData} />
+      <ActionConfirmDialog  data={confirmDelCatData} />
+      <ActionConfirmDialog  data={confirmClearCatData} />
+      <ActionConfirmDialog  data={confirmDelRarityData} />
+      <ActionConfirmDialog  data={confirmClearRarityData} />
 
       <Dialog open={isManageOpen} onOpenChange={setManageOpen}>
         <DialogContent className="sm:max-w-[600px]">

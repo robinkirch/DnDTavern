@@ -269,6 +269,7 @@
     "The creature's details have been updated.": "The creature's details have been updated.",
     "Are you sure you want to remove this creature from the bestiary?": "Are you sure you want to remove this creature from the bestiary?",
     "Monster Removed": "Monster Removed",
+    "Delete Monster": "Delete Monster",
     "The creature has been removed from the bestiary.": "The creature has been removed from the bestiary.",
     "aggressive": "Aggressive",
     "neutral": "Neutral",
@@ -299,6 +300,7 @@
     "Note Removed": "Note Removed",
     "The document has been removed from your collection.": "The document has been removed from your collection.",
     "Are you sure you want to delete this note? This cannot be undone.": "Are you sure you want to delete this note? This cannot be undone.",
+    "Delete Note": "Delete Note",
     "Error {{Error}}": "Error: {{Error}}",
     "Username is required.": "Username is required.",
     "Welcome Back": "Welcome Back",
@@ -512,7 +514,10 @@
     "CopperLabelShort": "C",
     "Craft Item": "Craft Item",
     "Missing Materials": "Missing Materials",
-    "Item Crafted": "Item Crafted"
+    "Item Crafted": "Item Crafted",
+    "Something went wrong during this action.": "Something went wrong during this action.",
+    "Item deleted": "Item deleted",
+    "Item {{0}} was removed": "Item {{0}} was removed"
 }
 
     

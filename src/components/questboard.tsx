@@ -6,7 +6,7 @@ import './style/questboard.css';
 import { Quest, Questboard } from '@/lib/types';
 import { getAllQuestBoards, addQuestBoard, deleteQuestboard, addQuest, updateQuest, deleteQuest } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 interface QuestboardProps {
     campaignId: string;
@@ -102,33 +102,33 @@ export default function QuestBoard({ campaignId, grimoireId }: QuestboardProps) 
       }
     };
 
-    // 3. Quest endgültig vom Board löschen
-    const [isConfirmDialogOpenBoard, setIsConfirmDialogOpenBoard] = useState(false);
-    const [confirmActionBoard, setConfirmActionBoard] = useState<(() => void) | null>(null);
-    const [confirmDialogTitleBoard, setConfirmDialogTitleBoard] = useState('');
-    const [confirmDialogDescriptionBoard, setConfirmDialogDescriptionBoard] = useState('');
-    const showConfirmDialogBoard = (title: string, description: string, action: () => void) => {
-            setConfirmDialogTitleBoard(title);
-            setConfirmDialogDescriptionBoard(description);
-            setConfirmActionBoard(() => action);
-            setIsConfirmDialogOpenBoard(true);
-        };
+    const [confirmBoardData, setConfirmBoardData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmBoardData(prev => ({ ...prev, isOpen: false }))});
+    const showBoardConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+        setConfirmQuestData(prev => ({
+            ...prev,
+            isOpen: true,
+            title,
+            description,
+            successTitle,
+            onConfirm: action,
+            errorDescription: errorDescription ?? null,
+            successDescription: successDescription ?? null,
+        }));
+    };
 
     const deleteBoard = async (board: Questboard) => {
-        showConfirmDialogBoard(
+        var name = board.cityName;
+        showBoardConfirm(
             t('Delete Questboard'),
             t('Are you sure you want to remove this board and all quests?'),
+            t("Success"),
             async () => {
-                try {
-                    const name = board.cityName;
-                    await deleteQuestboard(grimoireId!, campaignId, board.id);
-                    toast({ title: t("Success"), description: t("Questboard ({{0}}) was deleted", { 0: name}) });
-                    fetchQuests();
-                } catch (error) {
-                    toast({ title: t("Error"), description: t("Questboard could not be deleted"), variant: "destructive" });
-                }
-            }
-        );    
+                await deleteQuestboard(grimoireId!, campaignId, board.id);
+                fetchQuests();
+            },
+            t("Questboard could not be deleted"),
+            t("Questboard ({{0}}) was deleted", { 0: name})
+        ); 
       };
 
 
@@ -177,31 +177,32 @@ export default function QuestBoard({ campaignId, grimoireId }: QuestboardProps) 
     };
 
 
-    // 3. Quest endgültig vom Board löschen
-    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
-    const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
-    const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
-    const showConfirmDialog = (title: string, description: string, action: () => void) => {
-            setConfirmDialogTitle(title);
-            setConfirmDialogDescription(description);
-            setConfirmAction(() => action);
-            setIsConfirmDialogOpen(true);
-        };
+    const [confirmQuestData, setConfirmQuestData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmQuestData(prev => ({ ...prev, isOpen: false }))});
+    const showQuestConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+        setConfirmQuestData(prev => ({
+            ...prev,
+            isOpen: true,
+            title,
+            description,
+            successTitle,
+            onConfirm: action,
+            errorDescription: errorDescription ?? null,
+            successDescription: successDescription ?? null,
+        }));
+    };
 
     const handleDeleteQuest = async (quest: Quest) => {
-        showConfirmDialog(
+        showQuestConfirm(
             t('Delete Quest'),
             t('Are you sure you want to remove this quest?'),
+            t("Quest deleted"),
             async () => {
-                try {
-                    await deleteQuest(grimoireId!, quest.questBoardId, quest.id);
-                    toast({ title: t("Quest deleted"), description: t("The quest was torn from the board.") });
-                    fetchQuests();
-                } catch (error) {
-                    toast({ title: t("Error"), description: t("The quest could not be deleted"), variant: "destructive" });
-                }
-            }
+                await deleteQuest(grimoireId!, quest.questBoardId, quest.id);
+                fetchQuests();
+            },
+            t("The quest could not be deleted"),
+            t("The quest was torn from the board.")
+
         );    
       };
 
@@ -211,36 +212,12 @@ export default function QuestBoard({ campaignId, grimoireId }: QuestboardProps) 
 
     return (
         <>
-        <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{confirmDialogTitle}</DialogTitle>
-                    <DialogDescription>{confirmDialogDescription}</DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>{t('Cancel')}</Button>
-                    <Button variant="destructive" onClick={() => confirmAction?.()}>{t('Confirm')}</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ActionConfirmDialog  data={confirmQuestData} />
+        <ActionConfirmDialog  data={confirmBoardData} />
 
-        <Dialog open={isConfirmDialogOpenBoard} onOpenChange={setIsConfirmDialogOpenBoard}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{confirmDialogTitleBoard}</DialogTitle>
-                    <DialogDescription>{confirmDialogDescriptionBoard}</DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsConfirmDialogOpenBoard(false)}>{t('Cancel')}</Button>
-                    <Button variant="destructive" onClick={() => confirmActionBoard?.()}>{t('Confirm')}</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        
-
-        <div className="min-h-screen bg-slate-950 p-8 space-y-12">
+        <div className="min-h-screen p-8 space-y-12">
             {/* Header */}
-            <div className="flex justify-between items-end border-b border-slate-800 pb-6">
+            <div className="flex justify-between items-end border-b pb-6">
                 <div>
                     <h2 className="text-4xl text-amber-500 tracking-wider">{t('Guild Quests')}</h2>
                     <p className="text-slate-500 text-sm mt-1 italic">{t('Fame and fortune for those who dare.')}</p>

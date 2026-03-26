@@ -21,8 +21,8 @@ import { Skeleton } from './ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { useRouter } from 'next/navigation';
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 export default function CampaignsDashboard() {
     const { user } = useAuth();
@@ -33,19 +33,6 @@ export default function CampaignsDashboard() {
     const [grimoires, setGrimoires] = useState<Grimoire[]>([]); 
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
-
-    // State for the custom confirmation dialog
-    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
-    const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
-    const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
-
-    const showConfirmDialog = (title: string, description: string, action: () => void) => {
-        setConfirmDialogTitle(title);
-        setConfirmDialogDescription(description);
-        setConfirmAction(() => action);
-        setIsConfirmDialogOpen(true);
-    };
 
     useEffect(() => {
         const checkAccess = async () => {
@@ -141,22 +128,33 @@ export default function CampaignsDashboard() {
     }
   };
 
+    const [confirmData, setConfirmData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmData(prev => ({ ...prev, isOpen: false }))});
+    const showConfirm = (title: string, description: string, errorDescription: string, successTitle: string, successDescription: string | null, action: () => void) => {
+        setConfirmData(prev => ({
+            ...prev,
+            isOpen: true,
+            title,
+            description,
+            errorDescription,
+            successTitle,
+            successDescription,
+            onConfirm: action
+        }));
+    };
+  
+
     const handleDeleteCampaign = async (campaignId: string) => {
         if (!user) return;
-        showConfirmDialog(
+        showConfirm(
             t('Remove Campaign'),
             t('Are you sure you want to remove this campaign? This does delete the data itself, but doesnt remove the grimoire.'),
+            t('Failed to delete the campaign.'),
+            t('Campaign deleted'),
+            t('The campaign was successfully deleted.'),
             async () => {
-                try {
-                    await deleteCampaign(campaignId);
-                    setCampaigns(prev => prev.filter(g => g.id !== campaignId));
-                    toast({ title: t('Campaign deleted'), description: t('The campaign was successfully deleted.') });
-                } catch (error) {
-                    console.error('Failed to delete campaign:', error);
-                    toast({ title: t('Error'), description: t('Failed to delete the campaign.'), variant: 'destructive'});
-                } finally {
-                    setIsConfirmDialogOpen(false);
-                }
+                await deleteCampaign(campaignId);
+                setCampaigns(prev => prev.filter(g => g.id !== campaignId));
+
             }
         );
     };
@@ -184,25 +182,13 @@ export default function CampaignsDashboard() {
 
   return (
     <>
-      <CreateCampaignDialog 
-        isOpen={isCreateDialogOpen} 
-        onOpenChange={setCreateDialogOpen}
-        onCreate={handleCreateCampaign}
-        grimoires={grimoires}
-      />
-
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{confirmDialogTitle}</DialogTitle>
-            <DialogDescription>{confirmDialogDescription}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>{t('Cancel')}</Button>
-            <Button variant="destructive" onClick={() => confirmAction?.()}>{t('Confirm')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <ActionConfirmDialog  data={confirmData} />
+        <CreateCampaignDialog 
+            isOpen={isCreateDialogOpen} 
+            onOpenChange={setCreateDialogOpen}
+            onCreate={handleCreateCampaign}
+            grimoires={grimoires}
+        />
 
       <div className="container py-8">
         <div className="flex justify-between items-center mb-8">

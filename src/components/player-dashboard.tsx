@@ -32,6 +32,7 @@ import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -55,17 +56,6 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
   const FreeItemSpaces = 9999;
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
-  const [confirmDialogTitle, setConfirmDialogTitle] = useState('');
-  const [confirmDialogDescription, setConfirmDialogDescription] = useState('');
-  const showConfirmDialog = (title: string, description: string, action: () => void) => {
-        setConfirmDialogTitle(title);
-        setConfirmDialogDescription(description);
-        setConfirmAction(() => action);
-        setIsConfirmDialogOpen(true);
-    };
-
 
   const IDS = {
     Money: "-9998",
@@ -268,22 +258,33 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     }
   };
 
+  const [confirmData, setConfirmData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmData(prev => ({ ...prev, isOpen: false }))});
+  const showConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null, finallyAction?: (() => void) | null) => {
+      setConfirmData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+          onFinally: finallyAction ?? null
+      }));
+  };
+
   const handleDeleteItem = async (item: InventoryItem) => {
-    showConfirmDialog(
+    var name = item.name;
+    showConfirm(
         t('Delete Item'),
         t('Are you sure you want to throw this item away?'),
+        t('Item deleted'),
         async () => {
-          try {
-            await deleteInventoryItem(grimoire.id, campaign.id, item.id);
-            
-            toast({ title: "Item gelöscht", description: `${item.name} wurde entfernt.` });//TODO
-          } catch (error) {
-            toast({ title: "Fehler beim Löschen", variant: "destructive" });//TODO
-          } finally {
-            await fetchInventoryData();
-            setIsConfirmDialogOpen(false);
-          }
-        }
+          await deleteInventoryItem(grimoire.id, campaign.id, item.id);
+        },
+        null,
+        t('Item {{0}} was removed', {0: name}),
+        fetchInventoryData
     );    
   };
 
@@ -379,38 +380,27 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
   return (
     <>
-    <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{confirmDialogTitle}</DialogTitle>
-            <DialogDescription>{confirmDialogDescription}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>{t('Cancel')}</Button>
-            <Button variant="destructive" onClick={() => confirmAction?.()}>{t('Confirm')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ActionConfirmDialog  data={confirmData} />
       
-    <AddInventoryItemDialog
-        isOpen={isAddOpen}
-        onOpenChange={setAddOpen}
-        onSave={(itemData) => handleAddItem({
-          ...itemData,
-          inventoryName: selectedSlot?.inventoryName || null,
-          slotNumber: selectedSlot?.slotNumber ?? 0
-        })}
-        grimoire={grimoire}
-    />
+      <AddInventoryItemDialog
+          isOpen={isAddOpen}
+          onOpenChange={setAddOpen}
+          onSave={(itemData) => handleAddItem({
+            ...itemData,
+            inventoryName: selectedSlot?.inventoryName || null,
+            slotNumber: selectedSlot?.slotNumber ?? 0
+          })}
+          grimoire={grimoire}
+      />
 
-    <SplitItemDialog 
-      isOpen={isSplitOpen} 
-      onOpenChange={setSplitOpen}
-      item={itemToSplit?.item || null}
-      onConfirm={executeSplit}
-    />
+      <SplitItemDialog 
+        isOpen={isSplitOpen} 
+        onOpenChange={setSplitOpen}
+        item={itemToSplit?.item || null}
+        onConfirm={executeSplit}
+      />
 
-    <div className="w-full mx-auto p-4">
+      <div className="w-full mx-auto p-4">
       
       <Tabs defaultValue="main" className="w-full">
         <TabsList 
