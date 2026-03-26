@@ -1,58 +1,40 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
-import { 
-  Package, 
-  ChevronDown, 
-  Backpack, 
-  Shield, 
-  Hammer, 
-  Check,
-  X,
-  Circle,
-  Send,
-  UtensilsCrossed,
-  KeySquare
-} from 'lucide-react';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "./ui/dropdown-menu";
+import { Package, ChevronDown, Backpack, Shield, Hammer, Check, X, Circle, UtensilsCrossed, KeySquare } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import foodImage from '../images/food.jpg';
 import { useAuth } from '../context/auth-context';
 import { useI18n } from '../context/i18n-context';
 import { AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { Campaign, InventoryItem, Grimoire, User, RecipeComponent } from '@/lib/types';
+import type { Campaign, InventoryItem, Grimoire, RecipeComponent, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, craftItem, deleteInventoryItem, getInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
   campaign: Campaign;
-  player: User;
-  userInventory?: InventoryItem[];
+  hasOwnInventory?: boolean;
+  playerInventoryAccess?: User[] | null;
 }
 
-
-export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: PlayerDashboardProps) {
+export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, playerInventoryAccess = null }: PlayerDashboardProps) {
   const { user } = useAuth();
+  const username = user!.username
   const { t } = useI18n();
   const { toast } = useToast();
   const [isAddOpen, setAddOpen] = useState(false);
   const [isSplitOpen, setSplitOpen] = useState(false);
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
-  const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>(userInventory || []);
+  const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>([]);
   const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
   const [otherInventories, setAllOtherInventories] = useState(campaign.inventorySettings.additionalInventories);
-  const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != player.username); 
+  const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != username); 
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
   const FreeItemSpaces = 9999;
@@ -104,42 +86,62 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   };
 
   const fetchInventoryData = async () => {
+    if(hasOwnInventory) 
+    {
+      try {
+        let data = await getInventory(grimoire.id, campaign.id);
+        const hasBackpack = data.some(item => item.isCurrentBackpack);
+        var money = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.id == IDS.Money);
+        if (money.length === 0) {
+          setLocalCoins({ gold: 0, silver: 0, copper: 0 });
+        } else {
+          const values = money[0].value!.split(',');
+          setLocalCoins({
+            gold: Number(values[0]) || 0,
+            silver: Number(values[1]) || 0,
+            copper: Number(values[2]) || 0
+          });
+          data = data.filter(d => d.id != IDS.Money);
+        }
+
+
+
+        var food = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood);
+        if(food.length >= 1){
+          const foodItem = {id: IDS.Food, name: "Food", isBackpack: false, isCurrentBackpack: false, image: foodImage ? (foodImage as any).src || foodImage : null, metadata: `{"isFood":false,"food":"${foodLevel}"}`, originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: "0", isCustom: true, inventoryName: "default", slotNumber:food[0].slotNumber, isLocked:true, isTemporary:false, isFood: false };
+          setPlayerInventory([...data, foodItem]); 
+        }
+        else{
+          setPlayerInventory([...data]); 
+        }
+        setPlayerBackpack([...data.filter(item => item.isBackpack), {id: IDS.StandardBag, name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber: Number(IDS.StandardBag), isLocked:true,isTemporary:true, isFood: false }]);        
+
+        } catch (error) {
+        toast({ title: t('Error'), description: t('Error while searching the bag'), variant: "destructive" });
+      }
+    }
     try {
-      let data = await getInventory(grimoire.id, campaign.id);
-      const hasBackpack = data.some(item => item.isCurrentBackpack);
-      var money = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.id == IDS.Money);
-      if (money.length === 0) {
-        setLocalCoins({ gold: 0, silver: 0, copper: 0 });
-      } else {
-        const values = money[0].value!.split(',');
-        setLocalCoins({
-          gold: Number(values[0]) || 0,
-          silver: Number(values[1]) || 0,
-          copper: Number(values[2]) || 0
-        });
-        data = data.filter(d => d.id != IDS.Money);
-      }
-
-
-
-      var food = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood);
-      if(food.length >= 1){
-        const foodItem = {id: IDS.Food, name: "Food", isBackpack: false, isCurrentBackpack: false, image: foodImage ? (foodImage as any).src || foodImage : null, metadata: `{"isFood":false,"food":"${foodLevel}"}`, originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: "0", isCustom: true, inventoryName: "default", slotNumber:food[0].slotNumber, isLocked:true, isTemporary:false, isFood: false };
-        setPlayerInventory([...data, foodItem]); 
-      }
-      else{
-        setPlayerInventory([...data]); 
-      }
-      setPlayerBackpack([...data.filter(item => item.isBackpack), {id: IDS.StandardBag, name: "No Backpack", isBackpack: true, isCurrentBackpack: !hasBackpack, image: null, metadata: '{"slots":0}', originalRecipeId: "", recipeIds: [], description: "", quantity: "0", value: "0", isCustom: true, inventoryName: "default", slotNumber: Number(IDS.StandardBag), isLocked:true,isTemporary:true, isFood: false }]);        
-
-      const newOtherInventories = [];
+      const newOtherInventories: any[] = [];
       for (const inv of campaign.inventorySettings.additionalInventories) {
         const invData = await getInventory(grimoire.id, campaign.id, inv.name);
         newOtherInventories.push({ ...inv, items: invData });
       }
-      setAllOtherInventories(newOtherInventories);
+
+      const otherPlayerInventories: any[] = [];
+      if(playerInventoryAccess != null) {
+        for(const user of playerInventoryAccess)
+        {
+          if(user.username == username && !hasOwnInventory)
+            continue;
+          
+          const invData = await getPlayerInventory(grimoire.id, campaign.id, user.username);
+          newOtherInventories.push({ name: user.username, size: invData.length+3, items: invData }); //TODO size is false, retrieve from campaign and backpack
+        }
+      }
+
+      setAllOtherInventories([...newOtherInventories, ...otherPlayerInventories]);
     } catch (error) {
-      console.error("Fehler beim Refreshen", error);
+      toast({ title: t('Error'), description: t('Error when scanning other bags'), variant: "destructive" });
     }
   };
 
@@ -159,9 +161,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
     try {
       await addItemToInventory(grimoire.id, campaign.id, newItem);
       setAddOpen(false); 
-      
       toast({ title: t('Item Added') });
-
       await fetchInventoryData(); 
     } catch (error) {
       toast({ title: t('Error'), variant: "destructive" });
@@ -227,7 +227,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
   const handleSplitItem = async (item: InventoryItem, splitAmount: number, inventoryName: string | null) => {
     try {
       if (!itemToSplit || !inventoryName) return;
-      const playerName = inventoryName === "default" ? player.username : "nobody"; 
+      const playerName = inventoryName === "default" ? username : "nobody"; 
       
       await splitInventoryItem(
         grimoire.id, 
@@ -248,7 +248,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
   const handleBackPack = async (item: InventoryItem) => {
     try {
-      await updateBackPack(grimoire.id, campaign.id, item.id, player.username);
+      await updateBackPack(grimoire.id, campaign.id, item.id, username);
       
       toast({ title: "Backpack aktualisiert", description: `${item.name} wurde angewendet.` });//TODO
     } catch (error) {
@@ -343,7 +343,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
       localCoins.silver !== Number(remoteValues[1]) ||
       localCoins.copper !== Number(remoteValues[2]);
 
-    if (!hasChanged) return; // STRUDEL STOPPT HIER
+    if (!hasChanged) return;
 
     const timer = setTimeout(() => {
       handleChangedMoney();
@@ -402,18 +402,22 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
 
       <div className="w-full mx-auto p-4">
       
-      <Tabs defaultValue="main" className="w-full">
+      <Tabs defaultValue={hasOwnInventory ? "main" : otherInventories.length > 0 ? otherInventories[0].name : ""} className="w-full">
         <TabsList 
         className="grid w-full mb-6"
         style={{ 
           gridTemplateColumns: `repeat(${otherInventories.length + 2}, minmax(0, 1fr))` 
         }}
         >
-          <TabsTrigger value="main"><Backpack className="w-4 h-4 mr-2" /> {t('Inventory')}</TabsTrigger>
+          {hasOwnInventory &&
+            <TabsTrigger value="main"><Backpack className="w-4 h-4 mr-2" /> {t('Inventory')}</TabsTrigger>
+          }
           {otherInventories.map((inv: any) => (
             <TabsTrigger key={inv.name} value={inv.name} ><Package className="w-4 h-4 mr-2" />{inv.name}</TabsTrigger>
           ))}
-          <TabsTrigger value="crafting"><Hammer className="w-4 h-4 mr-2" /> {t('Crafting')}</TabsTrigger>
+          {hasOwnInventory &&
+            <TabsTrigger value="crafting"><Hammer className="w-4 h-4 mr-2" /> {t('Crafting')}</TabsTrigger>
+          }
         </TabsList>
 
         <TabsContent value="main" className="space-y-6">
@@ -645,7 +649,7 @@ export function PlayerDashboard ({ grimoire, campaign, player, userInventory }: 
                 onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
                 onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
                 otherInventories={otherInventories} 
-                campaignPlayers={[player, ...otherPlayers]} 
+                campaignPlayers={[user!, ...otherPlayers]} 
                 currentInventory={inv.name}
                 grimoire={grimoire}
               />

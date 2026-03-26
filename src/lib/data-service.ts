@@ -331,35 +331,46 @@ export async function updateItemInInventory(grimoireId: string, campaignId: stri
     }
 }
 
+function mapInventoryData(data: any) : any {
+    return data.map((item: any) => {
+        const safeParse = (val: any) => {
+            if (!val) return {};
+            if (typeof val === 'object') return val;
+            try { 
+                return JSON.parse(val); 
+            } catch (e) { 
+                return {}; 
+            }
+        };
+
+        const baseMeta = safeParse(item.metadata);
+        const customMeta = safeParse(item.customMetadata);
+
+        const mergedMeta = { ...baseMeta, ...customMeta };
+
+        return {
+            ...item,
+            metadata: mergedMeta, 
+            isFood: Boolean(mergedMeta.isFood || item.isFood), 
+            foodValue: mergedMeta.food || mergedMeta.foodValue || null,
+            isQuestItem: Boolean(mergedMeta.isQuestItem)
+        };
+    });
+}
+
 export async function getInventory(grimoireId: string, campaignId: string, inventoryName: string = "default"): Promise<InventoryItem[]> {
     try {
         const response = await api.get(`/inventories/${grimoireId}/${campaignId}/${inventoryName}`);
-        
-        const da = response.data.map((item: any) => {
-            const safeParse = (val: any) => {
-                if (!val) return {};
-                if (typeof val === 'object') return val;
-                try { 
-                    return JSON.parse(val); 
-                } catch (e) { 
-                    return {}; 
-                }
-            };
+        return mapInventoryData(response.data);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to fetch inventory.');
+    }
+}
 
-            const baseMeta = safeParse(item.metadata);
-            const customMeta = safeParse(item.customMetadata);
-
-            const mergedMeta = { ...baseMeta, ...customMeta };
-
-            return {
-                ...item,
-                metadata: mergedMeta, 
-                isFood: Boolean(mergedMeta.isFood || item.isFood), 
-                foodValue: mergedMeta.food || mergedMeta.foodValue || null,
-                isQuestItem: Boolean(mergedMeta.isQuestItem)
-            };
-        });
-        return da;
+export async function getPlayerInventory(grimoireId: string, campaignId: string, playerName: string): Promise<InventoryItem[]> {
+    try {
+        const response = await api.get(`/inventories/${grimoireId}/${campaignId}/playerInventory/${playerName}`);
+        return mapInventoryData(response.data);
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to fetch inventory.');
     }

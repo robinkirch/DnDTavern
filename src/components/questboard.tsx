@@ -231,13 +231,14 @@ export default function QuestBoard({ campaignId, grimoireId }: QuestboardProps) 
 
             {/* Neues Board Formular */}
             {showNewBoardForm && (
-                <div className="bg-slate-900 border border-amber-900/40 p-6 rounded-lg flex gap-4 items-center animate-in slide-in-from-top duration-300">
+                <div className="border border-amber-900/40 p-6 rounded-lg flex gap-4 items-center animate-in slide-in-from-top duration-300">
                     <input
                         type="text"
                         placeholder={t('Name of the city or region (e.g. Waterdeep)...')}
                         value={newBoardName}
                         onChange={(e) => setNewBoardName(e.target.value)}
-                        className="flex-1 bg-black border border-slate-800 rounded px-4 py-2 text-amber-100 focus:outline-none focus:border-amber-600"
+                        className="flex-1 rounded px-4 py-2 text-amber-100 focus:outline-none focus:border-amber-600"
+                        style={{backgroundColor: "#251e18", color: "white", border: "1px solid #4d3f33"}}
                     />
                     <Button onClick={addBoard} className="bg-emerald-700 hover:bg-emerald-600">{t('Create')}</Button>
                     <Button variant="ghost" onClick={() => setShowNewBoardForm(false)} className="text-slate-500">{t('Cancel')}</Button>

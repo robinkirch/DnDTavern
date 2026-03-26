@@ -516,5 +516,7 @@
     "Item Crafted": "Item hergestellt",
     "Something went wrong during this action.": "Etwas ist beim Ausführen fehlgeschlagen.",
     "Item deleted": "Item gelöscht",
-    "Item {{0}} was removed": "Item {{0}} wurde entfernt"
+    "Item {{0}} was removed": "Item {{0}} wurde entfernt",
+    "Error while searching the bag": "Fehler beim durchsuchen des Beutels",
+    "Error when scanning other bags": "Fehler beim durchleuchten anderer Beutel"
 }

@@ -228,12 +228,10 @@ export default function CampaignPage() {
 									<ScrollText className="mr-2 h-4 w-4 shrink-0" />
 									<span className="truncate">{t("DM's Campaign Log")}</span>
 								</TabsTrigger>
-								{user.role === 'player' && (
-									<TabsTrigger value="inventories" className="flex-1">
-										<Backpack className="mr-2 h-4 w-4 shrink-0" />
-										<span className="truncate">{t('Inventories')}</span>
-									</TabsTrigger>
-								)}
+								<TabsTrigger value="inventories" className="flex-1">
+									<Backpack className="mr-2 h-4 w-4 shrink-0" />
+									<span className="truncate">{t('Inventories')}</span>
+								</TabsTrigger>
 							</TabsList>
 
 							<TabsContent value="recipes" className="mt-6">
@@ -332,8 +330,17 @@ export default function CampaignPage() {
 								<TabsContent value="inventories" className="mt-6">
 									<PlayerDashboard 
                                         grimoire={grimoire} 
+										campaign={campaign} />
+										{/* check wether the players has granted access to there inventory for others */}
+								</TabsContent>
+							)}
+							{isCreator && grimoire != null && (
+								<TabsContent value="inventories" className="mt-6">
+									<PlayerDashboard 
+                                        grimoire={grimoire} 
 										campaign={campaign}
-                                        player={user}/>
+										hasOwnInventory={false}
+										playerInventoryAccess={campaign.invitedUsernames} />
 								</TabsContent>
 							)}
 						</Tabs>
