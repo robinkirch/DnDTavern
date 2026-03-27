@@ -301,7 +301,6 @@ export async function deleteQuest(grimoireId: string, boardId: string, questid: 
 
 export async function updateQuest(grimoireId: string, boardId: string, quest: Quest): Promise<void> {
     try {
-        console.log("b", boardId);
         const response = await api.put(`/quests/quest/${grimoireId}/${boardId}`, quest);
         return response.data;
     } catch (error) {

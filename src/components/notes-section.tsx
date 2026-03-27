@@ -35,7 +35,7 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
 
     const handleSaveNote = async (noteData: Omit<Note, 'id' | 'creatorUsername'>) => {
         if (!user || !campaign.grimoireId) return;
-        console.log("call a");
+
         try {
             const noteToSave: Note = editingNote 
                 ? { ...editingNote, ...noteData }

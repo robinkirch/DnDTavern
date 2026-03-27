@@ -42,15 +42,16 @@ function InventoryDropZone({ id, label, icon: Icon }: { id: string, label: strin
   );
 }
 
-// --- Draggable Item Komponente ---
-function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: InventoryItem, recipe: Recipe | undefined, rarities: Rarity[], showFoodInfo: boolean }) {
+function ItemComponent ({ item, recipe, rarities, showFoodInfo, isDraggable }: { item: InventoryItem, recipe: Recipe | undefined, rarities: Rarity[], showFoodInfo: boolean, isDraggable: boolean }) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
     data: item
   });
-  const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 };
-  
+  const style = isDraggable ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 } : {};
+  const classes = isDraggable ? "cursor-grab active:cursor-grabbing" : "";
+  const draggableProps = isDraggable ? { ref: setNodeRef, style, ...listeners, ...attributes, classes } : {};
+
   const meta = typeof item.metadata === "string" && item.metadata.trim() !== "" ? JSON.parse(item.metadata) : (item.metadata || {});
   const isQuestItem = Boolean(meta?.isQuestItem) || false;
   const foodLevel: string = (showFoodInfo || item.id == "-9999") ? meta.food ?? 0 : "";
@@ -59,8 +60,8 @@ function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: Invento
   const title = rarities?.find(r => r.id == recipe?.rarityId)?.name ?? "-";
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="w-full h-full p-1 relative group cursor-grab active:cursor-grabbing">
-       {item.image ? (
+      <div {...draggableProps} className="w-full h-full p-1 relative group">
+      {item.image ? (
           <img src={item.image} alt={item.name} className="w-full h-full object-contain rounded" style={{border: isQuestItem ? "1px solid gold": "none"}}/>
         ) : (
           <div className="w-full h-full bg-amber-900/20 rounded flex items-center justify-center" style={{border: isQuestItem ? "1px solid gold": "none"}}>
@@ -71,13 +72,8 @@ function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: Invento
           {item.name}
         </span>
         <span className="absolute top-1.5 right-1.5 bg-background/80 px-1 rounded text-[10px] font-bold border">
-          {item.id == "-9999" ? (<>{foodLevel} {t("Food")}</>) : (<>x{item.quantity}</>)}
+          {item.id == "-9999" ? (<>{foodLevel} {t("Food")}</>) : (<>x{item.quantity} {showFoodInfo ? `je ${foodLevel} ${t("Food")}` : ""}</>)}
         </span>
-        {showFoodInfo &&
-          <span className="absolute right-1.5 bg-background/80 px-1 rounded text-[10px] font-bold border" style={{top: "25px"}}>
-            pro {foodLevel}
-          </span>
-        }
         <span 
           className="absolute top-1.5 left-1.5 w-2 h-2 rounded-full"
           style={{ backgroundColor: color }}
@@ -85,6 +81,14 @@ function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: Invento
         />
     </div>
   );
+}
+
+function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: InventoryItem, recipe: Recipe | undefined, rarities: Rarity[], showFoodInfo: boolean }) {
+  return <ItemComponent item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} isDraggable={true}/>
+}
+
+function NonDraggableItem({ item, recipe, rarities, showFoodInfo }: { item: InventoryItem, recipe: Recipe | undefined, rarities: Rarity[], showFoodInfo: boolean }) {
+  return <ItemComponent item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} isDraggable={false}/>
 }
 
 interface InventoryGridProps {
@@ -102,11 +106,12 @@ interface InventoryGridProps {
   grimoire: Grimoire;
   currentInventory?: string;
   inventoryType?: 'normal' | 'food' | 'currentEquipment' | 'key'
+  hasDraggableItems: boolean
 }
 
 
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onAddMore, otherInventories, campaignPlayers, grimoire, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
+export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onAddMore, otherInventories, campaignPlayers, grimoire, hasDraggableItems, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
   const { t } = useI18n();
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
@@ -192,14 +197,19 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
           <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 transition-all duration-300 ease-in-out overflow-hidden ${
             activeItem ? 'opacity-100 max-h-40 mb-6' : 'opacity-0 max-h-0 mb-0 pointer-events-none'
           }`}>
-            {otherInventories.map((inv: any) => (
-              <InventoryDropZone 
-                key={inv.name} 
-                id={`target-inv-${inv.name}`} 
-                label={`Move to ${inv.name}`} 
-                icon={Archive} 
-              />
-            ))}
+            {otherInventories.map((inv: any) => {
+              if(currentInventory == inv.name)
+                return (<></>);
+
+              return (
+                <InventoryDropZone 
+                  key={inv.name} 
+                  id={`target-inv-${inv.name}`} 
+                  label={`Move to ${inv.name}`} 
+                  icon={Archive} 
+                />
+              );
+            })}
             {campaignPlayers?.map((p: any) => (
               <InventoryDropZone 
                 key={p.id} 
@@ -233,7 +243,8 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                   )
                 }
                 rarities={grimoire.rarities}
-                showFoodInfo={inventoryType == 'food'} />
+                showFoodInfo={inventoryType == 'food'}
+                hasDraggableItems={hasDraggableItems}  />
             ))}
              {(inventoryType == 'food' || inventoryType == 'key') &&
               <GridCell 
@@ -245,11 +256,12 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onDeleteItem={null}
                 onSplitClick={null}
                 onAddClick={onAddClick}
-                onAddMore={onAddMore}
+                onAddMore={null}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory} 
-                rarities={grimoire.rarities} />
+                rarities={grimoire.rarities}
+                hasDraggableItems={hasDraggableItems}  />
             }
           </div>
         </div>
@@ -273,7 +285,8 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 currentInventory={currentInventory}
                 recipe={grimoire.recipes.find((g: Recipe) => g.id === item.originalRecipeId)}
                 rarities={grimoire.rarities}
-                isTemporary={true} />
+                isTemporary={true}
+                hasDraggableItems={hasDraggableItems} />
             ))
           }
           </div>
@@ -300,7 +313,7 @@ interface InventoryGridCellProps {
   onSendToPlayer: ((item: InventoryItem, targetPlayerName: string) => void) | null;
   onSendToInventory: ((item: InventoryItem, targetInvName: string | null) => void) | null;
   onDeleteItem: ((item: InventoryItem) => void) | null;
-  onAddMore: (item: InventoryItem) => void;
+  onAddMore: ((item: InventoryItem) => void) | null;
   otherInventories?: any;
   campaignPlayers?: User[];
   currentInventory?: string;
@@ -310,9 +323,10 @@ interface InventoryGridCellProps {
   rarities: Rarity[];
   isTemporary?: boolean;
   showFoodInfo?: boolean;
+  hasDraggableItems: boolean;
 }
 
-function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, onAddMore, currentInventory, recipe, rarities, isTemporary = false, showFoodInfo=  false }: InventoryGridCellProps) {
+function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, onAddMore, currentInventory, recipe, rarities, hasDraggableItems, isTemporary = false, showFoodInfo=  false }: InventoryGridCellProps) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ 
     id: index.toString(),
@@ -331,14 +345,16 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
 
             {item ? (
               <div className="relative z-0 w-full h-full"> 
-                <DraggableItem item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} />
+                {hasDraggableItems 
+                  ? <DraggableItem item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} /> 
+                  : <NonDraggableItem item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} />
+                }
               </div> ) : 
               (!isTemporary && onAddClick != null && <Plus size={16} className="text-gray-500" />)}
 
                 {isTemporary && (
                   <>
-                    <div 
-                      className="absolute inset-0 pointer-events-none z-[50] m-1 rounded-sm border-2 border-gray-500/40 border-dashed"
+                    <div className="absolute inset-0 pointer-events-none z-[50] m-1 rounded-sm border-2 border-gray-500/40 border-dashed"
                       style={{ 
                         background: 'repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5) 5px, rgba(100, 100, 100, 0.65) 5px, rgba(100, 100, 100, 0.32) 10px)',
                         mixBlendMode: 'multiply' 
@@ -357,7 +373,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
             <ContextMenuSeparator className="bg-slate-700" />
             
             {Number(item.quantity) > 1 && (
-              <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {(!item && !isTemporary && onSplitClick) && onSplitClick(item,currentInventory ?? "");}}>
+              <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {(item && !isTemporary && onSplitClick) && onSplitClick(item,currentInventory ?? "");}}>
                 <div className="flex items-center justify-between w-full">
                   {t('Split stack')}
                   <span className="text-xs opacity-50">{item.quantity}x</span>
@@ -365,7 +381,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
               </ContextMenuItem>
             )}
 
-            <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {onAddMore(item);}}>
+            <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {(item && !isTemporary && onAddMore) && onAddMore(item);}}>
               <div className="flex items-center justify-between w-full">
                 {t('Add Amount')}
                 <span className="text-xs opacity-50">+</span>
@@ -376,7 +392,7 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
               <ContextMenuSubTrigger className="focus:bg-slate-800">{t('Send to Player')}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {campaignPlayers?.map((p: any) => (
-                  <ContextMenuItem key={p.id} onClick={() => {(!item && !isTemporary && onSendToPlayer) && onSendToPlayer(item, p.username)}}>{p.username}</ContextMenuItem>
+                  <ContextMenuItem key={p.id} onClick={() => {(item && !isTemporary && onSendToPlayer) && onSendToPlayer(item, p.username)}}>{p.username}</ContextMenuItem>
                 ))}
               </ContextMenuSubContent>
             </ContextMenuSub>
@@ -384,14 +400,14 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
             <ContextMenuSub>
               <ContextMenuSubTrigger className="focus:bg-slate-800">{t('Move to Inventory')}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
-                {otherInventories?.map((p: any) => (
-                  <ContextMenuItem key={p.id} onClick={() => {(!item && !isTemporary && onSendToInventory) && onSendToInventory(item, p.name)}}>{p.name}</ContextMenuItem>
-                ))}
+                {otherInventories?.map((p: any) => {
+                  return p.name == currentInventory ? (<></>) : (<ContextMenuItem key={p.id} onClick={() => {(item && !isTemporary && onSendToInventory) && onSendToInventory(item, p.name)}}>{p.name}</ContextMenuItem>);
+                })}
               </ContextMenuSubContent>
             </ContextMenuSub>
 
             <ContextMenuSeparator className="bg-slate-700" />
-            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => {(!item && !isTemporary && onDeleteItem) && onDeleteItem(item)}}>{t('Delete')}</ContextMenuItem>
+            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => {(item && !isTemporary && onDeleteItem) && onDeleteItem(item)}}>{t('Delete')}</ContextMenuItem>
           </ContextMenuContent>
         )}
       </ContextMenu>
