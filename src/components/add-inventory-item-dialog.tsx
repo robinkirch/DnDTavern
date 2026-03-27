@@ -67,8 +67,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire 
   };
 
   const onSubmit = async (values: z.infer<typeof itemSchema>) => {
-    console.log("hi", values);
-    const isCustom = !values.recipeId;
+      const isCustom = !values.recipeId;
     const selectedRecipe = grimoire?.recipes.find(r => r.id === values.recipeId);
 
     const metadataObj = {

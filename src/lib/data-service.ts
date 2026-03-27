@@ -397,13 +397,19 @@ export const updateBackPack = async (grimoireId: string, campaignId: string, ite
 
 export async function splitInventoryItem(grimoireId: string, campaignId: string, inventoryName: string, playerName: string, itemId: string, splitAmount: number): Promise<{ message: string, newItemId: string }> {
     try {
-        const response = await api.put(
-            `/inventories/${grimoireId}/${campaignId}/${inventoryName}/${playerName}/split`, 
-            { itemId, splitAmount }
-        );
+        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${inventoryName}/${playerName}/split`, { itemId, splitAmount });
         return response.data;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to split item.');
+    }
+}
+
+export async function addMoreInventoryItem(grimoireId: string, campaignId: string, playerName: string, itemId: string, addAmount: number): Promise<{ message: string }> {
+    try {
+        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${playerName}/addToItem`, { itemId, addAmount });
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to add more to item.');
     }
 }
 

@@ -518,5 +518,8 @@
     "Item deleted": "Item gelöscht",
     "Item {{0}} was removed": "Item {{0}} wurde entfernt",
     "Error while searching the bag": "Fehler beim durchsuchen des Beutels",
-    "Error when scanning other bags": "Fehler beim durchleuchten anderer Beutel"
+    "Error when scanning other bags": "Fehler beim durchleuchten anderer Beutel",
+    "Add Amount": "Anzahl hinzufügen",
+    "adding amount": "Betrag hinzufügen",
+    "Amount to add": "Hinzuzufügender Betrag"
 }

@@ -13,7 +13,7 @@ import {
 } from "./ui/context-menu";
 import { InventoryItem, Recipe, Grimoire, User, Rarity } from '@/lib/types';
 import { Archive, CircleHelp, Plus, User as UserIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { CardSelection } from './recipe-card';
 import { 
   Dialog, 
@@ -43,7 +43,7 @@ function InventoryDropZone({ id, label, icon: Icon }: { id: string, label: strin
 }
 
 // --- Draggable Item Komponente ---
-function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: InventoryItem, recipe: Recipe, rarities: Rarity[], showFoodInfo: boolean }) {
+function DraggableItem({ item, recipe, rarities, showFoodInfo }: { item: InventoryItem, recipe: Recipe | undefined, rarities: Rarity[], showFoodInfo: boolean }) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.id,
@@ -96,6 +96,7 @@ interface InventoryGridProps {
   onSendToPlayer: (item: InventoryItem, targetPlayerName: string) => void;
   onSendToInventory: (item: InventoryItem, targetInvName: string | null) => void;
   onDeleteItem: (item: InventoryItem) => void;
+  onAddMore: (item: InventoryItem) => void;
   otherInventories: any;
   campaignPlayers: User[];
   grimoire: Grimoire;
@@ -105,7 +106,7 @@ interface InventoryGridProps {
 
 
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, otherInventories, campaignPlayers, grimoire, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
+export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onAddMore, otherInventories, campaignPlayers, grimoire, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
   const { t } = useI18n();
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
@@ -214,7 +215,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
               <GridCell 
                 key={i} 
                 index={i} 
-                item={items.find((it: any) => it.slotNumber === i && !it.isTemporary)} 
+                item={items.find((it: any) => it.slotNumber === i && !it.isTemporary) ?? null} 
                 campaignPlayers={campaignPlayers} 
                 otherInventories={otherInventories} 
                 onSendToPlayer={onSendToPlayer} 
@@ -222,6 +223,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onDeleteItem={onDeleteItem}
                 onSplitClick={onSplitClick}
                 onAddClick={(inventoryType == 'food' || inventoryType == 'key') ? null : onAddClick}
+                onAddMore={onAddMore}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory} 
@@ -243,6 +245,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onDeleteItem={null}
                 onSplitClick={null}
                 onAddClick={onAddClick}
+                onAddMore={onAddMore}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory} 
@@ -264,10 +267,11 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onDeleteItem={onDeleteItem}
                 onSplitClick={onSplitClick}
                 onAddClick={onAddClick}
+                onAddMore={onAddMore}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory}
-                recipe={grimoire.recipes.find((g: any) => g.id === item.originalRecipeId)}
+                recipe={grimoire.recipes.find((g: Recipe) => g.id === item.originalRecipeId)}
                 rarities={grimoire.rarities}
                 isTemporary={true} />
             ))
@@ -287,7 +291,28 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
   );
 }
 
-function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, currentInventory, recipe, rarities, isTemporary = false, showFoodInfo=  false }: any) {
+interface InventoryGridCellProps {
+  index: number;
+  item: InventoryItem | null;
+  onAddClick: ((slot: number) => void) | null;
+  onSplitClick: ((item: InventoryItem, inventoryName: string) => void) | null;
+  onMoveItem?: ((item: InventoryItem, newSlot: number, inventoryName: string) => void) | null;
+  onSendToPlayer: ((item: InventoryItem, targetPlayerName: string) => void) | null;
+  onSendToInventory: ((item: InventoryItem, targetInvName: string | null) => void) | null;
+  onDeleteItem: ((item: InventoryItem) => void) | null;
+  onAddMore: (item: InventoryItem) => void;
+  otherInventories?: any;
+  campaignPlayers?: User[];
+  currentInventory?: string;
+  onModalOpen: Dispatch<SetStateAction<boolean>>;
+  onDetailItem: Dispatch<SetStateAction<InventoryItem | null>>;
+  recipe?: Recipe | undefined;
+  rarities: Rarity[];
+  isTemporary?: boolean;
+  showFoodInfo?: boolean;
+}
+
+function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, onAddMore, currentInventory, recipe, rarities, isTemporary = false, showFoodInfo=  false }: InventoryGridCellProps) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ 
     id: index.toString(),
@@ -297,18 +322,18 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
   return (
     <>
       <ContextMenu>
-        <ContextMenuTrigger disabled={!item || item.id < -100 }>
+        <ContextMenuTrigger disabled={!item ||(Number(item.id) ?? 0) < -100 }>
           <div ref={setNodeRef} className={`aspect-square rounded-md flex items-center justify-center border-2 transition-all relative overflow-hidden
             ${item ? 'border-amber-900/40 bg-amber-900/5' : onAddClick != null ? 'border-gray-500 border-dashed cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5' : 'border-gray-500 border-dashed hover:border-amber-500/50 hover:bg-amber-500/5'}
             ${isOver && !isTemporary ? 'bg-amber-500/20 border-amber-500' : ''}
             ${isTemporary ? 'border-gray-600 bg-slate-950/50' : ''}`}
-            onClick={() => (!item && !isTemporary) && onAddClick(index)}>
+            onClick={() => (!item && !isTemporary && onAddClick) && onAddClick(index)}>
 
             {item ? (
               <div className="relative z-0 w-full h-full"> 
                 <DraggableItem item={item} recipe={recipe} rarities={rarities} showFoodInfo={showFoodInfo} />
               </div> ) : 
-              ( !isTemporary && onAddClick != null && <Plus size={16} className="text-gray-500" />)}
+              (!isTemporary && onAddClick != null && <Plus size={16} className="text-gray-500" />)}
 
                 {isTemporary && (
                   <>
@@ -331,11 +356,8 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
             </ContextMenuItem>
             <ContextMenuSeparator className="bg-slate-700" />
             
-            {item.quantity > 1 && (
-              <ContextMenuItem 
-                className="focus:bg-slate-800 focus:text-amber-400" 
-                onClick={() => {onSplitClick(item,currentInventory);}}
-              >
+            {Number(item.quantity) > 1 && (
+              <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {(!item && !isTemporary && onSplitClick) && onSplitClick(item,currentInventory ?? "");}}>
                 <div className="flex items-center justify-between w-full">
                   {t('Split stack')}
                   <span className="text-xs opacity-50">{item.quantity}x</span>
@@ -343,11 +365,18 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
               </ContextMenuItem>
             )}
 
+            <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {onAddMore(item);}}>
+              <div className="flex items-center justify-between w-full">
+                {t('Add Amount')}
+                <span className="text-xs opacity-50">+</span>
+              </div>
+            </ContextMenuItem>
+
             <ContextMenuSub>
               <ContextMenuSubTrigger className="focus:bg-slate-800">{t('Send to Player')}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {campaignPlayers?.map((p: any) => (
-                  <ContextMenuItem key={p.id} onClick={() => onSendToPlayer(item, p.username)}>{p.username}</ContextMenuItem>
+                  <ContextMenuItem key={p.id} onClick={() => {(!item && !isTemporary && onSendToPlayer) && onSendToPlayer(item, p.username)}}>{p.username}</ContextMenuItem>
                 ))}
               </ContextMenuSubContent>
             </ContextMenuSub>
@@ -356,13 +385,13 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
               <ContextMenuSubTrigger className="focus:bg-slate-800">{t('Move to Inventory')}</ContextMenuSubTrigger>
               <ContextMenuSubContent className="bg-slate-900 border-slate-700">
                 {otherInventories?.map((p: any) => (
-                  <ContextMenuItem key={p.id} onClick={() => onSendToInventory(item, p.name)}>{p.name}</ContextMenuItem>
+                  <ContextMenuItem key={p.id} onClick={() => {(!item && !isTemporary && onSendToInventory) && onSendToInventory(item, p.name)}}>{p.name}</ContextMenuItem>
                 ))}
               </ContextMenuSubContent>
             </ContextMenuSub>
 
             <ContextMenuSeparator className="bg-slate-700" />
-            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => onDeleteItem(item)}>{t('Delete')}</ContextMenuItem>
+            <ContextMenuItem className="text-red-400 focus:bg-red-950" onClick={() => {(!item && !isTemporary && onDeleteItem) && onDeleteItem(item)}}>{t('Delete')}</ContextMenuItem>
           </ContextMenuContent>
         )}
       </ContextMenu>
