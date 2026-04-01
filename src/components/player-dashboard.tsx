@@ -6,11 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import foodImage from '../images/food.jpg';
 import { useAuth } from '../context/auth-context';
 import { useI18n } from '../context/i18n-context';
-import { AddInventoryItemDialog } from './add-inventory-item-dialog';
+import { AddAdminInventoryItemDialog, AddInventoryItemDialog } from './add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, RecipeComponent, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, addMoreInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, addItemToInventoryToPlayer, addMoreInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './split-item-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
@@ -30,6 +30,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const { t } = useI18n();
   const { toast } = useToast();
   const [isAddOpen, setAddOpen] = useState(false);
+  const [isAdminAddOpen, setAdminAddOpen] = useState(false);
   const [isSplitOpen, setSplitOpen] = useState(false);
   const [isAddMoreOpen, setAddMoreOpen] = useState(false);
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
@@ -161,14 +162,33 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
       }
 
       const otherPlayerInventories: any[] = [];
-      if(playerInventoryAccess != null) {
-        for(const user of playerInventoryAccess)
-        {
-          if(user.username == username && !hasOwnInventory)
-            continue;
-          
+      if (playerInventoryAccess != null) {
+        for (const user of playerInventoryAccess) {
+          if (user.username == username && !hasOwnInventory) continue;
+
           const invData = await getPlayerInventory(grimoire.id, campaign.id, user.username);
-          newOtherInventories.push({ name: user.username, size: invData.length+3, items: invData }); //TODO size is false, retrieve from campaign and backpack
+
+
+          const usedSlots = new Set<number>();
+          const fixedInvData = invData.map(item => {
+            let slot = Number(item.slotNumber);
+
+            while (usedSlots.has(slot)) {
+              slot++;
+            }
+            
+            usedSlots.add(slot);
+            return { ...item, slotNumber: slot };
+          });
+
+
+          const maxSlot = usedSlots.size > 0 ? Math.max(...Array.from(usedSlots)) : 0;
+
+          otherPlayerInventories.push({ 
+            name: user.username, 
+            size: maxSlot + 3, //TODO: wrong value. get from campaigns and backpack
+            items: fixedInvData 
+          });
         }
       }
 
@@ -194,6 +214,17 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
     try {
       await addItemToInventory(grimoire.id, campaign.id, newItem);
       setAddOpen(false); 
+      toast({ title: t('Item Added') });
+      await fetchInventoryData(); 
+    } catch (error) {
+      toast({ title: t('Error'), variant: "destructive" });
+    }
+  };
+
+  const handleAdminAddItem = async (newItem: InventoryItem, targetPlayer: string) => {
+    try {
+      await addItemToInventoryToPlayer(grimoire.id, campaign.id, newItem, targetPlayer);
+      setAdminAddOpen(false); 
       toast({ title: t('Item Added') });
       await fetchInventoryData(); 
     } catch (error) {
@@ -425,6 +456,20 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
           preset={selectedSlot?.preset}
       />
 
+      {user?.role == "dm" &&
+        <AddAdminInventoryItemDialog
+            isOpen={isAdminAddOpen}
+            onOpenChange={setAdminAddOpen}
+            onSave={(itemData, targetPlayer) => handleAdminAddItem({
+              ...itemData,
+              inventoryName: selectedSlot?.inventoryName || null,
+              slotNumber: selectedSlot?.slotNumber ?? 0
+            }, targetPlayer)}
+            grimoire={grimoire}
+            users={playerInventoryAccess!}
+        />
+      }
+
       <SplitItemDialog 
         isOpen={isSplitOpen} 
         onOpenChange={setSplitOpen}
@@ -439,8 +484,12 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
         onConfirm={executeAddMore}
       />
 
-      <div className="w-full mx-auto p-4">
-      
+    <div className="w-full mx-auto p-4">
+      {user?.role == "dm" && 
+        <div className="flex justify-end">
+          <Button className="inline-flex rounded-md text-sm font-medium  focus-visible:outline-none h-10 px-4 py-2 bg-amber-700 hover:bg-amber-600 text-amber-50 gap-2" style={{margin: "10px"}} onClick={() => setAdminAddOpen(true)}>{t("Add Item")}</Button>
+        </div>
+      }
       <Tabs defaultValue={hasOwnInventory ? "main" : otherInventories.length > 0 ? otherInventories[0].name : ""} className="w-full">
         <TabsList 
         className="grid w-full mb-6"

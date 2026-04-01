@@ -521,5 +521,7 @@
     "Error when scanning other bags": "Fehler beim durchleuchten anderer Beutel",
     "Add Amount": "Anzahl hinzufügen",
     "adding amount": "Betrag hinzufügen",
-    "Amount to add": "Hinzuzufügender Betrag"
+    "Amount to add": "Hinzuzufügender Betrag",
+    "Assign to Player": "Dem Spieler zuweisen",
+    "Select a player": "Spieler auswählen"
 }

@@ -320,6 +320,16 @@ export async function addItemToInventory(grimoireId: string, campaignId: string,
     }
 }
 
+export async function addItemToInventoryToPlayer(grimoireId: string, campaignId: string, item: InventoryItem, targetPlayer: string): Promise<void> {
+    try {
+        item.image = null;
+        const response = await api.post(`/inventories/${grimoireId}/${campaignId}/${targetPlayer}`, item);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to save item.');
+    }
+}
+
 export async function updateItemInInventory(grimoireId: string, campaignId: string, item: InventoryItem): Promise<void> {
     try {
         item.image = null;
