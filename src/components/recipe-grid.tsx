@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
 
 interface RecipeGridProps {
   grimoire: Grimoire | null;
@@ -115,14 +116,33 @@ export function RecipeGrid({ canEdit, grimoire, grimoireId, userPermissions = {}
     }
   };
 
+  const [confirmData, setConfirmData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmData(prev => ({ ...prev, isOpen: false }))});
+  const showConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
+      setConfirmData(prev => ({
+          ...prev,
+          isOpen: true,
+          title,
+          description,
+          successTitle,
+          onConfirm: action,
+          errorDescription: errorDescription ?? null,
+          successDescription: successDescription ?? null,
+      }));
+  };
+
   const handleDeleteRecipe = async (id: string) => {
-    if(confirm(t('Are you sure you want to delete this recipe? This cannot be undone.'))) {
-        await deleteRecipe(grim!.id, id);
-        if (grim) {
-          const updatedRecipes = grim.recipes.filter(r => r.id !== id);
-          setGrimoire({ ...grim, recipes: updatedRecipes });
-        }
-    }
+    showConfirm(
+          t('Delete Recipe'),
+          t('Are you sure you want to delete this recipe? This cannot be undone.'),
+          t('Success'),
+          async () => {
+              await deleteRecipe(grim!.id, id);
+              if (grim) {
+                const updatedRecipes = grim.recipes.filter(r => r.id !== id);
+                setGrimoire({ ...grim, recipes: updatedRecipes });
+              }
+          }
+      );
   };
 
   const handleSaveRecipe = async (savedRecipe: Recipe) => {
@@ -163,6 +183,7 @@ export function RecipeGrid({ canEdit, grimoire, grimoireId, userPermissions = {}
 
   return (
     <>
+      <ActionConfirmDialog  data={confirmData} />
       <RecipeFormDialog
         isOpen={isFormOpen}
         onOpenChange={setFormOpen}

@@ -44,7 +44,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const FreeItemSpaces = 9999;
 
   const IDS = {
-    Money: "-9998",
+    Money: "-9998-"+username,
     Food: "-9999",
     StandardBag: "-10000",
   }

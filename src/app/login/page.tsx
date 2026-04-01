@@ -63,35 +63,21 @@ export default function LoginPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!loading && user) {
-            router.push('/');
-        }
-    }, [user, loading, router]);
-
-    useEffect(() => {
         const checkAccess = async () => {
-            if (!user) return;
+            if (loading || !user) return;
 
             try {
                 const campaigns = await getCampaignsForUser(user);
                 if (campaigns !== undefined) {
-                     router.push('/');
+                    router.push('/');
                 }
             } catch (error) {
-                toast({ 
-                    title: t('Error'), 
-                    description: "Session expired. Please log in again.", 
-                    variant: 'destructive' 
-                });
-                router.push('/login');
+                console.error("Session invalid on login page");
             }
         };
 
-        // 2. Logik-Entscheidung
-        if (!loading) {
-            checkAccess();
-        }
-    }, [user, loading, router]);
+        checkAccess();
+    }, [user, loading]);
 
     const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
