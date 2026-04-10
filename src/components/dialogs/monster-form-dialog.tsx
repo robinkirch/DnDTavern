@@ -4,10 +4,10 @@ import { useEffect, ChangeEvent, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Monster, DamageType } from '@/lib/types'; // DamageType im lib/types ergänzen
+import type { Monster, DamageType } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 import { Button } from '@/components/ui/button';
-import { fetchDamageTypes } from '@/lib/data-service'; // Deine neue Fetch-Funktion
+import { fetchDamageTypes } from '@/lib/data-service';
 import {
   Dialog,
   DialogContent,

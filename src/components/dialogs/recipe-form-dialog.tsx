@@ -14,8 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { PlusCircle, Trash2, Upload } from 'lucide-react';
 import Image from 'next/image';
-import { Checkbox } from './ui/checkbox';
-import { ScrollArea } from './ui/scroll-area';
+import { Checkbox } from '../ui/checkbox';
+import { ScrollArea } from '../ui/scroll-area';
 
 const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve, reject) => {

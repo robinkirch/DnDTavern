@@ -1,6 +1,6 @@
-import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign, UserDTO, Questboard, Quest } from './types';
+import type { Campaign, Grimoire, User, Recipe, Category, Rarity, InventoryItem, Monster, Note, DamageType, CreateCampaign, UserDTO, Questboard, Quest, SessionLog, Session, SessionWithLogs } from './types';
 import api from './api';
-import { CampaignUpdateData } from '@/components/edit-campaign-dialog';
+import { CampaignUpdateData } from '@/components/dialogs/edit-campaign-dialog';
 
 // --- CAMPAIGN SERVICE (Backend Calls) ---
 
@@ -449,5 +449,89 @@ export async function updateUser(userData: UserDTO): Promise<User> {
         return response.data;
     } catch (error) {
          throw (error as any).response?.data || new Error('Failed to update user.');
+    }
+}
+
+// --- SESSION SERVICE
+
+export async function getSessionLogs(grimoireId: string, sessionId: string): Promise<SessionLog[]> {
+    try {
+        const response = await api.get(`/sessions/${sessionId}/${grimoireId}`);
+        return response.data.map((log: any) => ({
+            ...log,
+            time: new Date(log.time)
+        }));
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to fetch session logs.');
+    }
+}
+
+export async function getOtherLogs(grimoireId: string, campaignId: string): Promise<SessionLog[]> {
+    try {
+        const response = await api.get(`/sessions/logs/${grimoireId}/${campaignId}`);
+        return response.data.map((log: any) => ({
+            ...log,
+            time: new Date(log.time)
+        }));
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to fetch session logs.');
+    }
+}
+
+
+export async function saveSession(grimoireId: string, campaignId: string, session: Session): Promise<Session> {
+    try {
+        const response = await api.post(`/sessions/${campaignId}/${grimoireId}`, session);
+        return {
+            ...response.data,
+            date: new Date(response.data.date)
+        };
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to save session.');
+    }
+}
+
+export async function updateSession(grimoireId: string, sessionId: string, session: Partial<Session>): Promise<Session> {
+    try {
+        const response = await api.put(`/sessions/${sessionId}/${grimoireId}`, session);
+        return {
+            ...response.data,
+            date: new Date(response.data.date)
+        };
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to update session.');
+    }
+}
+
+export async function deleteSession(grimoireId: string, sessionId: string): Promise<void> {
+    try {
+        await api.delete(`/sessions/${sessionId}/${grimoireId}`);
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to delete session.');
+    }
+}
+
+export async function getFullSessions(grimoireId: string, campaignId: string): Promise<SessionWithLogs[]> {
+    try {
+        const response = await api.get(`/sessions/all-with-details/${campaignId}/${grimoireId}`);
+
+        return response.data.map((s: any) => ({
+            ...s,
+            date: new Date(s.date),
+            logs: s.logs.map((l: any) => ({ ...l, time: new Date(l.time) })),
+            note: s.note
+        }));
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to load sessions.');
+    }
+}
+
+export async function updateSessionNote(grimoireId: string, sessionId: string, noteData: { id?: string; note: string }): Promise<{ id: string }> {
+    try {
+        const response = await api.put(`/sessions/note/${sessionId}/${grimoireId}`, {id: noteData.id || null, note: noteData.note, sessionId: sessionId});
+        
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to update session note.');
     }
 }

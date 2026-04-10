@@ -7,7 +7,7 @@ import { CardSelection } from './recipe-card';
 import { Input } from './ui/input';
 import { PlusCircle, Search } from 'lucide-react';
 import { Button } from './ui/button';
-import { RecipeFormDialog } from './recipe-form-dialog';
+import { RecipeFormDialog } from './dialogs/recipe-form-dialog';
 import { getGrimoireById, saveRecipe, deleteRecipe } from '@/lib/data-service'; 
 import { Skeleton } from './ui/skeleton';
 import {
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 
 interface RecipeGridProps {
   grimoire: Grimoire | null;

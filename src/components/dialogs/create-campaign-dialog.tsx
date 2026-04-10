@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { getGrimoiresByUsername } from '@/lib/data-service';
 import { useAuth } from '@/context/auth-context';
 import type { Grimoire } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';

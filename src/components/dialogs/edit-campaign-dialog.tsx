@@ -15,14 +15,14 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, KeyRound, UserCog, CalendarDays, CloudSun, PlusCircle, Trash2, Settings } from 'lucide-react';
+import { Upload, CalendarDays, CloudSun, PlusCircle, Trash2, Settings, UserCog } from 'lucide-react';
 import Image from 'next/image';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Separator } from './ui/separator';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Label } from './ui/label';
-import { Switch } from '../components/ui/switch';
-import { InlineUserPermissions } from './InlineUserPermissions';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Separator } from '../ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
+import { InlineUserPermissions } from '../InlineUserPermissions';
 import { toast } from '@/hooks/use-toast';
 
 

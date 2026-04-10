@@ -26,11 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from './ui/button';
+import { Button } from '../ui/button';
 import { KeyRound, Package } from 'lucide-react';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Separator } from './ui/separator';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { Separator } from '../ui/separator';
 
 
 interface UserPermissionsDialogProps {

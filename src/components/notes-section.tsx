@@ -7,13 +7,13 @@ import { deleteNote, saveNote, updateCampaign } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { PlusCircle, Trash2, Pencil, Search, MapPin, Tag, ScanSearch } from 'lucide-react';
-import { NoteFormDialog } from './note-form-dialog';
+import { NoteFormDialog } from './dialogs/note-form-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 
 interface NotesSectionProps {
     campaign: Campaign;

@@ -7,14 +7,14 @@ import { deleteMonster, saveMonster, fetchDamageTypes } from '@/lib/data-service
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { PlusCircle, Trash2, Pencil, Filter, Search } from 'lucide-react';
-import { MonsterFormDialog } from './monster-form-dialog';
+import { MonsterFormDialog } from './dialogs/monster-form-dialog';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import monsterplaceholder from '../images/monster_placeholder.png'
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 
 interface BestiaryProps {
     campaign: Campaign;

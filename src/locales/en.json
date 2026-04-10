@@ -525,7 +525,25 @@
     "Amount to add": "Amount to add",
     "Assign to Player": "Assign to Player",
     "Select a player": "Select a player",
-    "Delete Recipe": "Delete Recipe"
+    "Delete Recipe": "Delete Recipe",
+    "Add New Session": "Add New Session",
+    "Add a new Session to your Campaign.": "Add a new Session to your Campaign.",
+    "No.": "No.",
+    "Session Title": "Session Title",
+    "e.g. The Great Escape": "e.g. The Great Escape",
+    "Date": "Date",
+    "Create Session": "Create Session",
+    "Delete Session": "Delete Session",
+    "Session Added": "Session Added",
+    "Note Saved": "Note Saved",
+    "Changes have been synchronized.": "Changes have been synchronized.",
+    "Session": "Session",
+    "Session on": "Session on/from",
+    "Currently there are no session notes": "Currently there are no sessions or notes",
+    "Event Log": "Event Log",
+    "Between-Logs:": "Between-Logs:",
+    "Are you sure you want to remove this session and unparent all Logs?": "Are you sure you want to remove this session and unparent all Logs?",
+    "Session deleted": "Session deleted"
 }
 
     

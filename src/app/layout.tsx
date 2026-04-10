@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import './globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { I18nProvider } from '@/context/i18n-context';
 import { Toaster } from "@/components/ui/toaster"
 import BackToTopButton from '@/components/BackToTopButton';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'D&D Tavern Keeper',

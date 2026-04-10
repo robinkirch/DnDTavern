@@ -266,3 +266,31 @@ export interface Quest {
     reward: string;
     status: 'accepted' | 'done' | 'declined' | 'none';
 }
+
+export interface Session {
+    id: string | null;
+    campaignId: string;
+    name: string;
+    date: Date;
+    number: number;
+}
+
+export interface SessionLog {
+    id: string;
+    sessionId?: string;
+    userName: string;
+    time: Date;
+    logLevel: 'Information' | 'Warning' | 'Error' | 'Critical' | 'None';
+    message: string;
+}
+
+export interface SessionNote {
+    id: string;
+    sessionId: string;
+    note: string;
+}
+
+export interface SessionWithLogs extends Session {
+    logs: SessionLog[];
+    note: SessionNote;
+}

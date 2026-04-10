@@ -6,14 +6,14 @@ import { z } from 'zod';
 import type { Grimoire, Recipe, InventoryItem, User } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { Input } from '@/components/ui/input';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { Checkbox } from './ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import { Checkbox } from '../ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Name is required'),

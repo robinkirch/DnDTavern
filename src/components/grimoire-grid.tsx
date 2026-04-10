@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, DatabaseZap, Settings, Tags, Star } from 'lucide-react';
 import { RecipeGrid } from './recipe-grid';
-import { GrimoireFormDialog } from './grimoire-form-dialog';
+import { GrimoireFormDialog } from './dialogs/grimoire-form-dialog';
 import { Skeleton } from './ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Input } from './ui/input';
@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 
 
 export function GrimoireGrid() {

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CampaignUpdateData, EditCampaignDialog } from '@/components/edit-campaign-dialog';
+import { CampaignUpdateData, EditCampaignDialog } from '@/components/dialogs/edit-campaign-dialog';
 import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords, ClipboardCheck, BookMarked } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CampaignTracker } from '@/components/campaign-tracker';
@@ -26,6 +26,7 @@ import { Bestiary } from '@/components/bestiary';
 import { NotesSection } from '@/components/notes-section';
 import PlayerDashboard from '@/components/player-dashboard';
 import QuestBoard from '@/components/questboard';
+import SessionNoteBoard from '@/components/SessionNoteBoard';
 
 export default function CampaignPage() {
 	const params = useParams();
@@ -276,62 +277,13 @@ export default function CampaignPage() {
 							</TabsContent>
 
 							<TabsContent value="dm-log" className="mt-6">
-								{isCreator ? (
-									<Card>
-										<CardHeader>
-											<CardTitle className="font-headline">{t('Session Notes')}</CardTitle>
-											<CardDescription>{t('Your private notes for the campaign. Only you can see and edit this.')}</CardDescription>
-										</CardHeader>
-										<CardContent className="space-y-4">
-											<Textarea
-												id="session-notes"
-												placeholder={t('What happened in the last session? What clues did the party find? What are your plans for the next session?')}
-												value={sessionNotes}
-												onChange={(e) => setSessionNotes(e.target.value)}
-												className="min-h-[300px] text-base"
-											/>
-											<Button onClick={handleSaveNotes} disabled={isSavingNotes} className="w-full">
-												<Save className="mr-2 h-4 w-4" />
-												{isSavingNotes ? t('Saving...') : t('Save Notes')}
-											</Button>
-											{campaign.sessionNotesDate && (
-												<div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-2">
-													<CalendarIcon className="h-4 w-4" />
-													<span>{t('Last updated on {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
-												</div>
-											)}
-										</CardContent>
-									</Card>
-								) : (
-									<Card className="bg-card/50 border-dashed">
-										<CardHeader>
-											<CardTitle className="font-headline">{t("DM's Campaign Log")}</CardTitle>
-											<CardDescription className="flex items-center gap-2">
-												{campaign.sessionNotesDate && (
-													<>
-														<CalendarIcon className="h-4 w-4" />
-														<span>{t('Log entry from {{date}}', { date: formatDate(campaign.sessionNotesDate) })}</span>
-													</>
-												)}
-											</CardDescription>
-										</CardHeader>
-										<CardContent>
-											{campaign.sessionNotes ? (
-												<p className="text-muted-foreground whitespace-pre-line">{campaign.sessionNotes}</p>
-											) : (
-												<p className="text-muted-foreground italic">{t('The log is currently empty.')}</p>
-											)}
-										</CardContent>
-									</Card>
-								)}
+								<SessionNoteBoard campaignId={campaign.id} grimoireId={grimoire?.id} />
 							</TabsContent>
 
 							{user.role === 'player' && grimoire != null && (
 								<TabsContent value="inventories" className="mt-6">
-									<PlayerDashboard 
-                                        grimoire={grimoire} 
-										campaign={campaign} />
-										{/* check wether the players has granted access to there inventory for others */}
+									<PlayerDashboard grimoire={grimoire} campaign={campaign} />
+									{/* check wether the players has granted access to there inventory for others */}
 								</TabsContent>
 							)}
 							{isCreator && grimoire != null && (

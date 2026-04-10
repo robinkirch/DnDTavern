@@ -6,7 +6,7 @@ import './style/questboard.css';
 import { Quest, Questboard } from '@/lib/types';
 import { getAllQuestBoards, addQuestBoard, deleteQuestboard, addQuest, updateQuest, deleteQuest } from '@/lib/data-service';
 import { useI18n } from '@/context/i18n-context';
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 
 interface QuestboardProps {
     campaignId: string;

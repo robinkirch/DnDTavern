@@ -6,16 +6,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import foodImage from '../images/food.jpg';
 import { useAuth } from '../context/auth-context';
 import { useI18n } from '../context/i18n-context';
-import { AddAdminInventoryItemDialog, AddInventoryItemDialog } from './add-inventory-item-dialog';
+import { AddAdminInventoryItemDialog, AddInventoryItemDialog } from './dialogs/add-inventory-item-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, RecipeComponent, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
 import { addItemToInventory, addItemToInventoryToPlayer, addMoreInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
 import { Button } from './ui/button';
-import { SplitItemDialog } from './split-item-dialog';
+import { SplitItemDialog } from './dialogs/split-item-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
-import { AddMoreItemDialog } from './add-more-dialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
+import { AddMoreItemDialog } from './dialogs/add-more-dialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;

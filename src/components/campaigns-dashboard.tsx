@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { ArrowRight, PlusCircle, BookHeart, Shield, Users, Copy, CalendarIcon, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { CreateCampaignDialog } from './create-campaign-dialog';
+import { CreateCampaignDialog } from './dialogs/create-campaign-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GrimoireGrid } from './grimoire-grid';
 import { Skeleton } from './ui/skeleton';
@@ -22,7 +22,7 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { ActionConfirmDialog, ConfirmDialogData } from './ConfirmDialog';
+import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 
 export default function CampaignsDashboard() {
     const { user } = useAuth();
