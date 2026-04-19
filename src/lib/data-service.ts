@@ -236,9 +236,9 @@ export async function saveNote(grimoireId: string, campaignId: string, note: Not
     }
 }
 
-export async function deleteNote(grimoireId: string, noteId: string): Promise<void> {
+export async function deleteNote(grimoireId: string, noteId: string, campaignId: string): Promise<void> {
     try {
-        await api.delete(`/notes/${grimoireId}/${noteId}`);
+        await api.delete(`/notes/${grimoireId}/${noteId}/${campaignId}`);
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to delete note.');
     }

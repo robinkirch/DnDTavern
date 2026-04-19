@@ -80,7 +80,7 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
             t('Are you sure you want to delete this note? This cannot be undone.'),
             t('Note Removed'),
             async () => {
-                await deleteNote(campaign.grimoireId!, noteId);
+                await deleteNote(campaign.grimoireId!, noteId, campaign.id);
                 const updatedNotes = campaign.notes.filter(n => n.id !== noteId);
                 setCampaign({ ...campaign, notes: updatedNotes });
             }
