@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface RecipeGridProps {
   grimoire: Grimoire | null;
@@ -146,20 +147,24 @@ export function RecipeGrid({ canEdit, grimoire, grimoireId, userPermissions = {}
   };
 
   const handleSaveRecipe = async (savedRecipe: Recipe) => {
-    await saveRecipe(grim!.id, savedRecipe);
-    if (grim) {
-      const existingIndex = grim.recipes.findIndex(r => r.id === savedRecipe.id);
-      let updatedRecipes;
-      if (existingIndex !== -1) {
-        updatedRecipes = grim.recipes.map(r => r.id === savedRecipe.id ? savedRecipe : r);
-      } else {
-        updatedRecipes = [...grim.recipes, savedRecipe];
-      }
-      setGrimoire({ ...grim, recipes: updatedRecipes });
-    }
+    try {
+      setIsLoading(true);
+      await saveRecipe(grim!.id, savedRecipe);
 
-    setFormOpen(false);
-    setEditingRecipe(null);
+      if (grim) {
+        const updatedGrimoire = await getGrimoireById(grimoireId);
+        setGrimoire(updatedGrimoire);
+      }
+
+      setFormOpen(false);
+      setEditingRecipe(null);
+
+    } catch (error) {
+      console.error("Failed to save or fetch grimoire:", error);
+      toast({ title: t('Error'), description: t("Failed to save recipe."), variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {

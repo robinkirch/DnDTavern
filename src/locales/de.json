@@ -542,5 +542,6 @@
     "Event Log": "Event Log",
     "Between-Logs:": "Zwischen-Logs:",
     "Are you sure you want to remove this session and unparent all Logs?": "Bist du sicher das die Session gelöscht werden soll und alle Logs unparented werden?",
-    "Session deleted": "Session gelöscht"
+    "Session deleted": "Session gelöscht",
+    "Failed to save recipe.": "Das Rezept konnte nicht gespeichert werden."
 }

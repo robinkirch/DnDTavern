@@ -10,7 +10,7 @@ import { AddAdminInventoryItemDialog, AddInventoryItemDialog } from './dialogs/a
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, RecipeComponent, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, addItemToInventoryToPlayer, addMoreInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot } from '@/lib/data-service';
+import { addItemToInventory, addItemToInventoryToPlayer, addMoreInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, getPlayerMoney, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot, updatePlayerMoney } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './dialogs/split-item-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
@@ -44,7 +44,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const FreeItemSpaces = 9999;
 
   const IDS = {
-    Money: "-9998-"+username,
+    Money: `-9998-${username}-${campaign.id}`,
     Food: "-9999",
     StandardBag: "-10000",
   }
@@ -127,17 +127,16 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
       try {
         let data = await getInventory(grimoire.id, campaign.id);
         const hasBackpack = data.some(item => item.isCurrentBackpack);
-        var money = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.id == IDS.Money);
-        if (money.length === 0) {
+        var money = await getPlayerMoney(grimoire.id, campaign.id);
+        if (!money) {
           setLocalCoins({ gold: 0, silver: 0, copper: 0 });
         } else {
-          const values = money[0].value!.split(',');
+          const values = money.value!.split(',');
           setLocalCoins({
             gold: Number(values[0]) || 0,
             silver: Number(values[1]) || 0,
             copper: Number(values[2]) || 0
           });
-          data = data.filter(d => d.id != IDS.Money);
         }
 
         var food = data.filter(i => (i.inventoryName === null || i.inventoryName == "default") && i.isFood);
@@ -201,8 +200,8 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const handleChangedMoney = async () => {
     try {
       const moneyString = `${localCoins.gold},${localCoins.silver},${localCoins.copper}`;
-      const moneyItem = {id: IDS.Money, name: "Money", isBackpack: false, isCurrentBackpack: false, image: null, metadata: '', originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: moneyString, isCustom: true, inventoryName: "default", slotNumber: Number(IDS.Money), isLocked:true, isTemporary:false, isFood: false };
-      await updateItemInInventory(grimoire.id, campaign.id, moneyItem);
+      const moneyItem = {id: IDS.Money, name: "Money", isBackpack: false, isCurrentBackpack: false, image: null, metadata: '', originalRecipeId: "", recipeIds: [], description: "", quantity: "1", value: moneyString, isCustom: true, inventoryName: "default", slotNumber: -9998, isLocked:true, isTemporary:false, isFood: false };
+      await updatePlayerMoney(grimoire.id, campaign.id, moneyItem);
       
       toast({ title: t('Money Added') });
     } catch (error) {
@@ -417,27 +416,43 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   ];
 
   const [localCoins, setLocalCoins] = useState({ gold: 0, silver: 0, copper: 0 });
+  const [remoteMoney, setRemoteMoney] = useState({ gold: 0, silver: 0, copper: 0 });
 
   useEffect(() => {
-    const moneyItem = playerInventory.find(i => i.id === IDS.Money);
-    const remoteValues = moneyItem?.value?.split(',') || ["0", "0", "0"];
-    
-    const hasChanged = 
-      localCoins.gold !== Number(remoteValues[0]) ||
-      localCoins.silver !== Number(remoteValues[1]) ||
-      localCoins.copper !== Number(remoteValues[2]);
+      const fetchMoney = async () => {
+      var money = await getPlayerMoney(grimoire.id, campaign.id);
+        if (!money) {
+          setRemoteMoney({ gold: 0, silver: 0, copper: 0 });
+        } else {
+          const values = money.value!.split(',');
+          setRemoteMoney({
+            gold: Number(values[0]) || 0,
+            silver: Number(values[1]) || 0,
+            copper: Number(values[2]) || 0
+          });
+        }
+      }
+      fetchMoney();
+  }, [campaign]);
 
-    if (!hasChanged) return;
+  useEffect(() => {
+      const hasChanged = 
+        localCoins.gold !== remoteMoney.gold ||
+        localCoins.silver !== remoteMoney.silver ||
+        localCoins.copper !== remoteMoney.copper;
 
-    const timer = setTimeout(() => {
-      handleChangedMoney();
-    }, 1600);
+      if (!hasChanged) return;
 
-    return () => clearTimeout(timer);
-  }, [localCoins.gold, localCoins.silver, localCoins.copper]);
+      const timer = setTimeout(() => {
+          handleChangedMoney(); 
+          setRemoteMoney(localCoins);
+      }, 1600);
+
+      return () => clearTimeout(timer);
+  }, [localCoins]);
 
   const adjustCoin = (key:string, amount:Number) => {
-    setLocalCoins(prev => ({ ...prev, [key]: Math.max(0, prev[key] + amount) }));
+    setLocalCoins((prev: any) => ({ ...prev, [key]: Math.max(0, prev[key] + amount) }));
   };
 
   return (

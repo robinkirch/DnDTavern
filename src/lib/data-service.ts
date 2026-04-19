@@ -432,6 +432,33 @@ export async function deleteInventoryItem(grimoireId: string, campaignId: string
 }
 
 
+export async function getPlayerMoney(grimoireId: string, campaignId: string): Promise<InventoryItem | null> {
+    try {
+        const response = await api.get(`/inventories/money/${grimoireId}/${campaignId}`);
+        const data = response.data;
+
+        if (Array.isArray(data) && data.length > 0) {
+            const mappedItems = mapInventoryData(data);
+            return mappedItems[0]; 
+        }
+
+        return null;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to fetch inventory.');
+    }
+}
+
+export const updatePlayerMoney = async (grimoireId: string, campaignId: string, item: InventoryItem): Promise<void>  => {
+    try {
+        const response = await api.put(`/inventories/money/${grimoireId}/${campaignId}`, item);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to move item.');
+    }
+};
+
+
+
 export async function craftItem(grimoireId: string, campaignId: string, recipeid: string): Promise<void> {
     try {
         const response = await api.put(`/inventories/crafting/${grimoireId}/${campaignId}`, { recipeid });

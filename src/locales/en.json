@@ -543,7 +543,8 @@
     "Event Log": "Event Log",
     "Between-Logs:": "Between-Logs:",
     "Are you sure you want to remove this session and unparent all Logs?": "Are you sure you want to remove this session and unparent all Logs?",
-    "Session deleted": "Session deleted"
+    "Session deleted": "Session deleted",
+    "Failed to save recipe.": "Failed to save recipe."
 }
 
     

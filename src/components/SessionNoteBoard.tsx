@@ -29,13 +29,13 @@ export function SessionNoteBoard ({ grimoireId, campaignId }: SessionNoteBoardPr
   const isDM = user?.role == "dm";
   const { t } = useI18n();
   const { toast } = useToast();
-  const forceUpdate = useForceUpdate();
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setFormOpen] = useState(false);
 
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [forceUpdate, setForceUpdate] = useState<number>(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -82,7 +82,7 @@ export function SessionNoteBoard ({ grimoireId, campaignId }: SessionNoteBoardPr
       }
     };
     loadData();
-  }, [campaignId, grimoireId]);
+  }, [campaignId, grimoireId, forceUpdate]);
 
   const handleUpdateNote = async (sessionId: string, newMarkdown: string, noteId?: string) => {
     if (!grimoireId) return;
@@ -117,7 +117,7 @@ export function SessionNoteBoard ({ grimoireId, campaignId }: SessionNoteBoardPr
 
       await saveSession(grimoireId, campaignId, SessionToSave);
       setFormOpen(false);
-      forceUpdate();
+      setForceUpdate(forceUpdate+1);
       toast({ title: t('Session Added') });
     } catch (error) {
         toast({ title: t('Error'), variant: 'destructive' });
@@ -126,29 +126,30 @@ export function SessionNoteBoard ({ grimoireId, campaignId }: SessionNoteBoardPr
 
   const [confirmData, setConfirmData] = useState<ConfirmDialogData>({isOpen: false,title: '',description: '', errorDescription: null, successTitle:'', onConfirm: null,onClose: () => setConfirmData(prev => ({ ...prev, isOpen: false }))});
   const showConfirm = (title: string, description: string, successTitle: string, action: () => void, errorDescription?: string | null, successDescription?: string | null) => {
-      setConfirmData(prev => ({
-          ...prev,
-          isOpen: true,
-          title,
-          description,
-          successTitle,
-          onConfirm: action,
-          errorDescription: errorDescription ?? null,
-          successDescription: successDescription ?? null,
-      }));
+    setConfirmData(prev => ({
+      ...prev,
+      isOpen: true,
+      title,
+      description,
+      successTitle,
+      onConfirm: action,
+      errorDescription: errorDescription ?? null,
+      successDescription: successDescription ?? null,
+    }));
   };
 
-   const handleDeleteSession = async (sessionId: string) => {
-          if (!user || !grimoireId) return;
-          showConfirm(
-              t('Delete Session'),
-              t('Are you sure you want to remove this session and unparent all Logs?'),
-              t('Session deleted'),
-              async () => {
-                  await deleteSession(grimoireId, sessionId);
-              }
-          );
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!user || !grimoireId) return;
+    showConfirm(
+      t('Delete Session'),
+      t('Are you sure you want to remove this session and unparent all Logs?'),
+      t('Session deleted'),
+      async () => {
+        await deleteSession(grimoireId, sessionId);
+        setForceUpdate(forceUpdate+1);
       }
+    );
+  }
 
   if (isLoading) return <div className="p-10 text-white animate-pulse">{t("Loading data...")}</div>;
   if (error) return <div className="p-10 text-red-500">{error}</div>;
