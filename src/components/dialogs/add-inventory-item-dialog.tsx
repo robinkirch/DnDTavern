@@ -104,7 +104,8 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
   const isFoodChecked = form.watch('isFood');
   const isCustom = !watchRecipeId;
 
-  const suggestions = grimoire?.recipes.filter(r => {
+  const suggestions = grimoire?.recipes
+  .filter(r => {
     const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (preset === 'food') {
@@ -114,7 +115,23 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
       return false;
     }
     return matchesSearch;
-  }).slice(0, 5) || [];
+  })
+  .sort((a, b) => {
+    const search = searchTerm.toLowerCase();
+    const nameA = a.name.toLowerCase();
+    const nameB = b.name.toLowerCase();
+
+    if (nameA === search) return -1;
+    if (nameB === search) return 1;
+
+    const startsA = nameA.startsWith(search);
+    const startsB = nameB.startsWith(search);
+    if (startsA && !startsB) return -1;
+    if (!startsA && startsB) return 1;
+
+    return nameA.localeCompare(nameB);
+  })
+  .slice(0, 6) || [];
 
   const selectRecipe = (recipe: Recipe) => {
     form.setValue('recipeId', recipe.id);
