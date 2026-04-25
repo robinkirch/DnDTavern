@@ -1,9 +1,9 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Campaign, Note } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { useI18n } from '@/context/i18n-context';
-import { deleteNote, saveNote, updateCampaign } from '@/lib/data-service';
+import { deleteNote, getNotes, saveNote } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { PlusCircle, Trash2, Pencil, Search, MapPin, Tag, ScanSearch } from 'lucide-react';
@@ -17,16 +17,23 @@ import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog'
 
 interface NotesSectionProps {
     campaign: Campaign;
-    setCampaign: (campaign: Campaign) => void;
 }
 
-export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
+export function NotesSection({ campaign }: NotesSectionProps) {
     const { user } = useAuth();
     const { t } = useI18n();
     const { toast } = useToast();
+
     const [isFormOpen, setFormOpen] = useState(false);
+    const [notes, setNotes] = useState<Note[] | null>(null);
     const [editingNote, setEditingNote] = useState<Note | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        if (campaign.grimoireId) {
+            getNotes(campaign.grimoireId).then(setNotes).catch(console.error);
+        }
+    }, [campaign.grimoireId]);
 
     const handleOpenForm = (note?: Note) => {
         setEditingNote(note || null);
@@ -48,10 +55,10 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
             await saveNote(campaign.grimoireId, campaign.id, noteToSave);
 
             const updatedNotes = editingNote
-                ? (campaign.notes || []).map(n => n.id === noteToSave.id ? noteToSave : n)
-                : [...(campaign.notes || []), noteToSave];
+                ? (notes || []).map(n => n.id === noteToSave.id ? noteToSave : n)
+                : [...(notes || []), noteToSave];
 
-            setCampaign({ ...campaign, notes: updatedNotes });
+            setNotes(updatedNotes);
             setFormOpen(false);
             toast({ title: t('Success') });
         } catch (error) {
@@ -81,17 +88,17 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
             t('Note Removed'),
             async () => {
                 await deleteNote(campaign.grimoireId!, noteId, campaign.id);
-                const updatedNotes = campaign.notes.filter(n => n.id !== noteId);
-                setCampaign({ ...campaign, notes: updatedNotes });
+                const updatedNotes = (notes || []).filter(n => n.id !== noteId);
+                setNotes(updatedNotes);
             }
         ); 
     };
 
     const filteredNotes = useMemo(() => {
-        if (!campaign.notes) return [];
+        if (!notes) return [];
         const lowercasedTerm = searchTerm.toLowerCase();
         
-        return campaign.notes
+        return notes
             .filter(note => 
                 note.title.toLowerCase().includes(lowercasedTerm) ||
                 note.content.toLowerCase().includes(lowercasedTerm) ||
@@ -99,7 +106,7 @@ export function NotesSection({ campaign, setCampaign }: NotesSectionProps) {
                 note.tags.some(tag => tag.toLowerCase().includes(lowercasedTerm))
             )
             .reverse();
-    }, [campaign.notes, searchTerm]);
+    }, [notes, searchTerm]);
 
 
     return (

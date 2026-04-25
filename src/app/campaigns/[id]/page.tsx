@@ -2,11 +2,9 @@
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 
 import { useAuth } from '@/context/auth-context';
-import { getCampaignById, getCampaignsForUser, getGrimoireById, getGrimoireByIdAsPlayer, updateCampaign, updateCampaignSettings } from '@/lib/data-service';
+import { getCampaignById, getCampaignsForUser, getGrimoireById, getGrimoireByIdAsPlayer, updateCampaignSettings } from '@/lib/data-service';
 import type { Campaign, Grimoire } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/context/i18n-context';
@@ -15,11 +13,8 @@ import { Header } from '@/components/header';
 import { RecipeGrid } from '@/components/recipe-grid';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CampaignUpdateData, EditCampaignDialog } from '@/components/dialogs/edit-campaign-dialog';
-import { Pencil, Save, CalendarIcon, Backpack, BookHeart, ScrollText, Swords, ClipboardCheck, BookMarked } from 'lucide-react';
+import { Pencil, Backpack, BookHeart, ScrollText, Swords, ClipboardCheck, BookMarked } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CampaignTracker } from '@/components/campaign-tracker';
 import { Bestiary } from '@/components/bestiary';
@@ -33,13 +28,11 @@ export default function CampaignPage() {
 	const router = useRouter();
 	const { user, loading: authLoading } = useAuth();
 	const { toast } = useToast();
-	const { t, language } = useI18n();
+	const { t } = useI18n();
 
 	const [campaign, setCampaign] = useState<Campaign | null>(null);
 	const [grimoire, setGrimoire] = useState<Grimoire | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [sessionNotes, setSessionNotes] = useState('');
-	const [isSavingNotes, setIsSavingNotes] = useState(false);
 	const [isEditDialogOpen, setEditDialogOpen] = useState(false);
 
 	const pathname = usePathname();
@@ -86,7 +79,6 @@ export default function CampaignPage() {
 
 					if (isCreator || isInvited) {
 						setCampaign(foundCampaign);
-						setSessionNotes(foundCampaign.sessionNotes || '');
 						if (foundCampaign.grimoireId) {
 							if (isCreator) {
 								getGrimoireById(foundCampaign.grimoireId).then(setGrimoire);
@@ -106,25 +98,6 @@ export default function CampaignPage() {
 			setLoading(false);
 		}
 	}, [params.id, router, user, authLoading]);
-
-	const handleSaveNotes = async () => {
-		if (!campaign) return;
-		setIsSavingNotes(true);
-		const updatedCampaign = {
-			...campaign,
-			sessionNotes,
-			sessionNotesDate: new Date().toISOString()
-		};
-		await updateCampaign(updatedCampaign);
-		setCampaign(updatedCampaign);
-		setIsSavingNotes(false);
-		toast({ title: t('Success'), description: t('Session notes have been saved.') });
-	};
-
-	const formatDate = (dateString: string) => {
-		const locale = language === 'de' ? de : undefined;
-		return format(new Date(dateString), "PP", { locale });
-	}
 
 	if (loading || authLoading || !campaign || !user) {
 		return (
@@ -186,7 +159,6 @@ export default function CampaignPage() {
 						<div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
 					</div>
 
-					{/* Geändert: container durch w-full ersetzt für echtes justify-between an die Ränder */}
 					<div className="w-full max-w-7xl mx-auto px-4 md:px-8 relative -mt-16 md:-mt-24 pb-8 z-10">
 						<div className="flex justify-between items-start mb-1 w-full">
 							<h1 className="font-headline text-4xl lg:text-5xl font-bold">{campaign.name}</h1>
@@ -265,11 +237,11 @@ export default function CampaignPage() {
 							</TabsContent>
 
 							<TabsContent value="bestiary" className="mt-6">
-								<Bestiary campaign={campaign} setCampaign={setCampaign} />
+								<Bestiary campaign={campaign} />
 							</TabsContent>
 
 							<TabsContent value="notes" className="mt-6">
-								<NotesSection campaign={campaign} setCampaign={setCampaign} />
+								<NotesSection campaign={campaign} />
 							</TabsContent>
 
 							<TabsContent value="quest" className="mt-6">

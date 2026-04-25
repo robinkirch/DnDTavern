@@ -6,11 +6,11 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/context/auth-context';
-import { createCampaign, getCampaignsForUser, getCampaignById, getGrimoiresByUsername, copyCampaign, deleteCampaign } from '@/lib/data-service';
-import type { Campaign, Grimoire, User } from '@/lib/types';
+import { createCampaign, getCampaignsForUser, getGrimoiresByUsername, copyCampaign, deleteCampaign } from '@/lib/data-service';
+import type { Campaign, Grimoire } from '@/lib/types';
 import { useI18n } from '@/context/i18n-context';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, PlusCircle, BookHeart, Shield, Users, Copy, CalendarIcon, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';

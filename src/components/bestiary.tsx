@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Campaign, Monster, DamageType } from '@/lib/types';
 import { useAuth } from '@/context/auth-context';
 import { useI18n } from '@/context/i18n-context';
-import { deleteMonster, saveMonster, fetchDamageTypes } from '@/lib/data-service';
+import { deleteMonster, saveMonster, fetchDamageTypes, getMonsters } from '@/lib/data-service';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { PlusCircle, Trash2, Pencil, Filter, Search } from 'lucide-react';
@@ -18,15 +18,15 @@ import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog'
 
 interface BestiaryProps {
     campaign: Campaign;
-    setCampaign: (campaign: Campaign) => void;
 }
 
-export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
+export function Bestiary({ campaign }: BestiaryProps) {
     const { user } = useAuth();
     const { t } = useI18n();
     const { toast } = useToast();
 
     const [isFormOpen, setFormOpen] = useState(false);
+    const [bestiary, setBestiary] = useState<Monster[] | null>(null);
     const [editingMonster, setEditingMonster] = useState<Monster | null>(null);
     const [damageTypes, setDamageTypes] = useState<DamageType[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +35,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
     useEffect(() => {
         if (campaign.grimoireId) {
             fetchDamageTypes(campaign.grimoireId).then(setDamageTypes).catch(console.error);
+            getMonsters(campaign.grimoireId).then(setBestiary).catch(console.error);
         }
     }, [campaign.grimoireId]);
 
@@ -57,11 +58,9 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
 
             await saveMonster(campaign.grimoireId, campaign.id, monsterToSave);
 
-            const updatedBestiary = editingMonster
-                ? (campaign.bestiary || []).map(m => m.id === monsterToSave.id ? monsterToSave : m)
-                : [...(campaign.bestiary || []), monsterToSave];
+            const updatedBestiary = editingMonster ? (bestiary || []).map(m => m.id === monsterToSave.id ? monsterToSave : m): [...(bestiary || []), monsterToSave];
 
-            setCampaign({ ...campaign, bestiary: updatedBestiary });
+            setBestiary(updatedBestiary);
             setFormOpen(false);
             
             toast({ title: editingMonster ? t('Monster Updated') : t('Monster Added') });
@@ -92,7 +91,8 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
             t('Monster Removed'),
             async () => {
                 await deleteMonster(campaign.grimoireId!, monsterId);
-                setCampaign({ ...campaign, bestiary: (campaign.bestiary || []).filter(m => m.id !== monsterId) });
+                const updatedBestiary = (bestiary || []).filter(m => m.id != monsterId);
+                setBestiary(updatedBestiary);
             }
         );
     }
@@ -127,11 +127,11 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
     }
 
     const filteredBestiary = useMemo(() => {
-        if (!campaign.bestiary) return [];
+        if (!bestiary) return [];
         
         const lowerTerm = searchTerm.toLowerCase();
 
-        return campaign.bestiary.filter(monster => {
+        return bestiary.filter(monster => {
             // 1. Text-Filter (Name, Beschreibung, Ort)
             const matchesSearch = 
                 monster.name.toLowerCase().includes(lowerTerm) ||
@@ -146,7 +146,7 @@ export function Bestiary({ campaign, setCampaign }: BestiaryProps) {
 
             return matchesSearch && matchesType;
         });
-    }, [campaign.bestiary, searchTerm, typeFilter]);
+    }, [bestiary, searchTerm, typeFilter]);
 
     return (
         <>

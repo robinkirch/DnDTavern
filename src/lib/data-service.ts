@@ -208,6 +208,15 @@ export async function clearRarities(grimoireId: string): Promise<void> {
 
 // --- MONSTER SERVICE ---
 
+export async function getMonsters(grimoireId: string): Promise<Monster[]> {
+    try {
+        const response = await api.get(`/monsters/${grimoireId}`);
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+}
+
 export async function saveMonster(grimoireId: string, campaignId: string, monster: Monster): Promise<Monster> {
     try {
         const response = await api.post(`/monsters/${grimoireId}/${campaignId}`, monster);
@@ -226,6 +235,15 @@ export async function deleteMonster(grimoireId: string, monsterId: string): Prom
 }
 
 // --- NOTE SERVICE ---
+
+export async function getNotes(grimoireId: string): Promise<Note[]> {
+    try {
+        const response = await api.get(`/notes/${grimoireId}`);
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+}
 
 export async function saveNote(grimoireId: string, campaignId: string, note: Note): Promise<Note> {
     try {
