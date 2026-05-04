@@ -263,9 +263,7 @@ export function Bestiary({ campaign }: BestiaryProps) {
                 ) : (
                     <div className="text-center py-16 border-2 border-dashed rounded-lg bg-muted/5">
                         <p className="text-muted-foreground">
-                            {searchTerm || typeFilter !== 'all' 
-                                ? t('No creatures found matching your filters.') 
-                                : t('The bestiary is empty. Add the first creature!')}
+                            {searchTerm || typeFilter !== 'all' ? t('No creatures found matching your filters.') : t('The bestiary is empty. Add the first creature!')}
                         </p>
                     </div>
                 )}

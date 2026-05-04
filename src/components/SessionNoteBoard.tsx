@@ -3,14 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useI18n } from '@/context/i18n-context';
 import { useToast } from '@/hooks/use-toast';
-import { MDXEditorMethods } from '@mdxeditor/editor';
 import { ForwardRefEditor } from './editor/ForwardRefEditor';
 import { Session, SessionLog, SessionNote, SessionWithLogs } from '@/lib/types';
 import { deleteSession, getFullSessions, getOtherLogs, saveSession, updateSessionNote } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { PlusCircle, XCircle } from 'lucide-react';
 import { SessionFormDialog } from './dialogs/session-form-dialog';
-import { useForceUpdate } from '@/hooks/forceUpdate';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
@@ -175,6 +173,11 @@ return (
       </div> }
 
       <div className="sessions-container space-y-12">
+        {(timeline.length == 0 || timeline.filter(t => t.type).length == 0) &&
+          <div className="text-center py-16 border-2 border-dashed rounded-lg">
+            <p className="text-muted-foreground">{t('No sessions have been added yet.')}</p>
+          </div>
+        }
         {timeline.map((item, index) => {
           if (item.type === 'session') {
             const session = item.data;
