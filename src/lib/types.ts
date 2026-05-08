@@ -4,6 +4,10 @@ export interface User {
   username: string;
   role: 'player' | 'dm'; 
   avatar?: string | null;
+  characterData: Record<string, {
+    campaignName: string;
+    characterName: string;
+  }>;
 }
 
 export interface UserDTO {
@@ -12,6 +16,10 @@ export interface UserDTO {
   avatar?: string | null;
   oldPassword: string; // for verification
   newPassword?: string | null;
+  characterData: Record<string, {
+    campaignName: string;
+    characterName: string;
+  }>;
 }
 
 // A Grimoire is now just a pointer to a data source.
@@ -119,6 +127,7 @@ export interface Campaign {
       name: string;
       size: number;
       items?: InventoryItem[];
+      type: "player" | "group";
     }[];
   };
    userPermissions: {

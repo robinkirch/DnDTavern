@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { UserProfileDialog } from './userprofile-modal';
+import { UserProfileDialog } from './dialogs/userprofile-modal';
 import { useState } from 'react';
 import { UserDTO } from '@/lib/types';
 import { updateUser } from '@/lib/data-service';
@@ -39,7 +39,7 @@ export function Header({ helpText }: HeaderProps) {
 
   const handleUpdateProfile = async (values: UserDTO) => {
     try {
-      const updatedUser = await updateUser(values);
+      await updateUser(values);
       const loginPassword = values.newPassword && values.newPassword.trim() !== '' ? values.newPassword : values.oldPassword;
 
       await login(values.newUsername, loginPassword);
@@ -70,7 +70,7 @@ export function Header({ helpText }: HeaderProps) {
     </svg>
   );
 
-
+  const hasEmptyCharacterName = user?.characterData ? Object.values(user.characterData).some(data => !data.characterName || data.characterName.trim() === '') : false;
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
      <TooltipProvider>
@@ -113,12 +113,23 @@ export function Header({ helpText }: HeaderProps) {
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
                 onClick={() => setIsProfileOpen(true)}
               >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar ?? undefined} alt={user.username} />
-                  <AvatarFallback>
-                    <UserIcon className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
+                {/* Relative Container für das Badge */}
+                <div className="relative">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatar ?? undefined} alt={user.username} />
+                    <AvatarFallback>
+                      <UserIcon className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {/* Das blinkende Ausrufezeichen */}
+                  {hasEmptyCharacterName && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[10px] font-bold text-black shadow-sm animate-pulse border-2 border-background">
+                      !
+                    </span>
+                  )}
+                </div>
+
                 <span className="text-sm text-muted-foreground hidden sm:inline-block">
                   {user.username}
                 </span>
@@ -129,7 +140,6 @@ export function Header({ helpText }: HeaderProps) {
                 <span className="hidden sm:inline">{t('Logout')}</span>
               </Button>
 
-              {/* Der neue Dialog */}
               <UserProfileDialog 
                 user={user} 
                 isOpen={isProfileOpen} 

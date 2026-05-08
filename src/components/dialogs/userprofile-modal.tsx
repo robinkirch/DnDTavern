@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { UserIcon, Upload } from 'lucide-react';
 import { useI18n } from '@/context/i18n-context';
 import type { UserDTO } from '@/lib/types';
-import { resizeImage } from '../lib/utils'
+import { resizeImage } from '../../lib/utils'
 
 const profileSchema = z.object({
   oldUsername:  z.string(),
@@ -21,6 +21,10 @@ const profileSchema = z.object({
   oldPassword: z.string().min(8, 'Current password is required for verification'),
   newPassword: z.string().optional().or(z.literal('')),
   confirmPassword: z.string().optional().or(z.literal('')),
+  characterData: z.record(z.string(), z.object({
+    campaignName: z.string(),
+    characterName: z.string()
+  }))
 }).superRefine(({ newPassword, confirmPassword }, ctx) => {
   if (newPassword && newPassword !== confirmPassword) {
     ctx.addIssue({
@@ -41,12 +45,12 @@ export function UserProfileDialog({ user, isOpen, onOpenChange, onSave }: any) {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { oldUsername: user.username, newUsername: '', avatar: '', oldPassword: '', newPassword: '', confirmPassword: '' },
+    defaultValues: { oldUsername: user.username, newUsername: '', avatar: '', oldPassword: '', newPassword: '', confirmPassword: '', characterData: {} },
   });
 
   useEffect(() => {
     if (isOpen && user) {
-      form.reset({ oldUsername: user.username, newUsername: user.username, avatar: user.avatar || '', oldPassword: '', newPassword: '', confirmPassword: '' });
+      form.reset({ oldUsername: user.username, newUsername: user.username, avatar: user.avatar || '', oldPassword: '', newPassword: '', confirmPassword: '', characterData: user.characterData || {} });
       setAvatarPreview(user.avatar || null);
     }
   }, [isOpen, user, form]);
@@ -72,13 +76,14 @@ export function UserProfileDialog({ user, isOpen, onOpenChange, onSave }: any) {
 
   const onSubmit = async (values: ProfileFormValues) => {
     setIsPending(true);
-    // Wir senden nur die Daten, die das UserDTO erwartet
-    const dto = {
+
+    const dto: UserDTO = {
       oldUsername: values.oldUsername,
       newUsername: values.newUsername,
       avatar: values.avatar,
       oldPassword: values.oldPassword,
       newPassword: values.newPassword || null,
+      characterData: values.characterData,
     };
     try {
       await onSave(dto);
@@ -100,7 +105,6 @@ export function UserProfileDialog({ user, isOpen, onOpenChange, onSave }: any) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Avatar Section */}
             <div className="flex flex-col items-center gap-4 py-2">
               <Avatar className="h-20 w-20 border">
                 <AvatarImage src={avatarPreview ?? undefined} />
@@ -119,6 +123,39 @@ export function UserProfileDialog({ user, isOpen, onOpenChange, onSave }: any) {
             <FormField control={form.control} name="newUsername" render={({ field }) => (
               <FormItem><FormLabel>{t('Username')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
+
+            <div className="space-y-3 py-2 border-t border-b py-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase">{t('Your Characters')}</p>
+              
+              {Object.keys(form.getValues('characterData') || {}).length > 0 ? (
+                Object.keys(form.getValues('characterData')).map((campaignId) => (
+                  <div key={campaignId} className="flex items-center gap-3">
+                    <div className="flex-1 text-sm font-medium truncate">
+                      {form.watch(`characterData.${campaignId}.campaignName`)}
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name={`characterData.${campaignId}.characterName`}
+                      render={({ field }) => (
+                        <FormItem className="flex-[1.5] space-y-0">
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder={t('Character Name')} 
+                              className="h-8 text-sm"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic">{t('No active characters found.')}</p>
+              )}
+            </div>
 
             <div className="p-3 bg-muted/30 rounded-lg space-y-3">
               <p className="text-xs font-medium text-muted-foreground uppercase">{t('Change Password')}</p>

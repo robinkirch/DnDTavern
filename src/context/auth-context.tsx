@@ -4,6 +4,7 @@ import type { User } from '@/lib/types';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { loginUser, registerUser } from '../lib/authService';
 import { useRouter, usePathname } from 'next/navigation';
+import { getCharacterData } from '@/lib/data-service';
 
 interface AuthContextType {
     user: User | null;
@@ -22,6 +23,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
 
+    const fetchFullUserData = async (basicUser: User): Promise<User> => {
+        try {
+            if(basicUser.role == "dm")
+                return { ...basicUser, characterData: {} };
+            const charData = await getCharacterData(basicUser.username);
+            return { ...basicUser, characterData: charData };
+        } catch (error) {
+            console.error("Failed to fetch character data:", error);
+            return { ...basicUser, characterData: {} };
+        }
+    };
+
     useEffect(() => {
         const publicPaths = ['/login']; 
 
@@ -31,23 +44,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user, loading, pathname, router]);
 
     useEffect(() => {
-        try {
-            const storedUser = localStorage.getItem('tavern-user');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
+        const initializeAuth = async () => {
+            try {
+                const storedUser = localStorage.getItem('tavern-user');
+                if (storedUser) {
+                    const basicUser = JSON.parse(storedUser);
+                    const fullUser = await fetchFullUserData(basicUser);
+                    setUser(fullUser);
+                }
+            } catch (error) {
+                localStorage.removeItem('tavern-user');
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            localStorage.removeItem('tavern-user');
-        } finally {
-            setLoading(false);
-        }
+        };
+        initializeAuth();
     }, []);
 
     const login = async (username: string, password: string): Promise<void> => {
         try {
-            const userData = await loginUser({ username, password });
-            localStorage.setItem('tavern-user', JSON.stringify(userData));
-            setUser(userData);
+            const basicUser = await loginUser({ username, password });
+            
+            const fullUser = await fetchFullUserData(basicUser);
+            
+            localStorage.setItem('tavern-user', JSON.stringify(basicUser));
+            setUser(fullUser);
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
@@ -56,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const register = async (username: string, password: string, role: 'player' | 'dm', avatar: string | null): Promise<void> => {
         try {
-            const registeredUser = await registerUser({ username, password, role: role === 'dm' ? 'DM' : 'Player', avatar });
+            await registerUser({ username, password, role: role === 'dm' ? 'DM' : 'Player', avatar });
             
             const userData = await loginUser({ username, password });
             localStorage.setItem('tavern-user', JSON.stringify(userData));

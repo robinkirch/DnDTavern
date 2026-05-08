@@ -236,9 +236,9 @@ export async function deleteMonster(grimoireId: string, monsterId: string): Prom
 
 // --- NOTE SERVICE ---
 
-export async function getNotes(grimoireId: string): Promise<Note[]> {
+export async function getNotes(grimoireId: string, campaignId: string): Promise<Note[]> {
     try {
-        const response = await api.get(`/notes/${grimoireId}`);
+        const response = await api.get(`/notes/${grimoireId}/${campaignId}`);
         return response.data;
     } catch (err) {
         throw err;
@@ -494,6 +494,15 @@ export async function updateUser(userData: UserDTO): Promise<User> {
         return response.data;
     } catch (error) {
          throw (error as any).response?.data || new Error('Failed to update user.');
+    }
+}
+
+export async function getCharacterData(username: string): Promise<Record<string, { campaignName: string; characterName: string }>> {
+    try {
+        const response = await api.get(`/users/character/${username}`);
+        return response.data;
+    } catch (error) {
+        throw (error as any).response?.data || new Error('Failed to fetch user data.');
     }
 }
 
