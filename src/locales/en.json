@@ -545,7 +545,10 @@
     "Are you sure you want to remove this session and unparent all Logs?": "Are you sure you want to remove this session and unparent all Logs?",
     "Session deleted": "Session deleted",
     "Failed to save recipe.": "Failed to save recipe.",
-    "No sessions have been added yet.": "No sessions have been added yet."
+    "No sessions have been added yet.": "No sessions have been added yet.",
+    "Your Characters": "Your Characters",
+    "Character Name": "Character Name",
+    "No active characters found.": "No active characters found."
 }
 
     

@@ -135,6 +135,9 @@ export default function CampaignPage() {
 		return;
 	};
 
+	const hasAdditionalInventories = (campaign?.inventorySettings?.additionalInventories?.length || 0) > 0;
+	const showInventoryTab = grimoire != null && (user.role === 'player' || (isCreator && (campaign.invitedUsernames.filter(i => i.username != campaign.creatorUsername).length > 0 || hasAdditionalInventories)));
+
 	return (
 		<>
 			<EditCampaignDialog
@@ -201,10 +204,12 @@ export default function CampaignPage() {
 									<ScrollText className="mr-2 h-4 w-4 shrink-0" />
 									<span className="truncate">{t("DM's Campaign Log")}</span>
 								</TabsTrigger>
-								<TabsTrigger value="inventories" className="flex-1">
-									<Backpack className="mr-2 h-4 w-4 shrink-0" />
-									<span className="truncate">{t('Inventories')}</span>
-								</TabsTrigger>
+								{showInventoryTab && 
+									<TabsTrigger value="inventories" className="flex-1">
+										<Backpack className="mr-2 h-4 w-4 shrink-0" />
+										<span className="truncate">{t('Inventories')}</span>
+									</TabsTrigger> 
+								}
 							</TabsList>
 
 							<TabsContent value="recipes" className="mt-6">
@@ -252,19 +257,27 @@ export default function CampaignPage() {
 								<SessionNoteBoard campaignId={campaign.id} grimoireId={grimoire?.id} />
 							</TabsContent>
 
-							{user.role === 'player' && grimoire != null && (
+
+							{showInventoryTab && (
 								<TabsContent value="inventories" className="mt-6">
-									<PlayerDashboard grimoire={grimoire} campaign={campaign} />
-									{/* check wether the players has granted access to there inventory for others */}
-								</TabsContent>
-							)}
-							{isCreator && grimoire != null && (
-								<TabsContent value="inventories" className="mt-6">
+									{isCreator && hasAdditionalInventories ? (
 									<PlayerDashboard 
-                                        grimoire={grimoire} 
-										campaign={campaign}
+										grimoire={grimoire} 
+										campaign={campaign} 
 										hasOwnInventory={false}
-										playerInventoryAccess={campaign.invitedUsernames} />
+                                        playerInventoryAccess={campaign.invitedUsernames}
+									/>
+									) : user.role === 'player' ? (
+									<PlayerDashboard 
+										grimoire={grimoire} 
+										campaign={campaign} 
+									/>
+									) : (
+									/* Fallback */
+									<div className="text-center py-10 border-2 border-dashed rounded-lg">
+										<p className="text-muted-foreground">'No inventories configured for this campaign.</p>
+									</div>
+									)}
 								</TabsContent>
 							)}
 						</Tabs>

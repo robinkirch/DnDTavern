@@ -250,7 +250,7 @@ export function Bestiary({ campaign }: BestiaryProps) {
                                 </CardContent>
                                 <CardFooter className="flex justify-between items-center bg-muted/10 py-2 border-t">
                                     <p className="text-[10px] text-muted-foreground tracking-wider">{t('Added by')} {monster.creatorUsername}</p>
-                                    {monster.creatorUsername === user?.username && (
+                                    {(monster.creatorUsername === user?.username || user?.role == "dm") && (
                                         <div className="flex gap-1">
                                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenForm(monster)}><Pencil className="h-3 w-3" /></Button>
                                             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteMonster(monster.id)}><Trash2 className="h-3 w-3" /></Button>

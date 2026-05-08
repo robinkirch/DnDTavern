@@ -36,7 +36,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
   const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>([]);
   const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
-  const [otherInventories, setAllOtherInventories] = useState(campaign.inventorySettings.additionalInventories);
+  const [otherInventories, setAllOtherInventories] = useState(() => (!campaign || !campaign.inventorySettings || !campaign.inventorySettings.additionalInventories)? [] : campaign.inventorySettings.additionalInventories);
   const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != username); 
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number, preset: 'food' | 'key' | 'normal' } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
@@ -157,7 +157,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
       const newOtherInventories: any[] = [];
       for (const inv of campaign.inventorySettings.additionalInventories) {
         const invData = await getInventory(grimoire.id, campaign.id, inv.name);
-        newOtherInventories.push({ ...inv, items: invData });
+        newOtherInventories.push({ ...inv, items: invData, type: "group" });
       }
 
       const otherPlayerInventories: any[] = [];
@@ -186,7 +186,8 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
           otherPlayerInventories.push({ 
             name: user.username, 
             size: maxSlot + 3, //TODO: wrong value. get from campaigns and backpack
-            items: fixedInvData 
+            items: fixedInvData ,
+            type: "player"
           });
         }
       }
@@ -639,7 +640,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
             onDeleteItem={handleDeleteItem}
             onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
             onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
-            otherInventories={otherInventories} 
+            otherInventories={otherInventories.filter(oi => oi.type == "group")} 
             campaignPlayers={otherPlayers} 
             grimoire={grimoire}
             inventoryType='normal'
@@ -672,7 +673,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                       onDeleteItem={handleDeleteItem}
                       onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
                       onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
-                      otherInventories={otherInventories} 
+                      otherInventories={otherInventories.filter(oi => oi.type == "group")} 
                       campaignPlayers={otherPlayers} 
                       grimoire={grimoire}
                       inventoryType='food'
@@ -708,7 +709,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                       onDeleteItem={handleDeleteItem}
                       onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
                       onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
-                      otherInventories={otherInventories} 
+                      otherInventories={otherInventories.filter(oi => oi.type == "group")} 
                       campaignPlayers={otherPlayers} 
                       grimoire={grimoire}
                       inventoryType='key'
@@ -746,7 +747,9 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
             </div>
           </div>
         </TabsContent>
-          {otherInventories.map((inv: any) => (
+          {otherInventories.map((inv: any) => {
+            console.log(`Inventar ${inv.name}`);
+            return (
             <TabsContent key={inv.name} value={inv.name}>
               <InventoryGrid 
                 capacity={inv.size} 
@@ -758,14 +761,17 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                 onDeleteItem={handleDeleteItem}
                 onSendToPlayer={(item: InventoryItem, targetPlayerName: string) => handleSendToPlayer(item, targetPlayerName)}
                 onSendToInventory={(item: InventoryItem, targetInvName: string | null) => handleMoveToOtherInv(item, targetInvName ?? "")}
-                otherInventories={otherInventories} 
-                campaignPlayers={[user!, ...otherPlayers]} 
+                otherInventories={otherInventories.filter(oi => oi.type == "group")} 
+                campaignPlayers={[
+                    (user && user.role !== "dm") ? user! : null!,
+                    ...otherPlayers
+                  ].filter(Boolean)}
                 currentInventory={inv.name}
                 grimoire={grimoire}
                 hasDraggableItems={true}
               />
             </TabsContent>
-          ))}
+          )})}
 
         <TabsContent value="crafting">
           <div className="p-8 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-lg mb-4">

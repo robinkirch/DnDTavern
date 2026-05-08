@@ -64,8 +64,8 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
   const form = useForm({
     resolver: zodResolver(itemSchema),
     defaultValues: { 
-      name: '', recipeId: '', description: '', quantity: 1, 
-      value: '', isFood: false, foodValue: '1', isQuestItem: false, isKey: false 
+      name: '', recipeId: '', description: '', quantity: 1,
+      value: '', isFood: false, foodValue: '0', isQuestItem: false, isKey: false 
     },
   });
 
@@ -75,6 +75,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
         form.reset({ 
           ...form.getValues(), 
           isFood: true, 
+          foodValue: "1",
           isKey: false, 
           recipeId: ''
         });
@@ -83,6 +84,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
           ...form.getValues(), 
           isKey: true, 
           isFood: false, 
+          foodValue: "0",
           recipeId: '' // Key ist immer Custom
         });
       } else {
@@ -93,6 +95,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
           isQuestItem: false,
           description: '',
           quantity: 1,
+          foodValue: "0",
           name: '',
           recipeId: ''
         });
@@ -140,6 +143,26 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
     form.setValue('value', recipe.value || '');
     form.setValue('isFood', recipe.isFood);
 
+    if (recipe.metadata) 
+    {
+      let meta = recipe.metadata;
+      
+      //fallback
+      if (typeof meta === 'string') {
+        try {
+          meta = JSON.parse(meta);
+        } catch (e) {
+          console.error("Metadata string parsing failed", e);
+        }
+      }
+
+      if (meta.food) {
+        form.setValue('foodValue', String(meta.food));
+      } else {
+        form.setValue('foodValue', '1'); // Fallback
+      }
+    }
+
     setSearchTerm(recipe.name);
   };
 
@@ -171,7 +194,7 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
       isLocked: false,
     };
 
-    await onSave(newItem);
+    onSave(newItem);
     form.reset();
     setSearchTerm('');
     onOpenChange(false);
@@ -285,13 +308,13 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
 
               <FormField control={form.control} name="isQuestItem" render={({ field }) => (
                 <FormItem className="flex items-center space-x-2 space-y-0">
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isCustom} />
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   <FormLabel className="text-xs text-slate-300 cursor-pointer">{t('QuestItem')}</FormLabel>
                 </FormItem>
               )} />
             </div>
 
-            {isFoodChecked && (
+            {!!isFoodChecked && (
               <FormField
                 control={form.control}
                 name="foodValue"
@@ -302,7 +325,8 @@ export function AddInventoryItemDialog({ isOpen, onOpenChange, onSave, grimoire,
                       <Input 
                         {...field} 
                         type="number"
-                        className="border-slate-700 h-8"
+                        className={`border-slate-700 h-8 ${!isCustom ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        readOnly={!isCustom}
                         min={1}
                       />
                     </FormControl>
@@ -345,7 +369,7 @@ export function AddAdminInventoryItemDialog({ isOpen, onOpenChange, onSave, grim
 
   const form = useForm({
     resolver: zodResolver(itemSchemaAdmin),
-    defaultValues: { name: '', recipeId: '', description: '', quantity: 1, value: '', isFood: false, foodValue: '1', isQuestItem: false, isKey: false, targetUser: ''
+    defaultValues: { name: '', recipeId: '', description: '', quantity: 1, value: '', isFood: false, foodValue: '0', isQuestItem: false, isKey: false, targetUser: ''
     },
   });
 
@@ -397,6 +421,26 @@ export function AddAdminInventoryItemDialog({ isOpen, onOpenChange, onSave, grim
     form.setValue('value', recipe.value || '');
     form.setValue('isFood', recipe.isFood);
 
+    if (recipe.metadata) 
+    {
+      let meta = recipe.metadata;
+      
+      //fallback
+      if (typeof meta === 'string') {
+        try {
+          meta = JSON.parse(meta);
+        } catch (e) {
+          console.error("Metadata string parsing failed", e);
+        }
+      }
+
+      if (meta.food) {
+        form.setValue('foodValue', String(meta.food));
+      } else {
+        form.setValue('foodValue', '1'); // Fallback
+      }
+    }
+
     setSearchTerm(recipe.name);
   };
 
@@ -428,7 +472,7 @@ export function AddAdminInventoryItemDialog({ isOpen, onOpenChange, onSave, grim
       isLocked: false,
     };
 
-    await onSave(newItem, values.targetUser);
+    onSave(newItem, values.targetUser);
     form.reset();
     setSearchTerm('');
     onOpenChange(false);
@@ -569,13 +613,13 @@ export function AddAdminInventoryItemDialog({ isOpen, onOpenChange, onSave, grim
 
               <FormField control={form.control} name="isQuestItem" render={({ field }) => (
                 <FormItem className="flex items-center space-x-2 space-y-0">
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={!isCustom} />
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   <FormLabel className="text-xs text-slate-300 cursor-pointer">{t('QuestItem')}</FormLabel>
                 </FormItem>
               )} />
             </div>
 
-            {isFoodChecked && (
+            {!!isFoodChecked && (
               <FormField
                 control={form.control}
                 name="foodValue"
@@ -586,7 +630,8 @@ export function AddAdminInventoryItemDialog({ isOpen, onOpenChange, onSave, grim
                       <Input 
                         {...field} 
                         type="number"
-                        className="border-slate-700 h-8"
+                        className={`border-slate-700 h-8 ${!isCustom ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        readOnly={!isCustom}
                         min={1}
                       />
                     </FormControl>

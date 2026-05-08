@@ -14,6 +14,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
+import { Skeleton } from './ui/skeleton';
 
 interface NotesSectionProps {
     campaign: Campaign;
@@ -31,7 +32,7 @@ export function NotesSection({ campaign }: NotesSectionProps) {
 
     useEffect(() => {
         if (campaign.grimoireId) {
-            getNotes(campaign.grimoireId).then(setNotes).catch(console.error);
+            getNotes(campaign.grimoireId, campaign.id).then(setNotes).catch(console.error);
         }
     }, [campaign.grimoireId]);
 
@@ -94,6 +95,13 @@ export function NotesSection({ campaign }: NotesSectionProps) {
         ); 
     };
 
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     const filteredNotes = useMemo(() => {
         if (!notes) return [];
         const lowercasedTerm = searchTerm.toLowerCase();
@@ -106,8 +114,19 @@ export function NotesSection({ campaign }: NotesSectionProps) {
                 note.tags.some(tag => tag.toLowerCase().includes(lowercasedTerm))
             )
             .reverse();
-    }, [notes, searchTerm]);
+    }, [notes, debouncedSearch]);
 
+    if (notes === null) {
+        return (
+			<div className="min-h-screen flex flex-col">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <Skeleton className="h-96 rounded-lg" />
+                    <Skeleton className="h-96 rounded-lg" />
+                    <Skeleton className="h-96 rounded-lg" />
+                </div>
+			</div>
+		);
+    }
 
     return (
         <>
@@ -149,6 +168,7 @@ export function NotesSection({ campaign }: NotesSectionProps) {
                                                     fill 
                                                     className="object-cover transition-transform duration-300 group-hover:scale-105" 
                                                     data-ai-hint="old parchment paper" 
+                                                    loading="lazy"
                                                 />
                                                 <ScanSearch className='h-7 w-7' style={{zIndex: "99", position: "absolute", marginLeft: "395px", marginTop: "65px", color: "#000"}}/>
                                             </button>
@@ -180,7 +200,7 @@ export function NotesSection({ campaign }: NotesSectionProps) {
                                      </div>
                                      <div className="flex justify-between items-center w-full">
                                         <p className="text-xs text-muted-foreground">{t('Added by')}: {note.creatorUsername}</p>
-                                        {note.creatorUsername === user?.username && (
+                                        {(note.creatorUsername === user?.username || user?.role == "dm") && (
                                             <div className="flex gap-1">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenForm(note)}><Pencil className="h-4 w-4" /></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteNote(note.id)}><Trash2 className="h-4 w-4" /></Button>

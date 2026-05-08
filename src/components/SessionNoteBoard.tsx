@@ -190,9 +190,11 @@ return (
                     </h2>
                     <p className="text-white/40 text-sm italic">{t("Session on")} {session.date.toLocaleDateString()}</p>
                   </div>
-                  <Button variant="destructive" onClick={() => handleDeleteSession(session.id!)}>
-                    <XCircle className="mr-2 h-4 w-4"/> {t("Delete Session")}
-                  </Button>
+                  {isDM && 
+                    <Button variant="destructive" onClick={() => handleDeleteSession(session.id!)}>
+                      <XCircle className="mr-2 h-4 w-4"/> {t("Delete Session")}
+                    </Button>
+                  }
                 </div>
                 
                 <div className={`flex flex-col ${isDM ? 'lg:flex-row' : ''} gap-8`}>

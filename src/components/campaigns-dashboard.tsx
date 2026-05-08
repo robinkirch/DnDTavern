@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
+import { TooltipPortal } from '@radix-ui/react-tooltip';
 
 export default function CampaignsDashboard() {
     const { user } = useAuth();
@@ -225,6 +226,8 @@ export default function CampaignsDashboard() {
                             //kommt ungünstig vom backend
                             const rawData: any = campaign.tracking; 
                             let trackingData;
+                            const rawDataCal: any = campaign.calendarSettings; 
+                            let calendarData;
 
                             if (rawData && typeof rawData.tracking === 'string') {
                                 trackingData = JSON.parse(rawData.tracking);
@@ -234,11 +237,20 @@ export default function CampaignsDashboard() {
                                 trackingData = rawData;
                             }
 
+                            if (rawDataCal && typeof rawDataCal.calendarSettings === 'string') {
+                                calendarData = JSON.parse(rawDataCal.calendarSettings);
+                            } else if (typeof rawDataCal === 'string') {
+                                calendarData = JSON.parse(rawDataCal);
+                            } else {
+                                calendarData = rawDataCal;
+                            }
+
                             const day = trackingData?.currentDate?.day ?? 1;
                             const month = trackingData?.currentDate?.month ?? 1;
                             const year = trackingData?.currentDate?.year ?? 1000;
+                            const yearName = calendarData?.yearName ?? ""
 
-                            const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year}`;
+                            const dateString = `${t('Day')} ${day}, ${t('Month')} ${month}, ${year} ${yearName}`;
                           return (
                             <Card key={campaign.id} className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
                                 <CardHeader className="relative p-0 h-48 w-full">
@@ -257,9 +269,11 @@ export default function CampaignsDashboard() {
                                                         <Copy className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{t('Copy Campaign')}</p>
-                                                </TooltipContent>
+                                                <TooltipPortal>
+                                                    <TooltipContent>
+                                                        <p>{t('Copy Campaign')}</p>
+                                                    </TooltipContent>
+                                                </TooltipPortal>
                                             </Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -275,9 +289,11 @@ export default function CampaignsDashboard() {
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{t('Copy Campaign')}</p>
-                                                </TooltipContent>
+                                                <TooltipPortal>
+                                                    <TooltipContent>
+                                                        <p>{t('Remove Campaign')}</p>
+                                                    </TooltipContent>
+                                                </TooltipPortal>
                                             </Tooltip>
                                         </>
                                     )}
@@ -316,7 +332,7 @@ export default function CampaignsDashboard() {
                                             <Users className='h-4 w-4' />
                                             <span>{t('Players')}</span>
                                         </div>
-                                        <div className='flex items-center gap-2'>
+                                        <div className='flex flex-wrap items-center gap-2'>
                                             {(campaign.invitedUsernames ?? []).sort((a, b) => (a.role === 'dm' ? -1 : b.role === 'dm' ? 1 : 0)).map(username => (
                                                 <Tooltip key={username.username}>
                                                     <TooltipTrigger>
