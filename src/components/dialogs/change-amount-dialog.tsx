@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '../ui/button';
 import { useI18n } from '@/context/i18n-context';
 
-interface AddMoreItemDialogProps {
+interface ChangeAmountItemDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   item: InventoryItem | null;
   onConfirm: (amount: number) => void;
 }
 
-export function AddMoreItemDialog({ isOpen, onOpenChange, item, onConfirm }: AddMoreItemDialogProps) {
+export function ChangeAmountItemDialog({ isOpen, onOpenChange, item, onConfirm }: ChangeAmountItemDialogProps) {
   const { t } = useI18n();
   if (!item) return null;
   
@@ -27,7 +27,7 @@ export function AddMoreItemDialog({ isOpen, onOpenChange, item, onConfirm }: Add
 
   const form = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { amount: 1 },
+    defaultValues: { amount: Number.parseInt(item.quantity) ?? 1 },
   });
 
   const handleSubmit = (values: { amount: number }) => {
@@ -40,7 +40,7 @@ export function AddMoreItemDialog({ isOpen, onOpenChange, item, onConfirm }: Add
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>"{item.name}" {t('adding amount')}</DialogTitle>
+          <DialogTitle>"{item.name}" {t('- change amount')}</DialogTitle>
           <p className="text-sm">{t('Current amount')}: {item.quantity}</p>
         </DialogHeader>
         
@@ -51,7 +51,7 @@ export function AddMoreItemDialog({ isOpen, onOpenChange, item, onConfirm }: Add
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Amount to add')}</FormLabel>
+                  <FormLabel>{t('New Amount')}</FormLabel>
                   <FormControl>
                     <Input type="number" {...field} min={1} onChange={e => field.onChange(parseInt(e.target.value) || 0)}/>
                   </FormControl>
@@ -61,7 +61,7 @@ export function AddMoreItemDialog({ isOpen, onOpenChange, item, onConfirm }: Add
             />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
-              <Button type="submit">{t('Add')}</Button>
+              <Button type="submit">{t('Change Amount')}</Button>
             </DialogFooter>
           </form>
         </Form>

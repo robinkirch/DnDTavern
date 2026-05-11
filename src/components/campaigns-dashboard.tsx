@@ -34,6 +34,7 @@ export default function CampaignsDashboard() {
     const [grimoires, setGrimoires] = useState<Grimoire[]>([]); 
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+    const [updated, setUpdated] = useState<boolean>(false); 
 
     useEffect(() => {
         const checkAccess = async () => {
@@ -80,7 +81,7 @@ export default function CampaignsDashboard() {
             setIsLoading(true);
             fetchAllData();
         }
-    }, [user]);
+    }, [user, updated]);
 
     const handleCreateCampaign = async (formData: { 
         name: string; 
@@ -99,9 +100,8 @@ export default function CampaignsDashboard() {
                 notes: [],
             };
             
-            const newCampaign = await createCampaign(campaignDataToSend);
-            
-            setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
+            await createCampaign(campaignDataToSend);
+            setUpdated(!updated);
             setCreateDialogOpen(false);
             toast({ title: t('Campaign Created'), description: t('The new campaign has been successfully created.') });
         } catch (error) {
@@ -117,8 +117,8 @@ export default function CampaignsDashboard() {
     if (!user) return;
     
     try {
-        const newCampaign = await copyCampaign(campaignId);
-        setCampaigns(prevCampaigns => [...prevCampaigns, newCampaign]);
+        await copyCampaign(campaignId);
+        setUpdated(!updated);
         toast({ title: t('Campaign Copied'), description: t('The campaign was successfully copied.') });
     } catch (error) {
         toast({ 
@@ -333,19 +333,20 @@ export default function CampaignsDashboard() {
                                             <span>{t('Players')}</span>
                                         </div>
                                         <div className='flex flex-wrap items-center gap-2'>
-                                            {(campaign.invitedUsernames ?? []).sort((a, b) => (a.role === 'dm' ? -1 : b.role === 'dm' ? 1 : 0)).map(username => (
-                                                <Tooltip key={username.username}>
+                                            {(campaign.invitedUsernames ?? []).sort((a, b) => (a.role === 'dm' ? -1 : b.role === 'dm' ? 1 : 0)).map(u => {
+                                                return(
+                                                <Tooltip key={u.username}>
                                                     <TooltipTrigger>
-                                                        <Avatar className={`h-14 w-14 border-2 ${username.role === 'dm' ? 'border-primary' : 'border-muted'}`}>
-                                                            {username.avatar && <AvatarImage src={username.avatar} alt={username.username} />}
-                                                            <AvatarFallback>{username.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                        <Avatar className={`h-14 w-14 border-2 ${u.role === 'dm' ? 'border-primary' : 'border-muted'}`}>
+                                                            {u.avatar && <AvatarImage src={u.avatar} alt={u.username} />}
+                                                            <AvatarFallback>{u.username.charAt(0).toUpperCase()}</AvatarFallback>
                                                         </Avatar>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        <p>{username.username} {username.role === 'dm' ? `- ${t("DM")}` : ""}</p>
+                                                        <p>{u.username} {u.role === 'dm' ? `- ${t("DM")}` : ""}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
-                                            ))}
+                                            )})}
                                         </div>
                                     </div>
 

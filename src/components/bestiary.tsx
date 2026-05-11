@@ -35,7 +35,7 @@ export function Bestiary({ campaign }: BestiaryProps) {
     useEffect(() => {
         if (campaign.grimoireId) {
             fetchDamageTypes(campaign.grimoireId).then(setDamageTypes).catch(console.error);
-            getMonsters(campaign.grimoireId).then(setBestiary).catch(console.error);
+            getMonsters(campaign.grimoireId, campaign.id).then(setBestiary).catch(console.error);
         }
     }, [campaign.grimoireId]);
 

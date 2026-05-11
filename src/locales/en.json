@@ -520,9 +520,9 @@
     "Item {{0}} was removed": "Item {{0}} was removed",
     "Error while searching the bag": "Error while searching the bag",
     "Error when scanning other bags": "Error when scanning other bags",
-    "Add Amount": "Add Amount",
-    "adding amount": "adding amount",
-    "Amount to add": "Amount to add",
+    "Change Amount": "Change Amount",
+    "- change amount": "- change amount",
+    "New Amount": "New Amount",
     "Assign to Player": "Assign to Player",
     "Select a player": "Select a player",
     "Delete Recipe": "Delete Recipe",
@@ -550,5 +550,3 @@
     "Character Name": "Character Name",
     "No active characters found.": "No active characters found."
 }
-
-    

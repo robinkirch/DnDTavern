@@ -208,9 +208,9 @@ export async function clearRarities(grimoireId: string): Promise<void> {
 
 // --- MONSTER SERVICE ---
 
-export async function getMonsters(grimoireId: string): Promise<Monster[]> {
+export async function getMonsters(grimoireId: string, campaignId: string): Promise<Monster[]> {
     try {
-        const response = await api.get(`/monsters/${grimoireId}`);
+        const response = await api.get(`/monsters/${grimoireId}/${campaignId}`);
         return response.data;
     } catch (err) {
         throw err;
@@ -431,9 +431,9 @@ export async function splitInventoryItem(grimoireId: string, campaignId: string,
     }
 }
 
-export async function addMoreInventoryItem(grimoireId: string, campaignId: string, playerName: string, itemId: string, addAmount: number): Promise<{ message: string }> {
+export async function changeAmountInventoryItem(grimoireId: string, campaignId: string, playerName: string, itemId: string, newAmount: number): Promise<{ message: string }> {
     try {
-        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${playerName}/addToItem`, { itemId, addAmount });
+        const response = await api.put(`/inventories/${grimoireId}/${campaignId}/${playerName}/changeToItem`, { itemId, newAmount });
         return response.data;
     } catch (error) {
         throw (error as any).response?.data || new Error('Failed to add more to item.');

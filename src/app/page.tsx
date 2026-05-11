@@ -67,7 +67,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header helpText={t('This is your main dashboard. From here, you can create new campaigns (DMs only), view your existing campaigns, or manage your grimoires (recipe books).')} />
+      <Header />
       <main className="flex-1">
         <CampaignsDashboard />
       </main>

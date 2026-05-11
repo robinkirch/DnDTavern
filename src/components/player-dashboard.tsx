@@ -10,12 +10,12 @@ import { AddAdminInventoryItemDialog, AddInventoryItemDialog } from './dialogs/a
 import { useToast } from '@/hooks/use-toast';
 import type { Campaign, InventoryItem, Grimoire, RecipeComponent, User } from '@/lib/types';
 import { InventoryGrid } from './InventoryGrid';
-import { addItemToInventory, addItemToInventoryToPlayer, addMoreInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, getPlayerMoney, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot, updatePlayerMoney } from '@/lib/data-service';
+import { addItemToInventory, addItemToInventoryToPlayer, changeAmountInventoryItem, craftItem, deleteInventoryItem, getInventory, getPlayerInventory, getPlayerMoney, splitInventoryItem, updateBackPack, updateItemInInventory, updateItemSlot, updatePlayerMoney } from '@/lib/data-service';
 import { Button } from './ui/button';
 import { SplitItemDialog } from './dialogs/split-item-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
-import { AddMoreItemDialog } from './dialogs/add-more-dialog';
+import { ChangeAmountItemDialog } from './dialogs/change-amount-dialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -32,7 +32,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const [isAddOpen, setAddOpen] = useState(false);
   const [isAdminAddOpen, setAdminAddOpen] = useState(false);
   const [isSplitOpen, setSplitOpen] = useState(false);
-  const [isAddMoreOpen, setAddMoreOpen] = useState(false);
+  const [isChangeAmountOpen, setChangeAmountOpen] = useState(false);
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
   const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>([]);
   const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
@@ -40,7 +40,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const otherPlayers = campaign.invitedUsernames.filter(u => u.username != campaign.creatorUsername && u.username != username); 
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number, preset: 'food' | 'key' | 'normal' } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
-  const [itemToAddMore, setItemToAddMore] = useState<{item: InventoryItem} | null>(null);
+  const [itemToChangeAmount, setItemToChangeAmount] = useState<{item: InventoryItem} | null>(null);
   const FreeItemSpaces = 9999;
 
   const IDS = {
@@ -155,9 +155,11 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
     }
     try {
       const newOtherInventories: any[] = [];
-      for (const inv of campaign.inventorySettings.additionalInventories) {
-        const invData = await getInventory(grimoire.id, campaign.id, inv.name);
-        newOtherInventories.push({ ...inv, items: invData, type: "group" });
+      if(campaign?.inventorySettings?.additionalInventories?.length > 0) {
+        for (const inv of campaign.inventorySettings.additionalInventories) {
+          const invData = await getInventory(grimoire.id, campaign.id, inv.name);
+          newOtherInventories.push({ ...inv, items: invData, type: "group" });
+        }
       }
 
       const otherPlayerInventories: any[] = [];
@@ -166,7 +168,6 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
           if (user.username == username && !hasOwnInventory) continue;
 
           const invData = await getPlayerInventory(grimoire.id, campaign.id, user.username);
-
 
           const usedSlots = new Set<number>();
           const fixedInvData = invData.map(item => {
@@ -180,7 +181,6 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
             return { ...item, slotNumber: slot };
           });
 
-
           const maxSlot = usedSlots.size > 0 ? Math.max(...Array.from(usedSlots)) : 0;
 
           otherPlayerInventories.push({ 
@@ -193,7 +193,8 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
       }
 
       setAllOtherInventories([...newOtherInventories, ...otherPlayerInventories]);
-    } catch (error) {
+    } catch (error : any) {
+      console.log("error: ", error.message);
       toast({ title: t('Error'), description: t('Error when scanning other bags'), variant: "destructive" });
     }
   };
@@ -242,9 +243,9 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
     setSplitOpen(true);
   };
 
-  const openAddMoreUI = (item: InventoryItem) => {
-    setItemToAddMore({ item });
-    setAddMoreOpen(true);
+  const openChangeAmountUI = (item: InventoryItem) => {
+    setItemToChangeAmount({ item });
+    setChangeAmountOpen(true);
   };
 
   const handleMoveItem = async (item: InventoryItem, newSlot: number, inventoryName: string) => {
@@ -312,17 +313,17 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
     }
   };
 
-  const executeAddMore = async (amount: number) => {
-    if (!itemToAddMore) return;
-    await handleAddMoreItem(itemToAddMore.item, amount);
+  const executeChangeAmount = async (amount: number) => {
+    if (!itemToChangeAmount) return;
+    await handleChangeAmountItem(itemToChangeAmount.item, amount);
   };
 
-  const handleAddMoreItem = async (item: InventoryItem, addAmount: number) => {
+  const handleChangeAmountItem = async (item: InventoryItem, newAmount: number) => {
     try {
-      if (!itemToAddMore) return;
-      await addMoreInventoryItem(grimoire.id, campaign.id, username, item.id, addAmount,);
+      if (!itemToChangeAmount) return;
+      await changeAmountInventoryItem(grimoire.id, campaign.id, username, item.id, newAmount,);
 
-      toast({ title: "Items hinzugefügt", description: `${addAmount}x ${item.name} wurde hinzugefügt.` });//TODO
+      toast({ title: "Anzahl geändert", description: `${newAmount} von ${item.name} wurde geändert.` });//TODO
     } catch (error) {
       toast({ title: "Fehler beim hinzufügen", description: (error as any).message, variant: "destructive" });//TODO
     } finally {
@@ -493,11 +494,11 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
         onConfirm={executeSplit}
       />
 
-      <AddMoreItemDialog 
-        isOpen={isAddMoreOpen} 
-        onOpenChange={setAddMoreOpen}
-        item={itemToAddMore?.item || null}
-        onConfirm={executeAddMore}
+      <ChangeAmountItemDialog 
+        isOpen={isChangeAmountOpen} 
+        onOpenChange={setChangeAmountOpen}
+        item={itemToChangeAmount?.item || null}
+        onConfirm={executeChangeAmount}
       />
 
     <div className="w-full mx-auto p-4">
@@ -634,7 +635,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
             capacity={getInventoryCapacity} 
             items={categorizedItems.normal}
             onAddClick={(slot: number) => openAddDialog(null, slot)}
-            onAddMore={(item: InventoryItem) => openAddMoreUI(item)}
+            onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
             onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
             onMoveItem={handleMoveItem} 
             onDeleteItem={handleDeleteItem}
@@ -667,7 +668,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                       capacity={9999} 
                       items={categorizedItems.food.sort((a, b) => a.name.localeCompare(b.name))}
                       onAddClick={(slot: number) => openAddDialog(null, slot, 'food')}
-                      onAddMore={(item: InventoryItem) => openAddMoreUI(item)}
+                      onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
                       onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                       onMoveItem={handleMoveItem} 
                       onDeleteItem={handleDeleteItem}
@@ -703,7 +704,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                       capacity={9999} 
                       items={categorizedItems.keys.sort((a, b) => a.name.localeCompare(b.name))}
                       onAddClick={(slot: number) => openAddDialog(null, slot, 'key')}
-                      onAddMore={(item: InventoryItem) => openAddMoreUI(item)}
+                      onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
                       onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                       onMoveItem={handleMoveItem} 
                       onDeleteItem={handleDeleteItem}
@@ -755,7 +756,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                 capacity={inv.size} 
                 items={inv.items ?? []} 
                 onAddClick={(slot: number) => openAddDialog(inv.name, slot)} 
-                onAddMore={(item: InventoryItem) => openAddMoreUI(item)}
+                onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
                 onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                 onMoveItem={handleMoveItem} 
                 onDeleteItem={handleDeleteItem}

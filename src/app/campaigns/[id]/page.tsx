@@ -147,7 +147,7 @@ export default function CampaignPage() {
 				campaign={campaign}
 			/>
 			<div className="min-h-screen flex flex-col">
-				<Header helpText={t('This is the main view for a single campaign. Here you can see all campaign-related information.')} />
+				<Header />
 				<main className="flex-grow">
 					<div className="relative w-full h-64 md:h-80">
 						{campaign.image && (
@@ -260,7 +260,7 @@ export default function CampaignPage() {
 
 							{showInventoryTab && (
 								<TabsContent value="inventories" className="mt-6">
-									{isCreator && hasAdditionalInventories ? (
+									{isCreator && (hasAdditionalInventories || campaign.invitedUsernames?.length > 0) ? (
 									<PlayerDashboard 
 										grimoire={grimoire} 
 										campaign={campaign} 

@@ -25,12 +25,7 @@ import { UserDTO } from '@/lib/types';
 import { updateUser } from '@/lib/data-service';
 import { toast } from '@/hooks/use-toast';
 
-
-interface HeaderProps {
-    helpText?: string;
-}
-
-export function Header({ helpText }: HeaderProps) {
+export function Header() {
   const { user, logout, login } = useAuth();
   const router = useRouter();
   const { language, setLanguage, t } = useI18n();
@@ -80,19 +75,6 @@ export function Header({ helpText }: HeaderProps) {
             <span className="font-headline text-xl font-bold text-primary hidden sm:inline-block">{t('Tavern Keeper')}</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
-           {helpText && (
-               <Tooltip>
-                 <TooltipTrigger asChild>
-                   <Button variant="ghost" size="icon" className='h-9 w-9 text-muted-foreground'>
-                     <Info className="h-4 w-4" />
-                     <span className="sr-only">{t('Help')}</span>
-                   </Button>
-                 </TooltipTrigger>
-                 <TooltipContent side="bottom" align="end" className="max-w-xs">
-                   <p>{helpText}</p>
-                 </TooltipContent>
-               </Tooltip>
-           )}
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className='h-9 w-9'>
@@ -113,7 +95,6 @@ export function Header({ helpText }: HeaderProps) {
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" 
                 onClick={() => setIsProfileOpen(true)}
               >
-                {/* Relative Container für das Badge */}
                 <div className="relative">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatar ?? undefined} alt={user.username} />
@@ -122,7 +103,6 @@ export function Header({ helpText }: HeaderProps) {
                     </AvatarFallback>
                   </Avatar>
 
-                  {/* Das blinkende Ausrufezeichen */}
                   {hasEmptyCharacterName && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[10px] font-bold text-black shadow-sm animate-pulse border-2 border-background">
                       !
