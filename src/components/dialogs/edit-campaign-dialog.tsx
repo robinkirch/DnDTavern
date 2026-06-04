@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, ChangeEvent } from 'react';
-import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Campaign, Grimoire, UserPermissions, PredefinedWeatherCondition, RegionWeatherCondition, UserCampaignInventory, TimeOfDay } from '@/lib/types';

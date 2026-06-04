@@ -475,8 +475,6 @@ export const updatePlayerMoney = async (grimoireId: string, campaignId: string, 
     }
 };
 
-
-
 export async function craftItem(grimoireId: string, campaignId: string, recipeid: string): Promise<void> {
     try {
         const response = await api.put(`/inventories/crafting/${grimoireId}/${campaignId}`, { recipeid });

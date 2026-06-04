@@ -16,6 +16,7 @@ import { SplitItemDialog } from './dialogs/split-item-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { ActionConfirmDialog, ConfirmDialogData } from './dialogs/ConfirmDialog';
 import { ChangeAmountItemDialog } from './dialogs/change-amount-dialog';
+import { EditItemDialog } from './dialogs/edit-item-dialog';
 
 interface PlayerDashboardProps {
   grimoire: Grimoire;
@@ -33,6 +34,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const [isAdminAddOpen, setAdminAddOpen] = useState(false);
   const [isSplitOpen, setSplitOpen] = useState(false);
   const [isChangeAmountOpen, setChangeAmountOpen] = useState(false);
+  const [isEditOpen, setEditOpen] = useState(false);
   const [getInventoryCapacity, setinventoryCapacity] = useState(0);
   const [playerInventory, setPlayerInventory] = useState<InventoryItem[]>([]);
   const [playerBackpack, setPlayerBackpack] = useState<InventoryItem[]>([]);
@@ -41,6 +43,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
   const [selectedSlot, setSelectedSlot] = useState<{ inventoryName: string | null; slotNumber: number, preset: 'food' | 'key' | 'normal' } | null>(null);
   const [itemToSplit, setItemToSplit] = useState<{item: InventoryItem, inventoryName: string} | null>(null);
   const [itemToChangeAmount, setItemToChangeAmount] = useState<{item: InventoryItem} | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<{item: InventoryItem} | null>(null);
   const FreeItemSpaces = 9999;
 
   const IDS = {
@@ -248,6 +251,11 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
     setChangeAmountOpen(true);
   };
 
+  const openEditUI = (item: InventoryItem) => {
+    setItemToEdit({ item });
+    setEditOpen(true);
+  };
+
   const handleMoveItem = async (item: InventoryItem, newSlot: number, inventoryName: string) => {
     if(item.slotNumber == newSlot)
       return;
@@ -291,6 +299,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
     await handleSplitItem(itemToSplit.item, amount, itemToSplit.inventoryName);
   };
 
+  
   const handleSplitItem = async (item: InventoryItem, splitAmount: number, inventoryName: string | null) => {
     try {
       if (!itemToSplit || !inventoryName) return;
@@ -304,12 +313,28 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
         item.id, 
         splitAmount,
       );
-
+      
       toast({ title: "Stack geteilt", description: `${splitAmount}x ${item.name} wurde verschoben.` });//TODO
     } catch (error) {
       toast({ title: "Fehler beim Teilen", description: (error as any).message, variant: "destructive" });//TODO
     } finally {
       await fetchInventoryData();
+    }
+  };
+
+  const executeEdit = async (editedItem: InventoryItem) => {
+    if (!editedItem) return;
+    await handleEditItem(editedItem);
+  };
+
+  const handleEditItem = async (editedItem: InventoryItem) => {
+    try {
+      await updateItemInInventory(grimoire.id, campaign.id, editedItem);
+      setEditOpen(false); 
+      toast({ title: t('Item Edited') });
+      await fetchInventoryData(); 
+    } catch (error) {
+      toast({ title: t('Error'), variant: "destructive" });
     }
   };
 
@@ -501,6 +526,13 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
         onConfirm={executeChangeAmount}
       />
 
+      <EditItemDialog 
+        isOpen={isEditOpen} 
+        onOpenChange={setEditOpen}
+        item={itemToEdit?.item || null}
+        onSave={executeEdit}
+      />
+
     <div className="w-full mx-auto p-4">
       {user?.role == "dm" && 
         <div className="flex justify-end">
@@ -636,6 +668,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
             items={categorizedItems.normal}
             onAddClick={(slot: number) => openAddDialog(null, slot)}
             onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
+            onEditItem={(item: InventoryItem) => openEditUI(item)}
             onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
             onMoveItem={handleMoveItem} 
             onDeleteItem={handleDeleteItem}
@@ -669,6 +702,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                       items={categorizedItems.food.sort((a, b) => a.name.localeCompare(b.name))}
                       onAddClick={(slot: number) => openAddDialog(null, slot, 'food')}
                       onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
+                      onEditItem={(item: InventoryItem) => openEditUI(item)}
                       onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                       onMoveItem={handleMoveItem} 
                       onDeleteItem={handleDeleteItem}
@@ -705,6 +739,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                       items={categorizedItems.keys.sort((a, b) => a.name.localeCompare(b.name))}
                       onAddClick={(slot: number) => openAddDialog(null, slot, 'key')}
                       onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
+                      onEditItem={(item: InventoryItem) => openEditUI(item)}
                       onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                       onMoveItem={handleMoveItem} 
                       onDeleteItem={handleDeleteItem}
@@ -749,7 +784,6 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
           </div>
         </TabsContent>
           {otherInventories.map((inv: any) => {
-            console.log(`Inventar ${inv.name}`);
             return (
             <TabsContent key={inv.name} value={inv.name}>
               <InventoryGrid 
@@ -757,6 +791,7 @@ export function PlayerDashboard ({ grimoire, campaign, hasOwnInventory = true, p
                 items={inv.items ?? []} 
                 onAddClick={(slot: number) => openAddDialog(inv.name, slot)} 
                 onChangeAmount={(item: InventoryItem) => openChangeAmountUI(item)}
+                onEditItem={(item: InventoryItem) => openEditUI(item)}
                 onSplitClick={(item: InventoryItem, inventoryName: string) => openSplitUI(item, inventoryName)}
                 onMoveItem={handleMoveItem} 
                 onDeleteItem={handleDeleteItem}

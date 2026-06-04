@@ -101,6 +101,7 @@ interface InventoryGridProps {
   onSendToInventory: (item: InventoryItem, targetInvName: string | null) => void;
   onDeleteItem: (item: InventoryItem) => void;
   onChangeAmount: (item: InventoryItem) => void;
+  onEditItem: ((item: InventoryItem) => void) | null;
   otherInventories: any;
   campaignPlayers: User[];
   grimoire: Grimoire;
@@ -111,7 +112,7 @@ interface InventoryGridProps {
 
 
 // --- Grid Komponente ---
-export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onChangeAmount, otherInventories, campaignPlayers, grimoire, hasDraggableItems, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
+export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMoveItem, onSendToPlayer, onSendToInventory, onDeleteItem, onChangeAmount, onEditItem, otherInventories, campaignPlayers, grimoire, hasDraggableItems, currentInventory = "default", inventoryType = "normal"}: InventoryGridProps) {
   const { t } = useI18n();
   const [activeItem, setActiveItem] = useState<InventoryItem | null>(null);
   const [activeDetailItem, setActiveDetailItem] = useState<InventoryItem | null>(null);
@@ -234,6 +235,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onSplitClick={onSplitClick}
                 onAddClick={(inventoryType == 'food' || inventoryType == 'key') ? null : onAddClick}
                 onChangeAmount={onChangeAmount}
+                onEditItem={onEditItem}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory} 
@@ -257,6 +259,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onSplitClick={null}
                 onAddClick={onAddClick}
                 onChangeAmount={null}
+                onEditItem={null}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory} 
@@ -280,6 +283,7 @@ export function InventoryGrid({ capacity, items, onAddClick, onSplitClick, onMov
                 onSplitClick={onSplitClick}
                 onAddClick={onAddClick}
                 onChangeAmount={onChangeAmount}
+                onEditItem={onEditItem}
                 onModalOpen={setIsItemModalOpen}
                 onDetailItem={setActiveDetailItem}
                 currentInventory={currentInventory}
@@ -314,6 +318,7 @@ interface InventoryGridCellProps {
   onSendToInventory: ((item: InventoryItem, targetInvName: string | null) => void) | null;
   onDeleteItem: ((item: InventoryItem) => void) | null;
   onChangeAmount: ((item: InventoryItem) => void) | null;
+  onEditItem: ((item: InventoryItem) => void) | null;
   otherInventories?: any;
   campaignPlayers?: User[];
   currentInventory?: string;
@@ -326,7 +331,7 @@ interface InventoryGridCellProps {
   hasDraggableItems: boolean;
 }
 
-function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, onChangeAmount, currentInventory, recipe, rarities, hasDraggableItems, isTemporary = false, showFoodInfo=  false }: InventoryGridCellProps) {
+function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSendToInventory, onDeleteItem, onEditItem, campaignPlayers, otherInventories, onModalOpen, onDetailItem, onChangeAmount, currentInventory, recipe, rarities, hasDraggableItems, isTemporary = false, showFoodInfo=  false }: InventoryGridCellProps) {
   const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ 
     id: index.toString(),
@@ -369,6 +374,9 @@ function GridCell({ index, item, onAddClick, onSplitClick, onSendToPlayer, onSen
           <ContextMenuContent className="w-56 bg-slate-900 text-slate-100 border-slate-700">
             <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {onDetailItem(item); onModalOpen(true);}}>
               {t('View Details')}
+            </ContextMenuItem>
+            <ContextMenuItem className="focus:bg-slate-800 focus:text-amber-400" onClick={() => {(item && onEditItem) && onEditItem(item); onModalOpen(true);}}>
+              {t('Edit')}
             </ContextMenuItem>
             <ContextMenuSeparator className="bg-slate-700" />
             

@@ -22,6 +22,7 @@ import { NotesSection } from '@/components/notes-section';
 import PlayerDashboard from '@/components/player-dashboard';
 import QuestBoard from '@/components/questboard';
 import SessionNoteBoard from '@/components/SessionNoteBoard';
+import { EditCampaignModernDialog } from '@/components/dialogs/edit-campaign-modern-dialog';
 
 export default function CampaignPage() {
 	const params = useParams();
@@ -140,7 +141,7 @@ export default function CampaignPage() {
 
 	return (
 		<>
-			<EditCampaignDialog
+			<EditCampaignModernDialog
 				isOpen={isEditDialogOpen}
 				onOpenChange={setEditDialogOpen}
 				onSave={handleSaveCampaignSettings}
